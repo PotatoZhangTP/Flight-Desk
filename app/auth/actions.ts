@@ -31,6 +31,18 @@ export async function signOut() {
   redirect("/");
 }
 
+export async function updateDisplayName(displayName: string) {
+  const name = displayName.trim();
+  if (!name || name.length > 80) return { error: "Please enter a name up to 80 characters." };
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: "You must be signed in." };
+  const { error } = await supabase.from("profiles").update({ display_name: name }).eq("id", user.id);
+  if (error) return { error: error.message };
+  revalidatePath("/dashboard");
+  return { error: null };
+}
+
 export async function requestPasswordReset(formData: FormData) {
   const email = String(formData.get("email") ?? "").trim();
   if (!email) redirect("/auth/reset-password?error=Enter%20your%20email%20address");
