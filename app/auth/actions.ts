@@ -5,10 +5,13 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 
 function getSiteUrl() {
+  const vercelUrl = process.env.VERCEL_URL?.trim();
+  if (process.env.VERCEL_ENV === "preview" && vercelUrl) {
+    return `https://${vercelUrl.replace(/^https?:\/\//, "").replace(/\/$/, "")}`;
+  }
+
   const configuredUrl = process.env.NEXT_PUBLIC_SITE_URL?.trim();
   if (configuredUrl) return configuredUrl.replace(/\/$/, "");
-
-  const vercelUrl = process.env.VERCEL_URL?.trim();
   if (vercelUrl) return `https://${vercelUrl.replace(/^https?:\/\//, "").replace(/\/$/, "")}`;
 
   return "http://localhost:3000";
@@ -40,6 +43,8 @@ export async function updateDisplayName(displayName: string) {
   const { error } = await supabase.from("profiles").update({ display_name: name }).eq("id", user.id);
   if (error) return { error: error.message };
   revalidatePath("/dashboard");
+  revalidatePath("/settings");
+  revalidatePath("/profile");
   return { error: null };
 }
 
