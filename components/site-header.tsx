@@ -1,0 +1,3 @@
+import Link from "next/link";
+import { Brand } from "./brand";
+export function SiteHeader() { return <header className="flex items-center justify-between border-b border-[#d9e2ec] px-6 py-5 lg:px-12"><Brand /><nav className="hidden items-center gap-8 text-sm font-semibold text-[#486581] md:flex"><Link href="/#how-it-works">How it works</Link><Link href="/#roadmap">Roadmap</Link><Link href="/dashboard" className="rounded-full bg-[#102a43] px-5 py-2.5 text-white">Open dashboard</Link></nav><Link href="/dashboard" className="text-sm font-semibold text-[#102a43] md:hidden">Dashboard →</Link></header>; }
