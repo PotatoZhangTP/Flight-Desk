@@ -23,11 +23,31 @@ alter table public.flights
   add column if not exists actual_duration_minutes integer,
   add column if not exists airline text;
 
-alter table public.flights
-  add constraint flights_scheduled_duration_check
-    check (scheduled_duration_minutes is null or scheduled_duration_minutes >= 0),
-  add constraint flights_actual_duration_check
-    check (actual_duration_minutes is null or actual_duration_minutes >= 0);
+do $$
+begin
+  if not exists (
+    select 1
+    from pg_constraint
+    where conrelid = 'public.flights'::regclass
+      and conname = 'flights_scheduled_duration_check'
+  ) then
+    alter table public.flights
+      add constraint flights_scheduled_duration_check
+      check (scheduled_duration_minutes is null or scheduled_duration_minutes >= 0);
+  end if;
+
+  if not exists (
+    select 1
+    from pg_constraint
+    where conrelid = 'public.flights'::regclass
+      and conname = 'flights_actual_duration_check'
+  ) then
+    alter table public.flights
+      add constraint flights_actual_duration_check
+      check (actual_duration_minutes is null or actual_duration_minutes >= 0);
+  end if;
+end;
+$$;
 
 create index if not exists flights_user_scheduled_at_idx
   on public.flights (user_id, departure_scheduled_at_utc desc);
