@@ -23,7 +23,7 @@ create table if not exists public.flights (
   updated_at timestamptz not null default now()
 );
 
-create index if not exists public.flights_user_id_date_idx
+create index if not exists flights_user_id_date_idx
   on public.flights (user_id, flight_date desc);
 
 alter table public.profiles enable row level security;
