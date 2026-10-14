@@ -1,0 +1,16 @@
+import Link from "next/link";
+import { notFound, redirect } from "next/navigation";
+import { Brand } from "@/components/brand";
+import { FlightForm } from "@/components/flight-form";
+import { UserMenu } from "@/components/user-menu";
+import { createClient } from "@/lib/supabase/server";
+
+export default async function EditFlightPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect(`/auth?next=/flights/${id}/edit`);
+  const { data: flight, error } = await supabase.from("flights").select("*").eq("id", id).eq("user_id", user.id).maybeSingle();
+  if (error || !flight) notFound();
+  return <div className="min-h-screen bg-[#f7f9fc]"><header className="flex items-center justify-between border-b border-[#d9e2ec] bg-white px-6 py-5 lg:px-12"><Brand /><UserMenu email={user.email ?? ""} initials={(user.email?.slice(0, 2) || "P").toUpperCase()} /></header><main className="mx-auto max-w-5xl px-6 py-10 lg:px-12"><Link href={`/flights/${id}`} className="text-sm font-semibold text-[#627d98]">← Back to flight</Link><div className="mt-8 mb-8"><p className="text-sm font-bold uppercase tracking-[0.18em] text-[#e8753a]">Edit logbook entry</p><h1 className="mt-2 text-4xl font-bold tracking-tight text-[#102a43]">Edit flight</h1><p className="mt-2 text-[#627d98]">Update your journey details below.</p></div><FlightForm initialData={flight} /></main></div>;
+}
