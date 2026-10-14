@@ -1,0 +1,7 @@
+"use client";
+
+import { FormEvent, useState } from "react";
+import { useRouter } from "next/navigation";
+import { createClient } from "@/lib/supabase/browser";
+
+export default function UpdatePasswordPage() { const router = useRouter(); const [password, setPassword] = useState(""); const [message, setMessage] = useState(""); const [error, setError] = useState(""); async function submit(e: FormEvent) { e.preventDefault(); setError(""); const { error } = await createClient().auth.updateUser({ password }); if (error) setError(error.message); else { setMessage("Password updated successfully."); setTimeout(() => router.push("/dashboard"), 1000); } } return <main className="grid min-h-screen place-items-center bg-[#f7f9fc] p-6"><form onSubmit={submit} className="w-full max-w-md rounded-2xl border border-[#d9e2ec] bg-white p-8 shadow-xl"><h1 className="text-3xl font-bold text-[#102a43]">Choose a new password</h1><label className="mt-6 block text-sm font-semibold text-[#486581]">New password<input required minLength={6} type="password" value={password} onChange={e => setPassword(e.target.value)} className="mt-1.5 w-full rounded-xl border border-[#bcccdc] px-4 py-3" /></label>{error && <p className="mt-4 text-sm text-[#b94a3d]">{error}</p>}{message && <p className="mt-4 text-sm text-[#16756d]">{message}</p>}<button className="mt-6 w-full rounded-full bg-[#e8753a] px-5 py-3 font-bold text-white">Update password</button></form></main>; }

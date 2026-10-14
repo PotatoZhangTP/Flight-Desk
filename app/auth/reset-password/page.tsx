@@ -1,0 +1,7 @@
+import Link from "next/link";
+import { requestPasswordReset } from "@/app/auth/actions";
+
+export default async function ResetPasswordPage({ searchParams }: { searchParams: Promise<{ error?: string; sent?: string }> }) {
+  const params = await searchParams;
+  return <main className="grid min-h-screen place-items-center bg-[#f7f9fc] p-6"><div className="w-full max-w-md rounded-2xl border border-[#d9e2ec] bg-white p-8 shadow-xl shadow-[#102a43]/5"><Link href="/auth" className="text-sm font-semibold text-[#627d98]">← Back to sign in</Link><h1 className="mt-8 text-3xl font-bold tracking-tight text-[#102a43]">Reset your password</h1><p className="mt-3 text-sm leading-6 text-[#627d98]">We’ll send a secure reset link to your email address.</p>{params.sent ? <p className="mt-6 rounded-lg bg-[#dff4f0] p-3 text-sm text-[#16756d]">Check your inbox for the password reset link.</p> : <form action={requestPasswordReset} className="mt-6 space-y-4"><label className="block text-sm font-semibold text-[#486581]">Email<input required name="email" type="email" className="mt-1.5 w-full rounded-xl border border-[#bcccdc] px-4 py-3 outline-none focus:border-[#168c82]" placeholder="you@example.com" /></label>{params.error && <p className="rounded-lg bg-[#fff0ed] p-3 text-sm text-[#b94a3d]">{params.error}</p>}<button className="w-full rounded-full bg-[#e8753a] px-5 py-3 font-bold text-white">Send reset link</button></form>}</div></main>;
+}

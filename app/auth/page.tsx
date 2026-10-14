@@ -1,0 +1,5 @@
+import Link from "next/link";
+import { Brand } from "@/components/brand";
+import { AuthForm } from "@/components/auth-form";
+
+export default function AuthPage() { return <main className="grid min-h-screen bg-[#f7f9fc] lg:grid-cols-2"><section className="grid-paper flex flex-col justify-between p-8 lg:p-14"><Brand /><div className="max-w-md pb-10"><p className="text-sm font-bold uppercase tracking-[0.2em] text-[#e8753a]">Your personal logbook</p><h1 className="mt-5 text-5xl font-bold leading-tight tracking-tight text-[#102a43]">Keep every journey in view.</h1><p className="mt-5 text-lg leading-8 text-[#486581]">Sign in to manage your flights, explore your statistics, and build your personal flying history.</p></div><p className="text-sm text-[#829ab1]">Flight Desk · A clearer view of your flying</p></section><section className="flex items-center justify-center p-6"><div className="w-full max-w-md"><Link href="/" className="mb-8 inline-block text-sm font-semibold text-[#627d98]">← Back home</Link><AuthForm /></div></section></main>; }
