@@ -2,9 +2,37 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { headers } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 
-function getSiteUrl() {
+function isTrustedHost(hostname: string) {
+  return hostname === "localhost" || hostname === "127.0.0.1" || hostname.endsWith(".vercel.app");
+}
+
+async function getSiteUrl() {
+  const requestHeaders = await headers();
+  const requestOrigin = requestHeaders.get("origin");
+  if (requestOrigin) {
+    try {
+      const origin = new URL(requestOrigin);
+      if ((origin.protocol === "https:" || origin.hostname === "localhost" || origin.hostname === "127.0.0.1") && isTrustedHost(origin.hostname)) {
+        return origin.origin;
+      }
+    } catch {
+      // Ignore malformed Origin values and use the trusted proxy fallback below.
+    }
+  }
+
+  const forwardedHost = requestHeaders.get("x-forwarded-host")?.split(",")[0]?.trim();
+  if (forwardedHost) {
+    try {
+      const host = new URL(`https://${forwardedHost}`);
+      if (isTrustedHost(host.hostname)) return host.origin;
+    } catch {
+      // Ignore malformed forwarded hosts.
+    }
+  }
+
   const vercelUrl = process.env.VERCEL_URL?.trim();
   if (process.env.VERCEL_ENV === "preview" && vercelUrl) {
     return `https://${vercelUrl.replace(/^https?:\/\//, "").replace(/\/$/, "")}`;
@@ -22,7 +50,7 @@ export async function signUpWithEmail(email: string, password: string) {
   const { error } = await supabase.auth.signUp({
     email,
     password,
-    options: { emailRedirectTo: `${getSiteUrl()}/auth/callback` },
+    options: { emailRedirectTo: `${await getSiteUrl()}/auth/callback` },
   });
   return { error: error?.message ?? null };
 }
@@ -65,7 +93,7 @@ export async function requestPasswordChange() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user?.email) return { error: "No signed-in email was found." };
   const { error } = await supabase.auth.resetPasswordForEmail(user.email, {
-    redirectTo: `${getSiteUrl()}/auth/callback?next=/auth/update-password`,
+    redirectTo: `${await getSiteUrl()}/auth/callback?next=/auth/update-password`,
   });
   return { error: error?.message ?? null };
 }
@@ -76,7 +104,7 @@ export async function requestPasswordReset(formData: FormData) {
 
   const supabase = await createClient();
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${getSiteUrl()}/auth/callback?next=/auth/update-password`,
+    redirectTo: `${await getSiteUrl()}/auth/callback?next=/auth/update-password`,
   });
   if (error) redirect(`/auth/reset-password?error=${encodeURIComponent(error.message)}`);
   redirect("/auth/reset-password?sent=1");
