@@ -3,6 +3,7 @@
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/browser";
+import { signUpWithEmail } from "@/app/auth/actions";
 
 export function AuthForm() {
   const router = useRouter();
@@ -19,9 +20,9 @@ export function AuthForm() {
     const supabase = createClient();
     const result = mode === "login"
       ? await supabase.auth.signInWithPassword({ email, password })
-      : await supabase.auth.signUp({ email, password, options: { emailRedirectTo: `${window.location.origin}/auth/callback` } });
+      : await signUpWithEmail(email, password);
     setLoading(false);
-    if (result.error) { setError(result.error.message); return; }
+    if (result.error) { setError(typeof result.error === "string" ? result.error : result.error.message); return; }
     if (mode === "signup") { setMessage("Account created. Check your inbox to verify your email before signing in."); return; }
     router.push("/dashboard"); router.refresh();
   }
