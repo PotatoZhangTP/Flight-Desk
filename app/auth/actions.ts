@@ -43,6 +43,28 @@ export async function updateDisplayName(displayName: string) {
   return { error: null };
 }
 
+export async function updateProfileBio(bio: string) {
+  const value = bio.trim();
+  if (value.length > 280) return { error: "Your bio must be 280 characters or fewer." };
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: "You must be signed in." };
+  const { error } = await supabase.from("profiles").update({ bio: value }).eq("id", user.id);
+  if (error) return { error: error.message };
+  revalidatePath("/profile");
+  return { error: null };
+}
+
+export async function requestPasswordChange() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user?.email) return { error: "No signed-in email was found." };
+  const { error } = await supabase.auth.resetPasswordForEmail(user.email, {
+    redirectTo: `${getSiteUrl()}/auth/callback?next=/auth/update-password`,
+  });
+  return { error: error?.message ?? null };
+}
+
 export async function requestPasswordReset(formData: FormData) {
   const email = String(formData.get("email") ?? "").trim();
   if (!email) redirect("/auth/reset-password?error=Enter%20your%20email%20address");
