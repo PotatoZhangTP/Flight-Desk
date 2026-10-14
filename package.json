@@ -11,6 +11,8 @@
   "dependencies": {
     "@supabase/ssr": "0.12.7",
     "@supabase/supabase-js": "2.117.3",
+    "@types/luxon": "3.7.6",
+    "luxon": "3.7.2",
     "next": "16.4.0",
     "react": "19.1.1",
     "react-dom": "19.1.1"
