@@ -1,4 +1,6 @@
 import Link from "next/link";
+import Image from "next/image";
+import { UpcomingButton } from "@/components/upcoming-button";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { JourneyDemo } from "@/components/journey-demo";
@@ -12,18 +14,39 @@ export const dynamic = "force-dynamic";
 const features = [
   {
     title: "Flight Logging",
+    href: "/flights/new",
     description: "Record your flights with essential journey details, including airports, dates, and aircraft information.",
     icon: <><path d="M8 4H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-2" /><rect x="8" y="2" width="8" height="4" rx="1" /><path d="M8 12h8m-8 5h5" /></>,
   },
   {
     title: "Flight History",
+    href: "/dashboard",
     description: "Keep your flights organized and revisit your past journeys in one place.",
     icon: <><path d="M3 11a9 9 0 1 1 2.5 7M3 4v7h7" /><path d="M12 7v5l3 2" /></>,
   },
   {
     title: "Flight Statistics",
+    href: "/dashboard",
     description: "Discover insights and statistics from your personal flight history.",
     icon: <><path d="M4 3v17h17M9 15v-4m5 4V7m5 8V4" /></>,
+  },
+  {
+    title: "Excel Import",
+    href: null,
+    description: "Planned: bring your past journeys together with spreadsheet imports and a review before saving.",
+    icon: <><path d="M14 2H6a2 2 0 0 0-2 2v16h16V8Z" /><path d="M14 2v6h6M8 12h8m-8 4h8m-4-4v8" /></>,
+  },
+  {
+    title: "Flight Map",
+    href: null,
+    description: "Planned: explore the routes and airports that shape your personal flying story on a map.",
+    icon: <><path d="m3 6 6-3 6 3 6-3v15l-6 3-6-3-6 3ZM9 3v15m6-12v15" /></>,
+  },
+  {
+    title: "Flight Checklist",
+    href: null,
+    description: "Planned: keep useful checklists for your aviation interests and simulator journeys in one place.",
+    icon: <><path d="m3 6 2 2 4-4m-6 9 2 2 4-4M12 6h9m-9 7h9M3 20h18" /></>,
   },
 ];
 
@@ -35,18 +58,20 @@ export default async function HomePage() {
       <h1 id="hero-title" className="mx-auto mt-6 text-4xl font-bold leading-[1.1] tracking-[-0.04em] sm:whitespace-nowrap sm:text-[clamp(2.5rem,6vw,4.75rem)]">Every Flight Tells a Story</h1>
       <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
         <LogbookLink />
-        <Link href="#features" className="whitespace-pre-line rounded-full border border-line bg-surface px-6 py-3 font-semibold text-ink transition hover:border-line-strong hover:text-brand focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand">{copy["landing.hero.secondary_label"]} <span aria-hidden="true">↓</span></Link>
+        <Link href="#features" className="inline-flex h-12 w-52 shrink-0 items-center justify-center gap-2 rounded-full border border-line bg-surface px-4 text-sm font-bold text-ink transition hover:-translate-y-0.5 hover:border-line-strong hover:text-brand focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand">{copy["landing.hero.secondary_label"]} <span aria-hidden="true">↓</span></Link>
       </div>
       <div className="mt-14 text-left sm:mt-16"><JourneyDemo /></div>
     </section>
 
     <section id="features" aria-labelledby="features-title" className="mx-auto max-w-7xl scroll-mt-8 px-6 py-16 sm:py-24 lg:px-12">
       <h2 id="features-title" className="text-center text-3xl font-bold tracking-tight sm:text-4xl">Built Around Your Journeys</h2>
-      <div className="mt-10 grid auto-rows-fr gap-4 lg:grid-cols-3">{features.map(feature => <article key={feature.title} className="rounded-2xl border border-line bg-surface p-6 shadow-sm shadow-ink/5 transition hover:border-line-strong">
+      <p className="mx-auto mt-4 max-w-2xl text-center text-base leading-7 text-muted">From your first entry to your next discovery, make every journey part of your story.</p>
+      <div className="mt-10 grid auto-rows-fr gap-4 lg:grid-cols-3">{features.map(feature => <article key={feature.title} className="relative rounded-2xl border border-line bg-surface p-6 shadow-sm shadow-ink/5 transition hover:border-line-strong hover:shadow-md hover:shadow-ink/5">
         <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-brand-soft text-brand"><svg aria-hidden="true" viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">{feature.icon}</svg></span>
         <h3 className="mt-5 text-base font-bold leading-6">{feature.title}</h3>
         <p className="mt-3 text-sm leading-6 text-muted">{feature.description}</p>
-      </article>)}{[1, 2, 3].map(slot => <div key={slot} aria-hidden="true" data-feature-slot className="min-h-48 rounded-2xl border border-line bg-surface p-6 shadow-sm shadow-ink/5" />)}</div>
+        {feature.href ? <Link href={feature.href} aria-label={feature.title} className="absolute inset-0 rounded-2xl focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand" /> : <UpcomingButton label={feature.title} className="absolute inset-0 cursor-pointer rounded-2xl focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand" />}
+      </article>)}</div>
     </section>
 
     <section id="product-preview" aria-labelledby="preview-title" className="mx-auto max-w-7xl px-6 py-16 sm:py-24 lg:px-12">
@@ -54,8 +79,10 @@ export default async function HomePage() {
         <h2 id="preview-title" className="text-3xl font-bold tracking-tight sm:text-4xl">Your Flights. All in One Place</h2>
         <p className="mx-auto mt-4 text-base leading-7 text-muted lg:whitespace-nowrap">A clearer way to organize your journeys, revisit past flights, and explore your flight history.</p>
       </div>
-      {/* Reserved for a real Dashboard capture; no synthetic product imagery. */}
-      <div aria-hidden="true" data-product-preview className="mt-10 aspect-[16/10] w-full rounded-2xl border border-line bg-surface shadow-sm shadow-ink/5 sm:aspect-video" />
+      <figure data-product-preview className="mt-10 overflow-hidden rounded-2xl border border-line bg-surface shadow-sm shadow-ink/5">
+        <Image src="/images/add-flight-preview.webp" alt="Actual Add Flight page showing the flight ticket preview and fields for departure, arrival, planned local times and timezones." width={1024} height={800} sizes="(min-width: 1280px) 1184px, 100vw" className="h-auto w-full" />
+        <figcaption className="border-t border-line px-5 py-3 text-center text-xs leading-5 text-muted">Add Flight · Actual product interface, shown with an empty form</figcaption>
+      </figure>
     </section>
 
     <RoadmapSummary items={items} failed={failed} copy={copy} />

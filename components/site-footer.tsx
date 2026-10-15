@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Brand } from "./brand";
+import { UpcomingButton } from "./upcoming-button";
 import { landingDefaults, type LandingCopy } from "@/lib/content/model";
 
 const footerGroups = [
@@ -17,7 +18,7 @@ export function SiteFooter({ copy = landingDefaults }: { copy?: LandingCopy }) {
         <ul className="mt-4 space-y-3">{group.links.map(label => <li key={label}>
           {label === "Features" || label === "Get Started"
             ? <Link href={label === "Features" ? "/#features" : "/dashboard"} className="rounded text-muted transition hover:text-brand focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand">{label}</Link>
-            : <span className="inline-flex flex-wrap items-center gap-2"><button type="button" disabled className="cursor-not-allowed text-subtle">{label}</button><span className="text-[10px] text-subtle">Coming soon</span></span>}
+            : <UpcomingButton className="cursor-pointer rounded text-muted transition hover:text-brand focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand">{label}</UpcomingButton>}
         </li>)}</ul>
       </nav>)}
     </div>

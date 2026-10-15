@@ -92,6 +92,7 @@ test('statistics count provided published records by status', () => {
 
 const React = require('react');
 const { renderToStaticMarkup } = require('react-dom/server');
+const upcoming = loadModule('components/upcoming-button.tsx', {'react/jsx-runtime':require('react/jsx-runtime')});
 const logbookLink = loadModule('components/logbook-link.tsx', {
   'react/jsx-runtime': require('react/jsx-runtime'), 'next/link': require('next/link'),
 });
@@ -111,6 +112,7 @@ test('landing uses a vertical product narrative with the exact hero copy and pre
   const journey=loadModule('components/journey-demo.tsx',{'react/jsx-runtime':require('react/jsx-runtime')});
   const home=loadModule('app/page.tsx',{
     'react/jsx-runtime':require('react/jsx-runtime'),'next/link':require('next/link'),
+    'next/image':require('next/image'),'@/components/upcoming-button':upcoming,
     '@/components/site-header':{SiteHeader:()=>React.createElement('header')},
     '@/components/site-footer':{SiteFooter:()=>React.createElement('footer')},
     '@/components/journey-demo':journey,'@/components/roadmap-cards':cards,
@@ -129,31 +131,48 @@ test('landing uses a vertical product narrative with the exact hero copy and pre
   assert.equal((html.match(/<section /g)||[]).length,7);
   for(const text of ['Built Around Your Journeys','Flight Logging','Flight History','Flight Statistics','Your Flights. All in One Place']) assert.ok(html.includes(text));
   assert.doesNotMatch(html,/Story\.<|Journeys\.<|Place\.<|Our flight plan/);
-  assert.equal((html.match(/data-feature-slot/g)||[]).length,3);
+  const features=html.slice(html.indexOf('id="features"'),html.indexOf('id="product-preview"'));
+  assert.equal((features.match(/<article /g)||[]).length,6);
+  for(const label of ['Excel Import','Flight Map','Flight Checklist']) assert.ok(features.includes(`aria-label="${label}"`));
+  assert.match(features,/href="\/flights\/new"/);
   assert.match(html,/>Beijing<|>Beijing<!--/);
   assert.match(html,/>New York<|>New York<!--/);
   assert.doesNotMatch(html,/Beijing Capital|New York JFK/);
+  assert.doesNotMatch(html,/>PEK|>JFK/);
+  assert.match(html,/>ZBAA</);assert.match(html,/>KJFK</);
   assert.doesNotMatch(html,/id="how-it-works"|Why Flight Desk|For Aviation Lovers|For Every Traveler/);
   const preview=html.slice(html.indexOf('id="product-preview"'),html.indexOf('id="roadmap"'));
   assert.match(preview,/data-product-preview/);
-  assert.doesNotMatch(preview,/<img|<svg|background-image/);
+  assert.match(preview,/<img/);assert.match(preview,/add-flight-preview/);
   assert.match(html,/href="\/dashboard"/);assert.match(html,/href="\/roadmap\?item=/);
 });
 test('public navigation reserves unfinished pages without fake links; footer uses the new brand copy', async () => {
   const deps = {'react/jsx-runtime':require('react/jsx-runtime'),'next/link':require('next/link'),
-    './brand':{Brand:()=>React.createElement('span',null,'Flight Desk')},'./logbook-link':logbookLink};
+    './brand':{Brand:()=>React.createElement('span',null,'Flight Desk')},'./logbook-link':logbookLink,'./upcoming-button':upcoming};
   const header=loadModule('components/site-header.tsx', {...deps,
     './account-controls':{AccountControls:()=>null},
     '@/lib/admin/server':{siteAdminAccess:async()=>({user:null,isAdmin:false})}});
   const html=renderToStaticMarkup(await header.SiteHeader());
-  for(const label of ['Blog','Community','Pricing']) assert.ok(html.includes(`disabled="" class="cursor-not-allowed text-subtle">${label}</button>`));
+  for(const label of ['Blog','Community','Pricing']) assert.ok(html.includes(`>${label}</button>`));
+  assert.doesNotMatch(html,/Coming soon|disabled/);
   assert.match(html,/href="\/#features"/);assert.match(html,/href="\/dashboard"/);
   const footer=loadModule('components/site-footer.tsx',{...deps,'@/lib/content/model':contentModel});
   const foot=renderToStaticMarkup(React.createElement(footer.SiteFooter));
   assert.match(foot,/FOR EVERYONE WHO LOVES THE SKY/);
   assert.doesNotMatch(foot,/Product roadmap|href="\/roadmap"|href="#"/);
+  assert.doesNotMatch(foot,/Coming soon|disabled/);
   for(const label of ['About','Contact','Support','Privacy Policy','Terms of Service']) assert.ok(foot.includes(`>${label}</button>`));
   assert.match(foot,/© 2026 Flight Desk. All rights reserved./);
+});
+test('unfinished entries show the requested message instead of navigating', () => {
+  const previous = global.window;
+  let message;
+  global.window = {alert:value=>{message=value;}};
+  try {
+    const button=upcoming.UpcomingButton({children:'Blog'});
+    assert.equal(button.type,'button');assert.equal(button.props.type,'button');
+    button.props.onClick();assert.equal(message,'该功能即将上线，敬请期待');
+  } finally {global.window=previous;}
 });
 test('homepage keeps three lightweight empty groups without fake cards or draft data', () => {
   for (const items of [[], [record('Unreviewed private draft','completed','draft')]]) {
