@@ -37,23 +37,34 @@ export function roadmapToday(now = new Date()) {
   return `${part("year")}-${part("month")}-${part("day")}`;
 }
 
-export function sortRoadmapItems(items: RoadmapItem[], sort: RoadmapSort = "target_closest", today = roadmapToday()) {
+export function sortRoadmapItems(items: RoadmapItem[], sort: RoadmapSort = "target_closest", today = roadmapToday(), dateField: "target_date" | "completed_date" = "target_date") {
   const reference = Date.parse(`${today}T00:00:00Z`);
   const tieBreak = (a: RoadmapItem, b: RoadmapItem) => (a.created_at ?? "").localeCompare(b.created_at ?? "") || a.id.localeCompare(b.id);
   return [...items].sort((a, b) => {
     if (sort === "target_closest" || sort === "target_farthest") {
       // Null dates stay last in BOTH directions; never substitute a fake date.
-      if (!a.target_date && !b.target_date) return tieBreak(a, b);
-      if (!a.target_date) return 1;
-      if (!b.target_date) return -1;
-      const distanceA = Math.abs(Date.parse(`${a.target_date}T00:00:00Z`) - reference);
-      const distanceB = Math.abs(Date.parse(`${b.target_date}T00:00:00Z`) - reference);
+      const dateA = a[dateField], dateB = b[dateField];
+      if (!dateA && !dateB) return tieBreak(a, b);
+      if (!dateA) return 1;
+      if (!dateB) return -1;
+      const distanceA = Math.abs(Date.parse(`${dateA}T00:00:00Z`) - reference);
+      const distanceB = Math.abs(Date.parse(`${dateB}T00:00:00Z`) - reference);
       const difference = sort === "target_closest" ? distanceA - distanceB : distanceB - distanceA;
-      return difference || a.target_date.localeCompare(b.target_date) || tieBreak(a, b);
+      return difference || dateA.localeCompare(dateB) || tieBreak(a, b);
     }
     const difference = Date.parse(a.updated_at) - Date.parse(b.updated_at);
     return (sort === "updated_newest" ? -difference : difference) || tieBreak(a, b);
   });
+}
+
+export function landingRoadmapGroups(items: RoadmapItem[], today = roadmapToday()) {
+  return (["in_progress", "planned", "completed"] as const).map(status => ({
+    status,
+    items: sortRoadmapItems(
+      items.filter(item => item.publication_status === "published" && item.status === status),
+      "target_closest", today, status === "completed" ? "completed_date" : "target_date",
+    ).slice(0, 4),
+  }));
 }
 
 export function filterRoadmapItems(items: RoadmapItem[], filter: RoadmapFilter) {

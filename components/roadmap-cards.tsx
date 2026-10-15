@@ -1,13 +1,13 @@
 import Link from "next/link";
-import { formatRoadmapDate, sortRoadmapItems, statuses, statusLabels, statusStyles, type RoadmapItem } from "@/lib/roadmap/model";
+import { formatRoadmapDate, landingRoadmapGroups, statuses, statusLabels, statusStyles, type RoadmapItem } from "@/lib/roadmap/model";
 
 export function RoadmapCard({ item, mode = "detailed" }: { item: RoadmapItem; mode?: "compact" | "detailed" }) {
-  const showCompletedDate = item.status === "completed" && Boolean(item.completed_date);
+  const showCompletedDate = item.status === "completed";
   const previewDate = showCompletedDate ? item.completed_date : item.target_date;
-  if (mode === "compact") return <article className="flex h-full min-h-[168px] min-w-0 flex-col rounded-2xl border border-[#d4e3e6] bg-white p-5 shadow-sm shadow-[#102a43]/5 transition duration-200 hover:-translate-y-0.5 hover:border-[#9fd8d2] hover:shadow-md hover:shadow-[#102a43]/10">
+  if (mode === "compact") return <article className="flex h-full min-h-[148px] min-w-0 flex-col rounded-2xl border border-[#d4e3e6] bg-white p-4 shadow-sm shadow-[#102a43]/5 transition duration-200 hover:-translate-y-0.5 hover:border-[#9fd8d2] hover:shadow-md hover:shadow-[#102a43]/10">
     <div className="flex items-start justify-between gap-3"><span className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-bold ${statusStyles[item.status]}`}>{statusLabels[item.status]}</span><span className="max-w-[45%] break-words text-right text-xs font-medium leading-5 text-[#627d98]">{item.category}</span></div>
-    <h3 className="mt-3 line-clamp-2 break-words text-base font-bold leading-snug tracking-tight text-[#102a43]" title={item.title}>{item.title}</h3>
-    <p className="mt-auto pt-4 text-xs leading-5 text-[#627d98]">{showCompletedDate ? "Completed date" : "Target date"}: {previewDate ? <time className="font-medium text-[#486581]" dateTime={previewDate}>{formatRoadmapDate(previewDate)}</time> : "TBD"}</p>
+    <h4 className="mt-2.5 line-clamp-2 break-words text-base font-bold leading-snug tracking-tight text-[#102a43]" title={item.title}>{item.title}</h4>
+    <p className="mt-auto pt-3 text-xs leading-5 text-[#627d98]">{showCompletedDate ? "Completed date" : "Target date"}: {previewDate ? <time className="font-medium text-[#486581]" dateTime={previewDate}>{formatRoadmapDate(previewDate)}</time> : "TBD"}</p>
   </article>;
 
   return <article className="min-w-0 rounded-2xl border border-[#d9e2ec] bg-white p-6 shadow-sm transition hover:border-[#9fd8d2] hover:shadow-md">
@@ -23,10 +23,10 @@ export function RoadmapCard({ item, mode = "detailed" }: { item: RoadmapItem; mo
 }
 
 export function RoadmapSummary({ items, failed }: { items: RoadmapItem[]; failed: boolean }) {
-  const highlights = sortRoadmapItems(items.filter(item => item.publication_status === "published")).slice(0, 6);
+  const groups = landingRoadmapGroups(items);
   return <section id="roadmap" className="relative overflow-hidden border-y border-[#d9e2ec] bg-[#eef5f5] py-14 sm:py-16"><div aria-hidden="true" className="pointer-events-none absolute -right-24 -top-28 h-80 w-80 rounded-full border border-[#d5e5e3]" /><div className="relative mx-auto max-w-7xl px-6 lg:px-12">
     <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end"><div><p className="eyebrow">Our flight plan</p><h2 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">Building the Next Journey</h2><p className="mt-3 max-w-lg text-sm leading-6 text-[#627d98]">What’s ready, what’s taking shape, and what’s next.</p></div><Link href="/roadmap" className="shrink-0 rounded-lg py-1 text-sm font-semibold text-[#168c82] hover:underline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#168c82]">View Full Roadmap <span aria-hidden="true">→</span></Link></div>
-    {failed ? <p role="alert" className="mt-6 rounded-xl border border-[#f3c5bd] bg-white p-4 text-sm text-[#b94a3d]">The roadmap is temporarily unavailable. Please try again later.</p> : !highlights.length ? <RoadmapEmptyState compact /> : <div className="mt-7 grid auto-rows-fr gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">{highlights.map(item => <RoadmapCard key={item.id} item={item} mode="compact" />)}</div>}
+    {failed ? <p role="alert" className="mt-6 rounded-xl border border-[#f3c5bd] bg-white p-4 text-sm text-[#b94a3d]">The roadmap is temporarily unavailable. Please try again later.</p> : <div className="mt-7 space-y-6">{groups.map(group => <section key={group.status} aria-labelledby={`home-roadmap-${group.status}`}><h3 id={`home-roadmap-${group.status}`} className="mb-3 text-sm font-semibold text-[#486581]">{statusLabels[group.status]}</h3>{group.items.length ? <div className="grid auto-rows-fr gap-4 sm:grid-cols-2 lg:grid-cols-4">{group.items.map(item => <RoadmapCard key={item.id} item={item} mode="compact" />)}</div> : <p className="rounded-xl border border-dashed border-[#c6dedb] px-4 py-3 text-sm text-[#627d98]">No published {statusLabels[group.status].toLowerCase()} items yet.</p>}</section>)}</div>}
   </div></section>;
 }
 

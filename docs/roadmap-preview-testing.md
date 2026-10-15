@@ -18,8 +18,9 @@ for signing in, verification and recovery continue to use the existing setup.
 ## Acceptance with real accounts
 
 1. In a signed-out/private window, open `/` and `/roadmap`. With all 13 initial
-   items still drafts, expect one illustrated empty state and no progress counters
-   or empty status columns on either page. The homepage Roadmap navigation links
+   items still drafts, expect three lightweight empty status rows on the homepage
+   and one illustrated empty state on the full page. No fake cards are added.
+   The homepage Roadmap navigation links
    to `/#roadmap`; View Full Roadmap opens the independent page.
    Check the Product demo label and mobile navigation.
 2. Visit `/admin/roadmap` signed out. Expect the login page. Sign in as an
@@ -33,10 +34,12 @@ for signing in, verification and recovery continue to use the existing setup.
    should be no Sort Order input or Order number on the management cards.
 5. Set visibility to Published. Refresh `/roadmap` in the signed-out window;
    the item should appear in the correct column and update its count. For
-   all four statuses, the homepage selects at most six published items by the
-   absolute target-date distance from today. Its smaller cards display title,
-   status, category at the top right and an inline date. Completed items with
-   a completion date show Completed date; otherwise show the target date or TBD.
+   the homepage has three fixed groups: In Progress, Planned, Completed. Each
+   selects at most four published items, by absolute date distance from today.
+   In Progress and Planned use target_date; Completed uses completed_date only.
+   Undated items are last within each group. On Hold items remain on the full page.
+   Smaller cards show title, status, category and an inline date. Completed items
+   always show Completed date, or TBD if their completion date is missing.
    No descriptions, update timestamps, card artwork or bottom decorations are
    shown. No progress panel is displayed. Both pages use Building the Next Journey.
    View Full Roadmap shows all published items, grouped by development status,

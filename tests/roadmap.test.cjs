@@ -101,34 +101,41 @@ const record = (title, status, publication_status = 'published') => ({
   target_date:null, completed_date:null, priority:null, updated_at:'2026-10-15T00:00:00Z',
 });
 const renderSummary = (items, failed = false) => renderToStaticMarkup(React.createElement(cards.RoadmapSummary, {items, failed}));
-test('homepage empty state has no misleading progress counts, columns or drafts', () => {
+test('homepage keeps three lightweight empty groups without fake cards or draft data', () => {
   for (const items of [[], [record('Unreviewed private draft','completed','draft')]]) {
     const html = renderSummary(items);
-    assert.match(html,/Our public flight plan is taking shape/);
-    assert.doesNotMatch(html,/role="progressbar"|home-roadmap-completed|Unreviewed private draft/);
+    assert.match(html,/No published in progress items yet/);
+    assert.match(html,/No published planned items yet/);
+    assert.match(html,/No published completed items yet/);
+    assert.doesNotMatch(html,/role="progressbar"|<article|Unreviewed private draft/);
     assert.match(html,/href="\/roadmap"/);
   }
 });
-test('homepage shows four published statuses without progress panel or private items', () => {
+test('homepage shows three status rows in order without on-hold or draft items', () => {
   const html=renderSummary([
     record('Completed feature','completed'),record('Work underway','in_progress'),
     record('Future feature','planned'),record('Paused feature','on_hold'),record('Secret feature','completed','draft'),
   ]);
-  for (const title of ['Completed feature','Work underway','Future feature','Paused feature']) assert.ok(html.includes(title));
+  for (const title of ['Completed feature','Work underway','Future feature']) assert.ok(html.includes(title));
+  assert.doesNotMatch(html,/Paused feature/);
+  assert.ok(html.indexOf('home-roadmap-in_progress') < html.indexOf('home-roadmap-planned'));
+  assert.ok(html.indexOf('home-roadmap-planned') < html.indexOf('home-roadmap-completed'));
   assert.doesNotMatch(html,/Published milestones|progressbar|1 of 4 completed|25%|Open to everyone/);
   assert.doesNotMatch(html,/Secret feature/);
   assert.doesNotMatch(html,/A real published milestone|Last updated|Updated|Sort Order/);
   assert.match(html,/Platform/);
   assert.match(html,/TBD/);
 });
-test('homepage selects six published items by closest target, with undated items last', () => {
+test('homepage caps each group at four, sorts dates first and preserves all items on full board', () => {
   const today = model.roadmapToday();
   const items = Array.from({length:7},(_,i)=>({...record(`Feature ${i}`,'planned'), target_date:i===6 ? today : null}));
   const html = renderSummary([...items,{...record('Private closest','planned','draft'),target_date:today}]);
-  assert.equal((html.match(/<article /g)||[]).length,6);
+  assert.equal((html.match(/<article /g)||[]).length,4);
   assert.ok(html.indexOf('Feature 6') < html.indexOf('Feature 0'));
-  assert.doesNotMatch(html,/>Feature 5<|Private closest/);
+  assert.doesNotMatch(html,/>Feature [345]<|Private closest/);
   assert.match(html,/href="\/roadmap"/);
+  const full=renderToStaticMarkup(React.createElement(cards.RoadmapBoard,{items}));
+  assert.equal((full.match(/<article /g)||[]).length,7);
 });
 test('request failures remain distinct from empty roadmap data', () => {
   const html = renderSummary([],true);
@@ -149,7 +156,20 @@ test('landing cards show inline completion dates, honest fallbacks and no decora
   const planned=render({...record('Upcoming','planned'),target_date:'2026-10-16'});
   assert.match(planned,/Target date: /);assert.match(planned,/16 Oct 2026/);
   assert.match(render(record('Undated','planned')),/Target date: TBD/);
-  assert.match(render(record('Undated completion','completed')),/Target date: TBD/);
+  assert.match(render({...record('Undated completion','completed'),target_date:'2026-10-16'}),/Completed date: TBD/);
+});
+test('landing groups use completed_date independently and limit each of the three published groups', () => {
+  const items=[];
+  for(const status of ['in_progress','planned','completed']) {
+    for(let i=0;i<6;i++) items.push({...record(`${status}-${i}`,status),target_date:`2026-10-${String(15+i).padStart(2,'0')}`,completed_date:i===0?null:`2026-10-${String(20-i).padStart(2,'0')}`});
+  }
+  items.push({...record('secret','completed','draft'),completed_date:'2026-10-15'});
+  const groups=model.landingRoadmapGroups(items,'2026-10-15');
+  assert.deepEqual(groups.map(g=>g.status),['in_progress','planned','completed']);
+  assert.deepEqual(groups.map(g=>g.items.length),[4,4,4]);
+  assert.deepEqual(groups[0].items.map(i=>i.id),['in_progress-0','in_progress-1','in_progress-2','in_progress-3']);
+  assert.deepEqual(groups[2].items.map(i=>i.id),['completed-5','completed-4','completed-3','completed-2']);
+  assert.equal(items.length,19);
 });
 const dated = (id,target,updated='2026-10-15T00:00:00Z') => ({...record(id,'planned'),target_date:target,updated_at:updated});
 test('target sorting uses absolute calendar distance, includes overdue, and always puts undated last', () => {
