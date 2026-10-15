@@ -2,6 +2,7 @@ import Link from "next/link";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { JourneyDemo } from "@/components/journey-demo";
+import { LogbookLink } from "@/components/logbook-link";
 import { RoadmapSummary } from "@/components/roadmap-cards";
 import { publishedRoadmap } from "@/lib/roadmap/server";
 import { publishedLandingCopy } from "@/lib/content/server";
@@ -31,16 +32,16 @@ export default async function HomePage() {
   return <div className="min-h-screen bg-page text-ink"><SiteHeader /><main>
     <section aria-labelledby="hero-title" className="mx-auto max-w-7xl px-6 pb-16 pt-20 text-center sm:pb-24 sm:pt-28 lg:px-12">
       <p className="eyebrow whitespace-pre-line">{copy["landing.hero.eyebrow"]}</p>
-      <h1 id="hero-title" className="mx-auto mt-6 text-4xl font-bold leading-[1.1] tracking-[-0.04em] sm:whitespace-nowrap sm:text-[clamp(2.5rem,6vw,4.75rem)]">Every Flight Tells a Story.</h1>
+      <h1 id="hero-title" className="mx-auto mt-6 text-4xl font-bold leading-[1.1] tracking-[-0.04em] sm:whitespace-nowrap sm:text-[clamp(2.5rem,6vw,4.75rem)]">Every Flight Tells a Story</h1>
       <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
-        <Link href="/dashboard" className="whitespace-pre-line rounded-full bg-brand px-6 py-3 font-semibold text-on-brand transition hover:-translate-y-0.5 hover:bg-brand-hover focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand">{copy["landing.hero.primary_label"]} <span aria-hidden="true">→</span></Link>
+        <LogbookLink />
         <Link href="#features" className="whitespace-pre-line rounded-full border border-line bg-surface px-6 py-3 font-semibold text-ink transition hover:border-line-strong hover:text-brand focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand">{copy["landing.hero.secondary_label"]} <span aria-hidden="true">↓</span></Link>
       </div>
       <div className="mt-14 text-left sm:mt-16"><JourneyDemo /></div>
     </section>
 
     <section id="features" aria-labelledby="features-title" className="mx-auto max-w-7xl scroll-mt-8 px-6 py-16 sm:py-24 lg:px-12">
-      <h2 id="features-title" className="text-center text-3xl font-bold tracking-tight sm:text-4xl">Built Around Your Journeys.</h2>
+      <h2 id="features-title" className="text-center text-3xl font-bold tracking-tight sm:text-4xl">Built Around Your Journeys</h2>
       <div className="mt-10 grid auto-rows-fr gap-4 lg:grid-cols-3">{features.map(feature => <article key={feature.title} className="rounded-2xl border border-line bg-surface p-6 shadow-sm shadow-ink/5 transition hover:border-line-strong">
         <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-brand-soft text-brand"><svg aria-hidden="true" viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">{feature.icon}</svg></span>
         <h3 className="mt-5 text-base font-bold leading-6">{feature.title}</h3>
@@ -50,7 +51,7 @@ export default async function HomePage() {
 
     <section id="product-preview" aria-labelledby="preview-title" className="mx-auto max-w-7xl px-6 py-16 sm:py-24 lg:px-12">
       <div className="mx-auto text-center">
-        <h2 id="preview-title" className="text-3xl font-bold tracking-tight sm:text-4xl">Your Flights. All in One Place.</h2>
+        <h2 id="preview-title" className="text-3xl font-bold tracking-tight sm:text-4xl">Your Flights. All in One Place</h2>
         <p className="mx-auto mt-4 text-base leading-7 text-muted lg:whitespace-nowrap">A clearer way to organize your journeys, revisit past flights, and explore your flight history.</p>
       </div>
       {/* Reserved for a real Dashboard capture; no synthetic product imagery. */}

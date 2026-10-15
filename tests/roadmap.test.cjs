@@ -92,7 +92,11 @@ test('statistics count provided published records by status', () => {
 
 const React = require('react');
 const { renderToStaticMarkup } = require('react-dom/server');
+const logbookLink = loadModule('components/logbook-link.tsx', {
+  'react/jsx-runtime': require('react/jsx-runtime'), 'next/link': require('next/link'),
+});
 const cards = loadModule('components/roadmap-cards.tsx', {
+  './logbook-link': logbookLink,
   'react/jsx-runtime': require('react/jsx-runtime'),
   'next/link': require('next/link'),
   '@/lib/roadmap/model': model,
@@ -110,11 +114,12 @@ test('landing uses a vertical product narrative with the exact hero copy and pre
     '@/components/site-header':{SiteHeader:()=>React.createElement('header')},
     '@/components/site-footer':{SiteFooter:()=>React.createElement('footer')},
     '@/components/journey-demo':journey,'@/components/roadmap-cards':cards,
+    '@/components/logbook-link':logbookLink,
     '@/lib/roadmap/server':{publishedRoadmap:async()=>({items:[record('Public milestone','planned')],failed:false})},
     '@/lib/content/server':{publishedLandingCopy:async()=>({...contentModel.landingDefaults})},
   });
   const html=renderToStaticMarkup(await home.default());
-  assert.match(html.replace(/<[^>]*>/g,'').replace(/\s+/g,' '),/Every Flight Tells a Story\./);
+  assert.match(html.replace(/<[^>]*>/g,'').replace(/\s+/g,' '),/Every Flight Tells a Story/);
   assert.doesNotMatch(html,/Your own account\. Your own records\. Room to grow\.|grid-paper|bg-panel|background-image/);
   assert.ok(html.indexOf('id="hero-title"') < html.indexOf('Product demo'));
   assert.ok(html.indexOf('Product demo') < html.indexOf('id="features"'));
@@ -122,7 +127,8 @@ test('landing uses a vertical product narrative with the exact hero copy and pre
   assert.ok(html.indexOf('id="product-preview"') < html.indexOf('id="roadmap"'));
   // Four top-level sections; Roadmap retains its three nested status sections.
   assert.equal((html.match(/<section /g)||[]).length,7);
-  for(const text of ['Built Around Your Journeys.','Flight Logging','Flight History','Flight Statistics','Your Flights. All in One Place.']) assert.ok(html.includes(text));
+  for(const text of ['Built Around Your Journeys','Flight Logging','Flight History','Flight Statistics','Your Flights. All in One Place']) assert.ok(html.includes(text));
+  assert.doesNotMatch(html,/Story\.<|Journeys\.<|Place\.<|Our flight plan/);
   assert.equal((html.match(/data-feature-slot/g)||[]).length,3);
   assert.match(html,/>Beijing<|>Beijing<!--/);
   assert.match(html,/>New York<|>New York<!--/);
@@ -132,6 +138,22 @@ test('landing uses a vertical product narrative with the exact hero copy and pre
   assert.match(preview,/data-product-preview/);
   assert.doesNotMatch(preview,/<img|<svg|background-image/);
   assert.match(html,/href="\/dashboard"/);assert.match(html,/href="\/roadmap\?item=/);
+});
+test('public navigation reserves unfinished pages without fake links; footer uses the new brand copy', async () => {
+  const deps = {'react/jsx-runtime':require('react/jsx-runtime'),'next/link':require('next/link'),
+    './brand':{Brand:()=>React.createElement('span',null,'Flight Desk')},'./logbook-link':logbookLink};
+  const header=loadModule('components/site-header.tsx', {...deps,
+    './account-controls':{AccountControls:()=>null},
+    '@/lib/admin/server':{siteAdminAccess:async()=>({user:null,isAdmin:false})}});
+  const html=renderToStaticMarkup(await header.SiteHeader());
+  for(const label of ['Blog','Community','Pricing']) assert.ok(html.includes(`disabled="" class="cursor-not-allowed text-subtle">${label}</button>`));
+  assert.match(html,/href="\/#features"/);assert.match(html,/href="\/dashboard"/);
+  const footer=loadModule('components/site-footer.tsx',{...deps,'@/lib/content/model':contentModel});
+  const foot=renderToStaticMarkup(React.createElement(footer.SiteFooter));
+  assert.match(foot,/FOR EVERYONE WHO LOVES THE SKY/);
+  assert.doesNotMatch(foot,/Product roadmap|href="\/roadmap"|href="#"/);
+  for(const label of ['About','Contact','Support','Privacy Policy','Terms of Service']) assert.ok(foot.includes(`>${label}</button>`));
+  assert.match(foot,/© 2026 Flight Desk. All rights reserved./);
 });
 test('homepage keeps three lightweight empty groups without fake cards or draft data', () => {
   for (const items of [[], [record('Unreviewed private draft','completed','draft')]]) {

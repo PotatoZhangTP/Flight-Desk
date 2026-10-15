@@ -2,6 +2,25 @@ import Link from "next/link";
 import { Brand } from "./brand";
 import { landingDefaults, type LandingCopy } from "@/lib/content/model";
 
+const footerGroups = [
+  { title: "Product", links: ["Features", "Get Started", "Blog", "Community", "Pricing"] },
+  { title: "Company", links: ["About", "Contact", "Support"] },
+  { title: "Legal", links: ["Privacy Policy", "Terms of Service"] },
+];
+
 export function SiteFooter({ copy = landingDefaults }: { copy?: LandingCopy }) {
-  return <footer className="mx-auto flex max-w-7xl flex-col justify-between gap-6 px-6 py-10 text-sm sm:flex-row sm:flex-wrap sm:items-center lg:px-12"><Brand /><p className="whitespace-pre-line text-muted">{copy["landing.footer.tagline"]}</p><Link className="whitespace-pre-line font-semibold text-muted hover:text-brand" href="/roadmap">{copy["landing.footer.link_label"]} ↗</Link>{copy["landing.footer.copyright"] && <p className="basis-full whitespace-pre-line text-xs text-muted">{copy["landing.footer.copyright"]}</p>}</footer>;
+  return <footer className="mx-auto max-w-7xl px-6 py-10 text-sm lg:px-12">
+    <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-[1.5fr_1fr_1fr_1fr]">
+      <div><Brand /><p className="mt-4 text-xs font-bold leading-6 tracking-[0.12em] text-muted">FOR EVERYONE WHO LOVES THE SKY</p></div>
+      {footerGroups.map(group => <nav key={group.title} aria-label={group.title + " footer navigation"}>
+        <h2 className="font-bold text-ink">{group.title}</h2>
+        <ul className="mt-4 space-y-3">{group.links.map(label => <li key={label}>
+          {label === "Features" || label === "Get Started"
+            ? <Link href={label === "Features" ? "/#features" : "/dashboard"} className="rounded text-muted transition hover:text-brand focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand">{label}</Link>
+            : <span className="inline-flex flex-wrap items-center gap-2"><button type="button" disabled className="cursor-not-allowed text-subtle">{label}</button><span className="text-[10px] text-subtle">Coming soon</span></span>}
+        </li>)}</ul>
+      </nav>)}
+    </div>
+    <p className="mt-10 border-t border-line pt-6 text-xs leading-6 text-muted">{copy["landing.footer.copyright"] || "© 2026 Flight Desk. All rights reserved."}</p>
+  </footer>;
 }
