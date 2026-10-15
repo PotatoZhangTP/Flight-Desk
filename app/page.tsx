@@ -63,23 +63,23 @@ export default async function HomePage() {
       <div className="mt-14 text-left sm:mt-16"><JourneyDemo /></div>
     </section>
 
-    <section id="features" aria-labelledby="features-title" className="mx-auto max-w-7xl scroll-mt-8 px-6 py-16 sm:py-24 lg:px-12">
+    <section id="features" aria-labelledby="features-title" className="mx-auto max-w-7xl scroll-mt-8 px-6 py-12 sm:py-16 lg:px-12">
       <h2 id="features-title" className="text-center text-3xl font-bold tracking-tight sm:text-4xl">Built Around Your Journeys</h2>
-      <p className="mx-auto mt-4 max-w-2xl text-center text-base leading-7 text-muted">From your first entry to your next discovery, make every journey part of your story.</p>
-      <div className="mt-10 grid auto-rows-fr gap-4 lg:grid-cols-3">{features.map(feature => <article key={feature.title} className="relative rounded-2xl border border-line bg-surface p-6 shadow-sm shadow-ink/5 transition hover:border-line-strong hover:shadow-md hover:shadow-ink/5">
+      <p className="mx-auto mt-2 max-w-2xl text-center text-base leading-7 text-muted">From your first entry to your next discovery, make every journey part of your story.</p>
+      <div className="mt-6 grid auto-rows-fr gap-4 lg:grid-cols-3">{features.map(feature => <article key={feature.title} className="relative rounded-2xl border border-line bg-surface p-6 shadow-sm shadow-ink/5 transition hover:border-line-strong hover:shadow-md hover:shadow-ink/5">
         <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-brand-soft text-brand"><svg aria-hidden="true" viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">{feature.icon}</svg></span>
-        <h3 className="mt-5 text-base font-bold leading-6">{feature.title}</h3>
-        <p className="mt-3 text-sm leading-6 text-muted">{feature.description}</p>
+        <h3 className="mt-3 text-base font-bold leading-6">{feature.title}</h3>
+        <p className="mt-2 text-sm leading-6 text-muted">{feature.description}</p>
         {feature.href ? <Link href={feature.href} aria-label={feature.title} className="absolute inset-0 rounded-2xl focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand" /> : <UpcomingButton label={feature.title} className="absolute inset-0 cursor-pointer rounded-2xl focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand" />}
       </article>)}</div>
     </section>
 
-    <section id="product-preview" aria-labelledby="preview-title" className="mx-auto max-w-7xl px-6 py-16 sm:py-24 lg:px-12">
+    <section id="product-preview" aria-labelledby="preview-title" className="mx-auto max-w-7xl px-6 py-12 sm:py-16 lg:px-12">
       <div className="mx-auto text-center">
         <h2 id="preview-title" className="text-3xl font-bold tracking-tight sm:text-4xl">Your Flights. All in One Place</h2>
-        <p className="mx-auto mt-4 text-base leading-7 text-muted lg:whitespace-nowrap">A clearer way to organize your journeys, revisit past flights, and explore your flight history.</p>
+        <p className="mx-auto mt-2 text-base leading-7 text-muted lg:whitespace-nowrap">A clearer way to organize your journeys, revisit past flights, and explore your flight history.</p>
       </div>
-      <figure data-product-preview className="mt-10 overflow-hidden rounded-2xl border border-line bg-surface shadow-sm shadow-ink/5">
+      <figure data-product-preview className="mt-6 overflow-hidden rounded-2xl border border-line bg-surface shadow-sm shadow-ink/5">
         <Image src="/images/add-flight-preview.webp" alt="Actual Add Flight page showing the flight ticket preview and fields for departure, arrival, planned local times and timezones." width={1024} height={800} sizes="(min-width: 1280px) 1184px, 100vw" className="h-auto w-full" />
         <figcaption className="border-t border-line px-5 py-3 text-center text-xs leading-5 text-muted">Add Flight · Actual product interface, shown with an empty form</figcaption>
       </figure>
