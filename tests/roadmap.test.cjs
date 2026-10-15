@@ -9,7 +9,7 @@ const ts = require('typescript');
 // No network calls, real user credentials or database writes are made.
 function loadModule(file, dependencies = {}) {
   const source = ts.transpileModule(fs.readFileSync(path.join(__dirname, '..', file), 'utf8'), {
-    compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
+    compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX },
   }).outputText;
   const module = { exports: {} };
   const execute = vm.runInThisContext(`(function(require,module,exports){${source}\n})`, { filename: file });
@@ -87,4 +87,47 @@ test('invalid IDs cannot produce updates or deletes', async () => {
 });
 test('statistics count provided published records by status', () => {
   assert.deepEqual(model.roadmapCounts([{status:'planned'},{status:'completed'},{status:'planned'}]), {planned:2,in_progress:0,completed:1,on_hold:0});
+});
+
+const React = require('react');
+const { renderToStaticMarkup } = require('react-dom/server');
+const cards = loadModule('components/roadmap-cards.tsx', {
+  'react/jsx-runtime': require('react/jsx-runtime'),
+  'next/link': require('next/link'),
+  '@/lib/roadmap/model': model,
+});
+const record = (title, status, publication_status = 'published') => ({
+  id: title, title, status, publication_status, category:'Platform', description:'A real published milestone',
+  target_date:null, completed_date:null, priority:null, updated_at:'2026-10-15T00:00:00Z',
+});
+const renderSummary = (items, failed = false) => renderToStaticMarkup(React.createElement(cards.RoadmapSummary, {items, failed}));
+test('homepage empty state has no misleading progress counts, columns or drafts', () => {
+  for (const items of [[], [record('Unreviewed private draft','completed','draft')]]) {
+    const html = renderSummary(items);
+    assert.match(html,/Our public flight plan is taking shape/);
+    assert.doesNotMatch(html,/role="progressbar"|home-roadmap-completed|Unreviewed private draft/);
+    assert.match(html,/href="\/roadmap"/);
+  }
+});
+test('homepage shows all four published statuses and computes progress from published items only', () => {
+  const html=renderSummary([
+    record('Completed feature','completed'),record('Work underway','in_progress'),
+    record('Future feature','planned'),record('Paused feature','on_hold'),record('Secret feature','completed','draft'),
+  ]);
+  for (const title of ['Completed feature','Work underway','Future feature','Paused feature']) assert.ok(html.includes(title));
+  assert.match(html,/1 of 4 completed/);assert.match(html,/25%/);
+  assert.doesNotMatch(html,/Secret feature/);
+  assert.ok(html.indexOf('home-roadmap-completed') < html.indexOf('home-roadmap-in_progress'));
+  assert.ok(html.indexOf('home-roadmap-planned') < html.indexOf('home-roadmap-on_hold'));
+});
+test('homepage limits highlights, links to all published items and omits empty groups', () => {
+  const html = renderSummary([record('First','planned'),record('Second','planned'),record('Third','planned')]);
+  assert.match(html,/First/);assert.match(html,/Second/);assert.doesNotMatch(html,/>Third</);
+  assert.match(html,/\/roadmap#status-planned/);assert.match(html,/View all 3 planned items/);
+  assert.doesNotMatch(html,/home-roadmap-on_hold|home-roadmap-completed/);
+});
+test('request failures remain distinct from empty roadmap data', () => {
+  const html = renderSummary([],true);
+  assert.match(html,/role="alert"/);assert.match(html,/temporarily unavailable/);
+  assert.doesNotMatch(html,/Our public flight plan is taking shape/);
 });

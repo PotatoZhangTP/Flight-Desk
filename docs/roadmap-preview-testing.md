@@ -18,7 +18,9 @@ for signing in, verification and recovery continue to use the existing setup.
 ## Acceptance with real accounts
 
 1. In a signed-out/private window, open `/` and `/roadmap`. With all 13 initial
-   items still drafts, expect empty roadmap states and zero public counts.
+   items still drafts, expect one illustrated empty state and no progress counters
+   or empty status columns on either page. The homepage Roadmap navigation links
+   to `/#roadmap`; View Full Roadmap opens the independent page.
    Check the Product demo label and mobile navigation.
 2. Visit `/admin/roadmap` signed out. Expect the login page. Sign in as an
    ordinary user and visit it directly: expect Access denied, no editor, and
@@ -30,9 +32,12 @@ for signing in, verification and recovery continue to use the existing setup.
    development status, order, and optional dates. Save and reopen the editor.
 5. Set visibility to Published. Refresh `/roadmap` in the signed-out window;
    the item should appear in the correct column and update its count. For
-   Planned, In Progress or Completed items, the homepage summary should select
-   from the same published data. Smaller display-order values come first;
-   Recently completed selects the most recently updated completed item.
+   all four statuses, the homepage should select up to two items per nonempty
+   group from the same published data, in Completed, In Progress, Planned,
+   On Hold order. Smaller display-order values come first. The progress bar
+   counts completed published items divided by all published items. Drafts
+   must not influence this percentage. View Full Roadmap shows every published
+   item, including those beyond the homepage highlight limit.
 6. Clear the target date and save. Confirm no target date is shown publicly.
    Set the item back to Draft: it should disappear from both public pages.
 7. Try deleting: cancel first and verify the item remains; confirm deletion
