@@ -84,11 +84,13 @@ test('public loader explicitly filters published even when the caller might be a
   assert.deepEqual(await server.publishedLandingCopy(),defaults);assert.deepEqual(filters,[['publication_status','published']]);
 });
 test('administrator button lives beside the personal menu and is absent for ordinary users',()=>{
-  const controls=load('components/account-controls.tsx',{'react/jsx-runtime':require('react/jsx-runtime'),'next/link':require('next/link'),'./user-menu-client':{UserMenuClient:()=>React.createElement('button',null,'Personal menu')}});
+  const controls=load('components/account-controls.tsx',{'react/jsx-runtime':require('react/jsx-runtime'),'next/link':require('next/link'),'./theme-controls':{ThemeMenu:()=>React.createElement('button',null,'Theme menu')},'./user-menu-client':{UserMenuClient:()=>React.createElement('button',null,'Personal menu')}});
   const admin=renderToStaticMarkup(React.createElement(controls.AccountControls,{email:'admin@example.test',initials:'AD',isAdmin:true}));
   assert.match(admin,/href="\/admin"/);assert.match(admin,/Admin Panel/);
+  assert.equal((admin.match(/Theme menu/g)||[]).length,1);assert.ok(admin.indexOf('Theme menu')<admin.indexOf('Personal menu'));
   const ordinary=renderToStaticMarkup(React.createElement(controls.AccountControls,{email:'member@example.test',initials:'ME',isAdmin:false}));
   assert.doesNotMatch(ordinary,/Admin Panel|href="\/admin"/);
+  assert.equal((ordinary.match(/Theme menu/g)||[]).length,1);
 });
 test('public content transport failures safely retain the existing default homepage copy',async()=>{
   const server=load('lib/content/server.ts',{'server-only':{},'./model':model,'@/lib/supabase/server':{createClient:async()=>{throw Error('transport unavailable');}}});

@@ -23,8 +23,9 @@ Requires modern browsers (Chrome/Edge 123+, Firefox 120+, Safari 17.5+).
 - Public/shared header: keyboard-accessible theme button, Light/Dark/System radio
   choices, outside-click and Escape dismissal.
 - Settings → Appearance: immediately applied radio cards. No Save required.
-- Private screens with independent headers still inherit the same root provider;
-  use the existing account menu to reach Settings.
+- Logged-in headers, including independent private-screen headers, include the
+  same theme button beside the avatar. The public header renders it only once.
+  Settings → Appearance remains available and shares the same preference.
 
 ## Tokens and new pages
 

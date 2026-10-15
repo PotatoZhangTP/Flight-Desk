@@ -30,6 +30,7 @@ try{
  await p.goto(origin+'/auth',{waitUntil:'networkidle'});await p.getByLabel('Email',{exact:true}).fill('member@example.test');await p.getByLabel('Password',{exact:true}).fill('wrong-password');await p.locator('form button:not([type="button"])').click();await p.getByRole('alert').filter({hasText:'Email or password is incorrect.'}).waitFor();
  await p.getByRole('button',{name:'Show password',exact:true}).click();assert.equal(await p.getByLabel('Password',{exact:true}).getAttribute('type'),'text');await p.getByRole('button',{name:'Hide password',exact:true}).click();
  await p.getByLabel('Password',{exact:true}).fill('test-only-password');await p.locator('form button:not([type="button"])').click();await p.waitForURL('**/dashboard');await color(p,'dark');
+ assert.equal(await p.getByRole('button',{name:'Choose color theme',exact:true}).count(),1);await choose(p,'Light');await color(p,'light');await choose(p,'Dark');await color(p,'dark');
  await p.goto(origin,{waitUntil:'networkidle'});await checkMenuBounds(p);await p.goto(origin+'/dashboard',{waitUntil:'networkidle'});
  await p.getByRole('button',{name:'Open user menu'}).click();await p.getByRole('link',{name:'Settings',exact:true}).click();await p.getByRole('heading',{name:'Appearance',exact:true}).waitFor();
  await p.getByRole('radio',{name:'Light',exact:true}).locator('..').click();await color(p,'light');await p.getByRole('radio',{name:'System',exact:true}).locator('..').click();await color(p,'light');await p.emulateMedia({colorScheme:'dark'});await color(p,'dark');await p.getByRole('radio',{name:'Dark',exact:true}).locator('..').click();
@@ -42,6 +43,7 @@ try{
  for(const mode of ['light','dark']){
   await p.goto(origin,{waitUntil:'networkidle'});await choose(p,mode==='dark'?'Dark':'Light');
   for(const [route,title] of routes){await p.goto(origin+route,{waitUntil:'networkidle'});await p.getByRole('heading').filter({hasText:title}).first().waitFor();await color(p,mode);
+   assert.equal(await p.getByRole('button',{name:'Choose color theme',exact:true}).count(),route.startsWith('/auth')?0:1,route);
    if(mode==='dark'){const white=await p.evaluate(()=>[...document.querySelectorAll('main section, main div, input, textarea, select, header, footer')].filter(e=>{const r=e.getBoundingClientRect();return r.width*r.height>3000&&getComputedStyle(e).backgroundColor==='rgb(255, 255, 255)'}).map(e=>e.tagName));assert.deepEqual(white,[],route);}
    for(const width of [1440,390]){await p.setViewportSize({width,height:1000});assert.equal(await p.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false,route+' '+width);}await p.setViewportSize({width:1440,height:1000});
    if(route==='/auth'||route==='/settings'||route==='/flights/new')await p.screenshot({path:`/tmp/theme-${mode}-${route.replaceAll('/','-')}.png`,fullPage:true});
