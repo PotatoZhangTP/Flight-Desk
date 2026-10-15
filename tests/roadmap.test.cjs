@@ -109,13 +109,13 @@ test('homepage empty state has no misleading progress counts, columns or drafts'
     assert.match(html,/href="\/roadmap"/);
   }
 });
-test('homepage shows all four published statuses and computes progress from published items only', () => {
+test('homepage shows four published statuses without progress panel or private items', () => {
   const html=renderSummary([
     record('Completed feature','completed'),record('Work underway','in_progress'),
     record('Future feature','planned'),record('Paused feature','on_hold'),record('Secret feature','completed','draft'),
   ]);
   for (const title of ['Completed feature','Work underway','Future feature','Paused feature']) assert.ok(html.includes(title));
-  assert.match(html,/1 of 4 completed/);assert.match(html,/25%/);
+  assert.doesNotMatch(html,/Published milestones|progressbar|1 of 4 completed|25%|Open to everyone/);
   assert.doesNotMatch(html,/Secret feature/);
   assert.ok(html.indexOf('home-roadmap-completed') < html.indexOf('home-roadmap-in_progress'));
   assert.ok(html.indexOf('home-roadmap-planned') < html.indexOf('home-roadmap-on_hold'));

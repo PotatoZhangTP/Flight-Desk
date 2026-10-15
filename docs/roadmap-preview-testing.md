@@ -34,9 +34,9 @@ for signing in, verification and recovery continue to use the existing setup.
    the item should appear in the correct column and update its count. For
    all four statuses, the homepage should select up to two items per nonempty
    group from the same published data, in Completed, In Progress, Planned,
-   On Hold order. Smaller display-order values come first. The progress bar
-   counts completed published items divided by all published items. Drafts
-   must not influence this percentage. View Full Roadmap shows every published
+   On Hold order. Smaller display-order values come first. The landing preview
+   has compact cards with two-line descriptions and no overall progress panel.
+   Drafts must never appear in its cards or counts. View Full Roadmap shows every published
    item, including those beyond the homepage highlight limit.
 6. Clear the target date and save. Confirm no target date is shown publicly.
    Set the item back to Draft: it should disappear from both public pages.
