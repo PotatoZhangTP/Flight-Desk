@@ -1,23 +1,25 @@
 export function AuthAircraft() {
   return <figure className="mx-auto mt-5 w-full max-w-xl sm:mt-8">
     <svg role="img" aria-labelledby="auth-aircraft-title auth-aircraft-description" viewBox="0 0 640 390" className="h-auto w-full" fill="none">
-      <title id="auth-aircraft-title">A journey taking flight</title>
-      <desc id="auth-aircraft-description">A clean line illustration of a passenger airplane seen from above, banking gently along a curved purple flight path.</desc>
-      <path d="M100 304c-32-42 15-91 73-69 65 25 20 100-33 81-45-16-27-67 30-66h89" stroke="var(--line-strong)" strokeWidth="1.5" strokeDasharray="4 8" strokeLinecap="round" />
-      <circle cx="91" cy="277" r="4" fill="var(--brand)" />
-      <g transform="translate(351 184) rotate(35)" strokeLinecap="round" strokeLinejoin="round">
-        {/* One continuous silhouette keeps the illustration light and legible. */}
-        <path d="M0-132c-9 0-14 17-14 32v55L-119 22c-6 4-8 8-8 13v6l113-35v70l-33 26v13l40-13q7 6 14 0l40 13v-13L14 76V6l113 35v-6c0-5-2-9-8-13L14-45v-55c0-15-5-32-14-32Z" fill="var(--surface)" stroke="var(--ink)" strokeWidth="2.3" />
-        {/* Discrete engine pods and a restrained violet wingtip accent. */}
-        <path d="M-64-16v26q7 5 14-1v-33m114 8v26q-7 5-14-1v-33" fill="var(--surface)" stroke="var(--ink)" strokeWidth="1.8" />
-        <path d="m-126 33 15-5m237 5-15-5" stroke="var(--brand)" strokeWidth="3" />
-        <path d="M-8-99q8-6 16 0l2 9q-10-4-20 0Z" fill="var(--ink)" />
-        <path d="M0-77V83" stroke="var(--line)" strokeWidth="1.3" />
-        <path d="m-43 105 30-10m56 10-30-10" stroke="var(--brand)" strokeWidth="2" />
-        {[-67, -54, -41, -28, -15, -2, 11, 24, 37, 50, 63].map(y => <g key={y} stroke="var(--muted)" strokeWidth="2" opacity=".65"><path d={`M-9 ${y}v3m18-3v3`} /></g>)}
+      <title id="auth-aircraft-title">Onward to your next journey</title>
+      <desc id="auth-aircraft-description">A slender passenger jet in side view, climbing gently to the right, with clean charcoal outlines and a purple tail.</desc>
+      <g transform="rotate(-9 320 200)" strokeLinecap="round" strokeLinejoin="round">
+        {/* A single, gently tapered fuselage rather than a diagram of parts. */}
+        <path d="M108 203 78 127q-2-5 4-5h20q5 0 8 5l49 63 320-3q22 0 40 13l22 14q9 7-3 12-20 7-48 7H194q-48 0-86-30Z" fill="var(--surface)" stroke="var(--ink)" strokeWidth="2" />
+        <path d="m87 131 27 65 31-4-43-61Z" fill="var(--brand)" opacity=".85" />
+        <path d="m115 166 16 25" stroke="var(--surface)" strokeWidth="2" />
+        {/* Swept wing and a simple engine nacelle, with no mechanical clutter. */}
+        <path d="m323 224 42 22h57q8 0 8 8t-8 8h-35q-8 0-13-5l-39-27" fill="var(--surface)" stroke="var(--ink)" strokeWidth="1.8" />
+        <path d="m268 215 82 72q5 4 12 4h22l-54-77" fill="var(--surface)" stroke="var(--ink)" strokeWidth="2" />
+        <path d="m353 280 9 7h14" stroke="var(--brand)" strokeWidth="2.5" />
+        <path d="m166 215-54 24q-5 2-10 1l-10-3 44-29" fill="var(--surface)" stroke="var(--ink)" strokeWidth="1.8" />
+        <path d="m491 196 14 6 10 8h-23Z" fill="var(--ink)" />
+        {Array.from({ length: 19 }, (_, index) => <rect key={index} x={190 + index * 14} y="201" width="4" height="6" rx="2" fill="var(--muted)" />)}
+        <rect x="168" y="198" width="9" height="22" rx="3" stroke="var(--line-strong)" strokeWidth="1.3" />
+        <rect x="468" y="198" width="9" height="22" rx="3" stroke="var(--line-strong)" strokeWidth="1.3" />
+        <path d="M196 225h57m175 0h40" stroke="var(--line)" strokeWidth="1.5" />
       </g>
-      <path d="M493 100h16m-8-8v16" stroke="var(--brand)" strokeWidth="1.5" strokeLinecap="round" opacity=".6" />
-      <circle cx="470" cy="306" r="3" fill="var(--line-strong)" />
+      <path d="M83 281h75m-53 12h29" stroke="var(--line-strong)" strokeWidth="1.5" strokeLinecap="round" />
     </svg>
   </figure>;
 }
