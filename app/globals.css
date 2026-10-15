@@ -28,6 +28,8 @@
   --danger-bg: light-dark(#fff1f0, #362021);
   --danger-fg: light-dark(#a53636, #f1aaaa);
   --danger-line: light-dark(#edc5c3, #6a3d40);
+  --danger-action: light-dark(#dc2626, #f87171);
+  --danger-action-hover: light-dark(#b91c1c, #fca5a5);
   /* Compatibility aliases for remaining pages as they adopt the theme. */
   --cream: var(--page);
 }
@@ -62,6 +64,8 @@
   --color-danger-bg: var(--danger-bg);
   --color-danger-fg: var(--danger-fg);
   --color-danger-line: var(--danger-line);
+  --color-danger-action: var(--danger-action);
+  --color-danger-action-hover: var(--danger-action-hover);
 }
 * { box-sizing: border-box; }
 body { margin: 0; background: var(--cream); color: var(--ink); font-family: Arial, Helvetica, sans-serif; }
