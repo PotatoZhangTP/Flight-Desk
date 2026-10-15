@@ -126,7 +126,10 @@ test('landing uses a vertical product narrative with the exact hero copy and pre
   assert.ok(html.indexOf('id="hero-title"') < html.indexOf('A journey, captured'));
   assert.ok(html.indexOf('A journey, captured') < html.indexOf('id="features"'));
   assert.doesNotMatch(html,/>Product demo</);
-  assert.match(html,/CA981 · Example flight/);
+  assert.match(html,/>CA981</);
+  assert.doesNotMatch(html,/Example flight/);
+  assert.ok(html.indexOf('href="/dashboard"') < html.indexOf('A journey, captured'));
+  assert.ok(html.indexOf('A journey, captured') < html.indexOf('href="#features"'));
   assert.ok(html.indexOf('id="features"') < html.indexOf('id="product-preview"'));
   assert.ok(html.indexOf('id="product-preview"') < html.indexOf('id="roadmap"'));
   // Four top-level sections; Roadmap retains its three nested status sections.

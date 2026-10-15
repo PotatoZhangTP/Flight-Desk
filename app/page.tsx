@@ -58,9 +58,11 @@ export default async function HomePage() {
       <h1 id="hero-title" className="mx-auto mt-6 text-4xl font-bold leading-[1.1] tracking-[-0.04em] sm:whitespace-nowrap sm:text-[clamp(2.5rem,6vw,4.75rem)]">Every Flight Tells a Story</h1>
       <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
         <LogbookLink />
-        <Link href="#features" className="inline-flex h-12 w-52 shrink-0 items-center justify-center gap-2 rounded-full border border-line bg-surface px-4 text-sm font-bold text-ink transition hover:-translate-y-0.5 hover:border-line-strong hover:text-brand focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand">{copy["landing.hero.secondary_label"]} <span aria-hidden="true">↓</span></Link>
       </div>
       <div className="mt-14 text-left sm:mt-16"><JourneyDemo /></div>
+      <div className="mt-8 flex justify-center">
+        <Link href="#features" className="inline-flex h-12 w-52 shrink-0 items-center justify-center gap-2 rounded-full border border-line bg-surface px-4 text-sm font-bold text-ink transition hover:-translate-y-0.5 hover:border-line-strong hover:text-brand focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand">{copy["landing.hero.secondary_label"]} <span aria-hidden="true">↓</span></Link>
+      </div>
     </section>
 
     <section id="features" aria-labelledby="features-title" className="mx-auto max-w-7xl scroll-mt-8 px-6 py-12 sm:py-16 lg:px-12">
