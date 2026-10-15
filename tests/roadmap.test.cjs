@@ -114,12 +114,19 @@ test('landing uses a vertical product narrative with the exact hero copy and pre
     '@/lib/content/server':{publishedLandingCopy:async()=>({...contentModel.landingDefaults})},
   });
   const html=renderToStaticMarkup(await home.default());
-  assert.match(html.replace(/<[^>]*>/g,'').replace(/\s+/g,' '),/Your Flying, Clearly Logged\./);
+  assert.match(html.replace(/<[^>]*>/g,'').replace(/\s+/g,' '),/Every Flight Tells a Story\./);
   assert.doesNotMatch(html,/Your own account\. Your own records\. Room to grow\.|grid-paper|bg-panel|background-image/);
   assert.ok(html.indexOf('id="hero-title"') < html.indexOf('Product demo'));
   assert.ok(html.indexOf('Product demo') < html.indexOf('id="features"'));
-  assert.ok(html.indexOf('id="features"') < html.indexOf('id="roadmap"'));
-  assert.ok(html.indexOf('id="roadmap"') < html.indexOf('id="how-it-works"'));
+  assert.ok(html.indexOf('id="features"') < html.indexOf('id="product-preview"'));
+  assert.ok(html.indexOf('id="product-preview"') < html.indexOf('id="roadmap"'));
+  // Four top-level sections; Roadmap retains its three nested status sections.
+  assert.equal((html.match(/<section /g)||[]).length,7);
+  for(const text of ['Built Around Your Journeys.','Flight Logging','Flight History','Flight Statistics','Your Flights. All in One Place.']) assert.ok(html.includes(text));
+  assert.doesNotMatch(html,/id="how-it-works"|Why Flight Desk|For Aviation Lovers|For Every Traveler/);
+  const preview=html.slice(html.indexOf('id="product-preview"'),html.indexOf('id="roadmap"'));
+  assert.match(preview,/data-product-preview/);
+  assert.doesNotMatch(preview,/<img|<svg|background-image/);
   assert.match(html,/href="\/dashboard"/);assert.match(html,/href="\/roadmap\?item=/);
 });
 test('homepage keeps three lightweight empty groups without fake cards or draft data', () => {
