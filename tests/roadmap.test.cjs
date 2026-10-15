@@ -123,6 +123,10 @@ test('landing uses a vertical product narrative with the exact hero copy and pre
   // Four top-level sections; Roadmap retains its three nested status sections.
   assert.equal((html.match(/<section /g)||[]).length,7);
   for(const text of ['Built Around Your Journeys.','Flight Logging','Flight History','Flight Statistics','Your Flights. All in One Place.']) assert.ok(html.includes(text));
+  assert.equal((html.match(/data-feature-slot/g)||[]).length,3);
+  assert.match(html,/>Beijing<|>Beijing<!--/);
+  assert.match(html,/>New York<|>New York<!--/);
+  assert.doesNotMatch(html,/Beijing Capital|New York JFK/);
   assert.doesNotMatch(html,/id="how-it-works"|Why Flight Desk|For Aviation Lovers|For Every Traveler/);
   const preview=html.slice(html.indexOf('id="product-preview"'),html.indexOf('id="roadmap"'));
   assert.match(preview,/data-product-preview/);
