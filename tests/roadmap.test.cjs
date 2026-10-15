@@ -117,7 +117,8 @@ test('homepage shows four published statuses without progress panel or private i
   for (const title of ['Completed feature','Work underway','Future feature','Paused feature']) assert.ok(html.includes(title));
   assert.doesNotMatch(html,/Published milestones|progressbar|1 of 4 completed|25%|Open to everyone/);
   assert.doesNotMatch(html,/Secret feature/);
-  assert.doesNotMatch(html,/A real published milestone|Platform|Last updated|Updated|Sort Order/);
+  assert.doesNotMatch(html,/A real published milestone|Last updated|Updated|Sort Order/);
+  assert.match(html,/Platform/);
   assert.match(html,/TBD/);
 });
 test('homepage selects six published items by closest target, with undated items last', () => {
@@ -140,6 +141,15 @@ test('detailed cards keep full description, category and date information', () =
   const html=renderToStaticMarkup(React.createElement(cards.RoadmapCard,{item}));
   for(const text of ['Detailed feature','A real published milestone','Platform','Target date','Completed date','Last updated']) assert.ok(html.includes(text));
   assert.doesNotMatch(html,/line-clamp/);
+});
+test('landing cards show inline completion dates, honest fallbacks and no decorative artwork', () => {
+  const render = item => renderToStaticMarkup(React.createElement(cards.RoadmapCard,{item,mode:'compact'}));
+  const completed=render({...record('Finished','completed'),completed_date:'2026-10-15',target_date:'2026-10-16'});
+  assert.match(completed,/Completed date: /);assert.match(completed,/15 Oct 2026/);assert.doesNotMatch(completed,/16 Oct 2026|<svg|border-dashed|aria-hidden/);
+  const planned=render({...record('Upcoming','planned'),target_date:'2026-10-16'});
+  assert.match(planned,/Target date: /);assert.match(planned,/16 Oct 2026/);
+  assert.match(render(record('Undated','planned')),/Target date: TBD/);
+  assert.match(render(record('Undated completion','completed')),/Target date: TBD/);
 });
 const dated = (id,target,updated='2026-10-15T00:00:00Z') => ({...record(id,'planned'),target_date:target,updated_at:updated});
 test('target sorting uses absolute calendar distance, includes overdue, and always puts undated last', () => {

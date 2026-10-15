@@ -34,9 +34,11 @@ for signing in, verification and recovery continue to use the existing setup.
 5. Set visibility to Published. Refresh `/roadmap` in the signed-out window;
    the item should appear in the correct column and update its count. For
    all four statuses, the homepage selects at most six published items by the
-   absolute target-date distance from today. Its cards display only title,
-   status and target date (TBD if missing). No descriptions, categories or
-   update timestamps belong on homepage cards. No progress panel is displayed.
+   absolute target-date distance from today. Its smaller cards display title,
+   status, category at the top right and an inline date. Completed items with
+   a completion date show Completed date; otherwise show the target date or TBD.
+   No descriptions, update timestamps, card artwork or bottom decorations are
+   shown. No progress panel is displayed. Both pages use Building the Next Journey.
    View Full Roadmap shows all published items, grouped by development status,
    with full descriptions and the category at the top right.
 6. Clear the target date and save. Expect TBD on the homepage and no target
