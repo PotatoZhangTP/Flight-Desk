@@ -1,19 +1,82 @@
 @import "tailwindcss";
-:root { --ink: #102a43; --muted: #627d98; --line: #d9e2ec; --cream: #f7f9fc; --orange: #e8753a; --teal: #168c82; }
+:root {
+  color-scheme: light;
+  --page: light-dark(#ffffff, #101014);
+  --surface: light-dark(#ffffff, #1b1a20);
+  --surface-muted: light-dark(#f7f7f9, #222128);
+  --ink: light-dark(#111111, #f4f3f7);
+  --muted: light-dark(#64616d, #b8b5c2);
+  --subtle: light-dark(#74717e, #a5a0b3);
+  --line: light-dark(#e8e6ef, #34313d);
+  --line-strong: light-dark(#c7c3d0, #56505f);
+  --brand: light-dark(#7656c8, #a48be0);
+  --brand-hover: light-dark(#6444b0, #bda7ed);
+  --brand-soft: light-dark(#f4f1fa, #2a233b);
+  --on-brand: light-dark(#ffffff, #111111);
+  --panel: #111111;
+  --on-panel: #ffffff;
+  --panel-muted: #c7c3d0;
+  --panel-accent: #a48be0;
+  --completed-bg: light-dark(#eaf4ee, #1e3027);
+  --completed-fg: light-dark(#326248, #a4d2b6);
+  --progress-bg: light-dark(#faf0e5, #352a1f);
+  --progress-fg: light-dark(#895723, #e5c193);
+  --planned-bg: light-dark(#f0f1f5, #272a32);
+  --planned-fg: light-dark(#555d70, #bec5d8);
+  --hold-bg: light-dark(#f0ecf7, #2d253b);
+  --hold-fg: light-dark(#70568c, #c9b4e3);
+  --danger-bg: light-dark(#fff1f0, #362021);
+  --danger-fg: light-dark(#a53636, #f1aaaa);
+  --danger-line: light-dark(#edc5c3, #6a3d40);
+  /* Compatibility aliases for remaining pages as they adopt the theme. */
+  --cream: var(--page);
+}
+:root[data-theme="dark"] { color-scheme: dark; }
+:root[data-theme="system"] { color-scheme: light dark; }
+:root[data-theme="light"] { color-scheme: light; }
+@theme inline {
+  --color-page: var(--page);
+  --color-surface: var(--surface);
+  --color-surface-muted: var(--surface-muted);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-subtle: var(--subtle);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-brand: var(--brand);
+  --color-brand-hover: var(--brand-hover);
+  --color-brand-soft: var(--brand-soft);
+  --color-on-brand: var(--on-brand);
+  --color-panel: var(--panel);
+  --color-on-panel: var(--on-panel);
+  --color-panel-muted: var(--panel-muted);
+  --color-panel-accent: var(--panel-accent);
+  --color-completed-bg: var(--completed-bg);
+  --color-completed-fg: var(--completed-fg);
+  --color-progress-bg: var(--progress-bg);
+  --color-progress-fg: var(--progress-fg);
+  --color-planned-bg: var(--planned-bg);
+  --color-planned-fg: var(--planned-fg);
+  --color-hold-bg: var(--hold-bg);
+  --color-hold-fg: var(--hold-fg);
+  --color-danger-bg: var(--danger-bg);
+  --color-danger-fg: var(--danger-fg);
+  --color-danger-line: var(--danger-line);
+}
 * { box-sizing: border-box; }
 body { margin: 0; background: var(--cream); color: var(--ink); font-family: Arial, Helvetica, sans-serif; }
 @layer base {
   a { color: inherit; text-decoration: none; }
 }
 button, input { font: inherit; }
-.grid-paper { background-image: linear-gradient(#e7eef5 1px, transparent 1px), linear-gradient(90deg, #e7eef5 1px, transparent 1px); background-size: 28px 28px; }
-.eyebrow { color: #a64b20; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; }
+.grid-paper { background-image: linear-gradient(var(--line) 1px, transparent 1px), linear-gradient(90deg, var(--line) 1px, transparent 1px); background-size: 28px 28px; }
+.eyebrow { color: var(--brand); font-size: 0.75rem; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; }
 .flight-trail { animation: flight-trail 24s linear infinite; }
 @keyframes flight-trail { to { stroke-dashoffset: -144; } }
-.roadmap-item-highlight { outline: 2px solid #9fd8d2; outline-offset: 3px; animation: roadmap-arrival 2.6s ease-out; }
+.roadmap-item-highlight { outline: 2px solid var(--brand); outline-offset: 3px; animation: roadmap-arrival 2.6s ease-out; }
 @keyframes roadmap-arrival {
-  0%, 25% { background-color: #eef8f5; box-shadow: 0 0 0 4px #9fd8d233; }
-  100% { background-color: white; box-shadow: 0 0 0 0 transparent; }
+  0%, 25% { background-color: var(--brand-soft); box-shadow: 0 0 0 4px color-mix(in srgb, var(--brand) 15%, transparent); }
+  100% { background-color: var(--surface); box-shadow: 0 0 0 0 transparent; }
 }
 button:not(:disabled), summary { cursor: pointer; }
 @media (prefers-reduced-motion: reduce) {

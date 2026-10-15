@@ -4,8 +4,8 @@ export const statusLabels: Record<RoadmapStatus, string> = {
   planned: "Planned", in_progress: "In Progress", completed: "Completed", on_hold: "On Hold",
 };
 export const statusStyles: Record<RoadmapStatus, string> = {
-  planned: "bg-[#edf2f7] text-[#486581]", in_progress: "bg-[#fff0e4] text-[#a64b20]",
-  completed: "bg-[#dff4f0] text-[#11675f]", on_hold: "bg-[#f0ebfa] text-[#705099]",
+  planned: "bg-planned-bg text-planned-fg", in_progress: "bg-progress-bg text-progress-fg",
+  completed: "bg-completed-bg text-completed-fg", on_hold: "bg-hold-bg text-hold-fg",
 };
 export type RoadmapItem = {
   id: string; title: string; description: string; category: string; status: RoadmapStatus;
