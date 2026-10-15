@@ -108,7 +108,7 @@ test('anonymous, invalid, missing/other-owner and DB failures cannot produce sav
 function endpoint(result={data:[{id:1,name:'Sample Airport',ident:'TEST',icao_code:null,iata_code:null}],error:null}) {
   const calls=[];
   const route=load('app/api/airports/route.ts',{
-    '@/lib/airports':model,'@/lib/airport-config':{resolveAirportConfig:()=>({url:'https://catalog.example.test',key:'sb_publishable_fixture'})},
+    '@/lib/airports':model,'@/lib/airport-config':{AirportConfigError:config.AirportConfigError,resolveAirportConfig:()=>({url:'https://catalog.example.test',key:'sb_publishable_fixture'})},
     '@supabase/supabase-js':{createClient:(url,key,options)=>{calls.push({url,key,options});return{rpc:(name,args)=>{calls.push({name,args});return{abortSignal:async signal=>{assert(signal instanceof AbortSignal);return result;}};}};}},
   });
   return{route,calls};
@@ -127,4 +127,27 @@ test('short, punctuation-only and oversized queries never hit Supabase; upstream
   const failed=endpoint({data:null,error:{message:'private credentials diagnostics'}});
   const response=await failed.route.GET(new Request('https://site.example.test/api/airports?q=PEK'));
   assert.equal(response.status,503);assert(!(await response.text()).includes('private credentials'));
+});
+test('airport diagnostics distinguish rejected key, missing RPC, schema, permission, timeout and bad response without leaking upstream data',async()=>{
+  for(const [status,code,expected] of [
+    [401,undefined,'AIRPORT_KEY_REJECTED'],[404,'PGRST202','AIRPORT_RPC_NOT_FOUND'],
+    [406,'PGRST106','AIRPORT_SCHEMA_NOT_EXPOSED'],[403,'42501','AIRPORT_PERMISSION_DENIED'],
+    [500,'57014','AIRPORT_QUERY_TIMEOUT'],[0,undefined,'AIRPORT_CONNECTION_FAILED'],
+    [500,'XX000','AIRPORT_UPSTREAM_REQUEST_FAILED'],
+  ]){
+    const f=endpoint({data:null,error:{code,message:'PRIVATE_SECRET_URL_DO_NOT_EXPOSE',details:'PRIVATE_SECRET_URL_DO_NOT_EXPOSE'},status});
+    const response=await f.route.GET(new Request('https://site.example.test/api/airports?q=KJFK'));
+    const body=await response.json(); assert.equal(response.status,503);assert.equal(body.diagnosticCode,expected);
+    assert(!JSON.stringify(body).includes('PRIVATE_SECRET'));assert.equal(body.build,null);
+  }
+  const invalid=endpoint({data:[{}],error:null,status:200});
+  assert.equal((await (await invalid.route.GET(new Request('https://site.example.test/api/airports?q=KJFK'))).json()).diagnosticCode,'AIRPORT_RESPONSE_INVALID');
+});
+test('configuration failures have safe diagnostic categories and reject appended API paths',()=>{
+  const preview={VERCEL_ENV:'preview'};
+  assert.throws(()=>config.resolveAirportConfig(preview),{diagnosticCode:'AIRPORT_PREVIEW_CONFIG_MISSING'});
+  assert.throws(()=>config.resolveAirportConfig({...preview,AIRPORTS_SUPABASE_URL:'https://example.test'}),{diagnosticCode:'AIRPORT_CONFIG_INCOMPLETE'});
+  const env={AIRPORTS_SUPABASE_URL:'PRIVATE_NOT_A_URL',AIRPORTS_SUPABASE_PUBLISHABLE_KEY:'sb_publishable_example'};
+  assert.throws(()=>config.resolveAirportConfig(env),{diagnosticCode:'AIRPORT_URL_INVALID'});
+  assert.throws(()=>config.resolveAirportConfig({...env,AIRPORTS_SUPABASE_URL:'https://example.test/rest/v1'}),{diagnosticCode:'AIRPORT_URL_NOT_PROJECT_ROOT'});
 });

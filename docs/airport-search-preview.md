@@ -101,3 +101,16 @@ After the two Preview settings are active:
 Vercel build success alone does not establish configured reference connectivity
 or user acceptance. Report missing environment variables and actual deployment
 status explicitly; do not claim Preview ready before verifying it.
+
+### Safe failure diagnostics
+
+`/api/airports?q=PEK` failures include `diagnosticCode`, sanitized numeric
+`upstreamStatus`, a format-checked PostgREST/SQLSTATE `upstreamCode`, and the
+deployment commit prefix `build`. They never include actual environment values,
+project URLs, keys, request headers, raw upstream messages/details or user data.
+Configuration codes distinguish missing Preview settings, incomplete pairs,
+malformed/project-path URLs and unsuitable key types. Upstream codes distinguish
+rejected keys, missing RPC/schema cache, unexposed schema, denied privileges,
+timeouts, network failures and malformed responses. This diagnoses, rather than
+bypasses, the underlying error. Use the NEW deployment URL after each push;
+older immutable Preview URLs retain their old code/environment snapshot.
