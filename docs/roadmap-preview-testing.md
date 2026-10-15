@@ -60,6 +60,19 @@ for signing in, verification and recovery continue to use the existing setup.
    still work. Public pages fetch current data on each request; an already
    open page should be refreshed to see another session's edits.
 
+## Item navigation
+
+Click any point on a homepage item card, including its padding. Expect
+`/roadmap?item=<stable-id>`, scrolling to the corresponding published detail
+card, keyboard focus on it and a soft highlight that clears after 2.6 seconds.
+Tab to a homepage card and press Enter to verify the same behavior. Changing
+Sort By must retain the full list and should not repeatedly pull focus back.
+With reduced-motion enabled, the arrival scroll is immediate and the highlight
+has no animation. Invalid, deleted or unpublished item IDs show a short
+unavailable message while keeping the current public roadmap usable. If there
+are no published items, keep the ordinary empty state alongside that message.
+The Back to Main Page link above the heading always navigates to `/`.
+
 ## Automated checks
 
 `node --test tests/roadmap.test.cjs` tests server-action authorization, field

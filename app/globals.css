@@ -10,6 +10,11 @@ button, input { font: inherit; }
 .eyebrow { color: #a64b20; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; }
 .flight-trail { animation: flight-trail 24s linear infinite; }
 @keyframes flight-trail { to { stroke-dashoffset: -144; } }
+.roadmap-item-highlight { outline: 2px solid #9fd8d2; outline-offset: 3px; animation: roadmap-arrival 2.6s ease-out; }
+@keyframes roadmap-arrival {
+  0%, 25% { background-color: #eef8f5; box-shadow: 0 0 0 4px #9fd8d233; }
+  100% { background-color: white; box-shadow: 0 0 0 0 transparent; }
+}
 button:not(:disabled), summary { cursor: pointer; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }

@@ -13,6 +13,8 @@ export type RoadmapItem = {
   target_date: string | null; completed_date: string | null; sort_order: number;
   created_at: string; updated_at: string;
 };
+export function roadmapItemAnchor(id: string) { return `roadmap-item-${id}`; }
+export function roadmapItemHref(id: string) { return `/roadmap?item=${encodeURIComponent(id)}`; }
 export function roadmapCounts(items: RoadmapItem[]) {
   return Object.fromEntries(statuses.map(status => [status, items.filter(item => item.status === status).length])) as Record<RoadmapStatus, number>;
 }

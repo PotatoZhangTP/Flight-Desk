@@ -149,6 +149,16 @@ test('detailed cards keep full description, category and date information', () =
   for(const text of ['Detailed feature','A real published milestone','Platform','Target date','Completed date','Last updated']) assert.ok(html.includes(text));
   assert.doesNotMatch(html,/line-clamp/);
 });
+test('landing navigation uses the stable item ID and detailed cards provide a focusable destination', () => {
+  const item={...record('Navigation feature','planned'),id:'33333333-3333-4333-8333-333333333333'};
+  const preview=renderToStaticMarkup(React.createElement(cards.RoadmapCard,{item,mode:'compact'}));
+  assert.match(preview,/href="\/roadmap\?item=33333333-3333-4333-8333-333333333333"/);
+  assert.equal((preview.match(/<a /g)||[]).length,1);
+  const detail=renderToStaticMarkup(React.createElement(cards.RoadmapCard,{item}));
+  assert.ok(detail.includes(`id="${model.roadmapItemAnchor(item.id)}"`));
+  assert.match(detail,/tabindex="-1"/);
+  assert.equal(model.roadmapItemHref('id&item=other'),'/roadmap?item=id%26item%3Dother');
+});
 test('landing cards show inline completion dates, honest fallbacks and no decorative artwork', () => {
   const render = item => renderToStaticMarkup(React.createElement(cards.RoadmapCard,{item,mode:'compact'}));
   const completed=render({...record('Finished','completed'),completed_date:'2026-10-15',target_date:'2026-10-16'});
