@@ -29,16 +29,23 @@ for signing in, verification and recovery continue to use the existing setup.
    show Manage Roadmap. Verify all initial drafts are visible in the backend.
 4. Create a disposable Draft item. Refresh: it should persist. Confirm that it
    is absent in the signed-out window. Edit its title, category, priority,
-   development status, order, and optional dates. Save and reopen the editor.
+   development status and optional dates. Save and reopen the editor. There
+   should be no Sort Order input or Order number on the management cards.
 5. Set visibility to Published. Refresh `/roadmap` in the signed-out window;
    the item should appear in the correct column and update its count. For
-   all four statuses, the homepage should select up to two items per nonempty
-   group from the same published data, in Completed, In Progress, Planned,
-   On Hold order. Smaller display-order values come first. The landing preview
-   has compact cards with two-line descriptions and no overall progress panel.
-   Drafts must never appear in its cards or counts. View Full Roadmap shows every published
-   item, including those beyond the homepage highlight limit.
-6. Clear the target date and save. Confirm no target date is shown publicly.
+   all four statuses, the homepage selects at most six published items by the
+   absolute target-date distance from today. Its cards display only title,
+   status and target date (TBD if missing). No descriptions, categories or
+   update timestamps belong on homepage cards. No progress panel is displayed.
+   View Full Roadmap shows all published items, grouped by development status,
+   with full descriptions and the category at the top right.
+6. Clear the target date and save. Expect TBD on the homepage and no target
+   date field on the detailed public card. Dates are sorted by absolute calendar
+   distance, including past dates. Undated items stay last for both date sort
+   directions. All views use one server-supplied reference day in Asia/Shanghai
+   to avoid server/browser timezone disagreement. Test all four Sort By options
+   in both the public page and administrator workspace. The public groups sort
+   independently. Admin Filter By supports all four statuses, Draft and Published.
    Set the item back to Draft: it should disappear from both public pages.
 7. Try deleting: cancel first and verify the item remains; confirm deletion
    second, then refresh and confirm it is removed. Delete only disposable

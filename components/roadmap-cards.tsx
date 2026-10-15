@@ -1,32 +1,31 @@
 import Link from "next/link";
-import { formatRoadmapDate, roadmapCounts, statuses, statusLabels, statusStyles, type RoadmapItem } from "@/lib/roadmap/model";
+import { formatRoadmapDate, sortRoadmapItems, statuses, statusLabels, statusStyles, type RoadmapItem } from "@/lib/roadmap/model";
 
-export function RoadmapCard({ item, compact = false }: { item: RoadmapItem; compact?: boolean }) {
-  return <article className={`flex min-w-0 flex-col rounded-xl border border-[#d9e2ec] bg-white transition hover:border-[#9fd8d2] hover:shadow-sm ${compact ? "p-4" : "p-5"}`}>
-    <div className="flex flex-wrap items-center gap-x-2 gap-y-1"><span className={`rounded-md px-2 py-0.5 text-[11px] font-bold ${statusStyles[item.status]}`}>{statusLabels[item.status]}</span><span className="min-w-0 truncate text-[11px] font-medium text-[#627d98]" title={item.category}>{item.category}</span></div>
-    <h3 className={`mt-2.5 break-words text-base font-bold leading-snug tracking-tight text-[#102a43] ${compact ? "line-clamp-2" : ""}`} title={compact ? item.title : undefined}>{item.title}</h3>
-    <p className={`mt-1.5 break-words text-sm leading-5 text-[#627d98] ${compact ? "line-clamp-2" : "whitespace-pre-wrap"}`}>{item.description}</p>
-    <div className="mt-3 flex flex-wrap gap-x-3 gap-y-1 border-t border-[#edf2f7] pt-2.5 text-[11px] leading-4 text-[#627d98]">
-      {!compact && item.priority && <span className="capitalize">Priority · {item.priority}</span>}
-      {item.target_date && <span>Target <time dateTime={item.target_date}>{formatRoadmapDate(item.target_date)}</time></span>}
-      {item.completed_date && <span>Completed <time dateTime={item.completed_date}>{formatRoadmapDate(item.completed_date)}</time></span>}
-      <span>Updated <time dateTime={item.updated_at}>{formatRoadmapDate(item.updated_at)}</time></span>
-    </div>
+export function RoadmapCard({ item, mode = "detailed" }: { item: RoadmapItem; mode?: "compact" | "detailed" }) {
+  if (mode === "compact") return <article className="group relative flex h-full min-h-[208px] min-w-0 flex-col overflow-hidden rounded-2xl border border-[#d4e3e6] bg-white p-6 shadow-sm shadow-[#102a43]/5 transition duration-200 hover:-translate-y-1 hover:border-[#9fd8d2] hover:shadow-lg hover:shadow-[#102a43]/10">
+    <div className="flex items-start justify-between gap-3"><span className={`rounded-full px-3 py-1 text-xs font-bold ${statusStyles[item.status]}`}>{statusLabels[item.status]}</span><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" className="h-6 w-6 shrink-0 text-[#a3c8c4] transition group-hover:text-[#168c82]"><path d="m3 13 7-2 4-7 2 1-2 6 6 2v2l-7-1-3 6-2-1 1-6-6 2Z" strokeLinejoin="round" /></svg></div>
+    <h3 className="mt-5 line-clamp-2 break-words text-lg font-bold leading-snug tracking-tight text-[#102a43]" title={item.title}>{item.title}</h3>
+    <div className="relative mt-auto flex items-center justify-between gap-3 pt-6 text-xs"><span className="text-[#627d98]">Target date</span><span className={`font-semibold ${item.target_date ? "text-[#102a43]" : "text-[#829ab1]"}`}>{item.target_date ? <time dateTime={item.target_date}>{formatRoadmapDate(item.target_date)}</time> : "TBD"}</span></div>
+    <div aria-hidden="true" className="pointer-events-none absolute bottom-0 left-6 right-6 flex items-center gap-2 opacity-60"><span className="h-1 w-1 rounded-full bg-[#e8753a]" /><span className="h-px flex-1 border-t border-dashed border-[#c6dedb]" /><span className="h-1 w-1 rounded-full bg-[#168c82]" /></div>
+  </article>;
+
+  return <article className="min-w-0 rounded-2xl border border-[#d9e2ec] bg-white p-6 shadow-sm transition hover:border-[#9fd8d2] hover:shadow-md">
+    <div className="flex items-start justify-between gap-3"><span className={`shrink-0 rounded-full px-3 py-1 text-xs font-bold ${statusStyles[item.status]}`}>{statusLabels[item.status]}</span><span className="max-w-[50%] break-words text-right text-xs font-medium leading-5 text-[#627d98]">{item.category}</span></div>
+    <h3 className="mt-5 break-words text-lg font-bold leading-snug tracking-tight text-[#102a43]">{item.title}</h3>
+    <p className="mt-3 whitespace-pre-wrap break-words text-sm leading-7 text-[#627d98]">{item.description}</p>
+    <dl className="mt-5 space-y-2 border-t border-[#edf2f7] pt-4 text-xs text-[#627d98]">
+      {item.target_date && <div className="flex flex-wrap justify-between gap-x-3 gap-y-1"><dt>Target date</dt><dd><time dateTime={item.target_date}>{formatRoadmapDate(item.target_date)}</time></dd></div>}
+      {item.completed_date && <div className="flex flex-wrap justify-between gap-x-3 gap-y-1"><dt>Completed date</dt><dd><time dateTime={item.completed_date}>{formatRoadmapDate(item.completed_date)}</time></dd></div>}
+      <div className="flex flex-wrap justify-between gap-x-3 gap-y-1"><dt>Last updated</dt><dd><time dateTime={item.updated_at}>{formatRoadmapDate(item.updated_at)}</time></dd></div>
+    </dl>
   </article>;
 }
 
 export function RoadmapSummary({ items, failed }: { items: RoadmapItem[]; failed: boolean }) {
-  const order = ["completed", "in_progress", "planned", "on_hold"] as const;
-  const published = items.filter(item => item.publication_status === "published");
-  const counts = roadmapCounts(published);
-  return <section id="roadmap" className="border-y border-[#d9e2ec] bg-[#eef5f5] py-12 sm:py-16"><div className="mx-auto max-w-7xl px-6 lg:px-12">
-    <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-end"><div><p className="eyebrow">Our flight plan</p><h2 className="mt-2 text-3xl font-bold tracking-tight">Product Roadmap</h2><p className="mt-2 text-sm leading-6 text-[#627d98]">What’s ready, what’s taking shape, and what’s next.</p></div><Link href="/roadmap" className="shrink-0 rounded-lg py-1 text-sm font-semibold text-[#168c82] hover:underline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#168c82]">View Full Roadmap <span aria-hidden="true">→</span></Link></div>
-    {failed ? <p role="alert" className="mt-6 rounded-xl border border-[#f3c5bd] bg-white p-4 text-sm text-[#b94a3d]">The roadmap is temporarily unavailable. Please try again later.</p> : !published.length ? <RoadmapEmptyState compact /> : <>
-      <div className="mt-6 grid items-start gap-5 sm:grid-cols-2 lg:grid-cols-4">{order.filter(status => counts[status] > 0).map(status => {
-        const matches = published.filter(item => item.status === status);
-        return <section key={status} className="min-w-0" aria-labelledby={`home-roadmap-${status}`}><div className="mb-2.5 flex items-center gap-2"><span aria-hidden="true" className={`grid h-6 w-6 place-items-center rounded-md text-xs font-bold ${statusStyles[status]}`}>{status === "completed" ? "✓" : status === "in_progress" ? "↗" : status === "planned" ? "→" : "Ⅱ"}</span><h3 id={`home-roadmap-${status}`} className="text-sm font-bold">{statusLabels[status]}</h3><span className="text-xs text-[#829ab1]">{matches.length}</span></div><div className="space-y-3">{matches.slice(0, 2).map(item => <RoadmapCard key={item.id} item={item} compact />)}</div>{matches.length > 2 && <Link href={`/roadmap#status-${status}`} className="mt-3 inline-block text-xs font-semibold text-[#168c82] hover:underline">View all {matches.length} {statusLabels[status].toLowerCase()} items →</Link>}</section>;
-      })}</div>
-    </>}
+  const highlights = sortRoadmapItems(items.filter(item => item.publication_status === "published")).slice(0, 6);
+  return <section id="roadmap" className="relative overflow-hidden border-y border-[#d9e2ec] bg-[#eef5f5] py-14 sm:py-16"><div aria-hidden="true" className="pointer-events-none absolute -right-24 -top-28 h-80 w-80 rounded-full border border-[#d5e5e3]" /><div className="relative mx-auto max-w-7xl px-6 lg:px-12">
+    <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end"><div><p className="eyebrow">Our flight plan</p><h2 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">Product Roadmap</h2><p className="mt-3 max-w-lg text-sm leading-6 text-[#627d98]">What’s ready, what’s taking shape, and what’s next.</p></div><Link href="/roadmap" className="shrink-0 rounded-lg py-1 text-sm font-semibold text-[#168c82] hover:underline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#168c82]">View Full Roadmap <span aria-hidden="true">→</span></Link></div>
+    {failed ? <p role="alert" className="mt-6 rounded-xl border border-[#f3c5bd] bg-white p-4 text-sm text-[#b94a3d]">The roadmap is temporarily unavailable. Please try again later.</p> : !highlights.length ? <RoadmapEmptyState compact /> : <div className="mt-8 grid auto-rows-fr gap-5 sm:grid-cols-2 lg:grid-cols-3">{highlights.map(item => <RoadmapCard key={item.id} item={item} mode="compact" />)}</div>}
   </div></section>;
 }
 
@@ -36,5 +35,5 @@ export function RoadmapEmptyState({ compact = false }: { compact?: boolean }) {
 }
 
 export function RoadmapBoard({ items }: { items: RoadmapItem[] }) {
-  return <div className="mt-12 grid items-start gap-6 md:grid-cols-2 xl:grid-cols-4">{statuses.map(status => <section key={status} aria-labelledby={`status-${status}`} className="min-w-0"><h2 id={`status-${status}`} className="mb-4 flex items-center justify-between text-lg font-bold">{statusLabels[status]}<span className={`rounded-full px-3 py-1 text-sm ${statusStyles[status]}`}>{items.filter(item => item.status === status).length}</span></h2><div className="space-y-4">{items.filter(item => item.status === status).map(item => <RoadmapCard key={item.id} item={item} />)}{!items.some(item => item.status === status) && <p className="rounded-2xl border border-dashed border-[#bcccdc] p-6 text-sm text-[#627d98]">No published items in this column yet.</p>}</div></section>)}</div>;
+  return <div className="mt-8 grid items-start gap-6 md:grid-cols-2 xl:grid-cols-4">{statuses.map(status => <section key={status} aria-labelledby={`status-${status}`} className="min-w-0"><h2 id={`status-${status}`} className="mb-4 flex items-center justify-between text-lg font-bold">{statusLabels[status]}<span className={`rounded-full px-3 py-1 text-sm ${statusStyles[status]}`}>{items.filter(item => item.status === status).length}</span></h2><div className="space-y-5">{items.filter(item => item.status === status).map(item => <RoadmapCard key={item.id} item={item} />)}{!items.some(item => item.status === status) && <p className="rounded-xl border border-dashed border-[#bcccdc] p-4 text-sm text-[#627d98]">No published items yet.</p>}</div></section>)}</div>;
 }

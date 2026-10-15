@@ -22,7 +22,7 @@ function loadModule(file, dependencies = {}) {
 const model = loadModule('lib/roadmap/model.ts');
 function form(overrides = {}) {
   const data = new FormData();
-  for (const [key, value] of Object.entries({title:'Flight map', description:'Routes', category:'Maps', status:'planned', publication_status:'draft', priority:'', sort_order:'10', target_date:'', completed_date:'', ...overrides})) data.set(key, value);
+  for (const [key, value] of Object.entries({title:'Flight map', description:'Routes', category:'Maps', status:'planned', publication_status:'draft', priority:'', target_date:'', completed_date:'', ...overrides})) data.set(key, value);
   return data;
 }
 function setup(user, isAdmin, dbFailure = false) {
@@ -43,12 +43,12 @@ function setup(user, isAdmin, dbFailure = false) {
   return { actions, calls, invalidated };
 }
 
-test('reject malformed status, visibility, priority, dates and order', () => {
-  for (const invalid of [{title:' '},{category:''},{status:'ready'},{publication_status:'public'},{priority:'critical'},{target_date:'2026-02-30'},{completed_date:'garbage'},{sort_order:'1.5'},{sort_order:'2147483648'}]) assert.throws(() => model.parseRoadmapForm(form(invalid)));
+test('reject malformed status, visibility, priority and dates', () => {
+  for (const invalid of [{title:' '},{category:''},{status:'ready'},{publication_status:'public'},{priority:'critical'},{target_date:'2026-02-30'},{completed_date:'garbage'}]) assert.throws(() => model.parseRoadmapForm(form(invalid)));
 });
-test('optional dates and priority clear to null; preserve zero order', () => {
-  const data = model.parseRoadmapForm(form({sort_order:'0'}));
-  assert.equal(data.sort_order,0); assert.equal(data.target_date,null); assert.equal(data.completed_date,null); assert.equal(data.priority,null);
+test('optional dates and priority clear to null; legacy order is not written', () => {
+  const data = model.parseRoadmapForm(form({sort_order:'999'}));
+  assert.equal('sort_order' in data,false); assert.equal(data.target_date,null); assert.equal(data.completed_date,null); assert.equal(data.priority,null);
 });
 test('only accepted fields reach persistence; extra privilege inputs ignored', () => {
   const data = model.parseRoadmapForm(form({user_id:'attacker',isAdmin:'true',seed_key:'accounts',updated_at:'forged'}));
@@ -117,17 +117,53 @@ test('homepage shows four published statuses without progress panel or private i
   for (const title of ['Completed feature','Work underway','Future feature','Paused feature']) assert.ok(html.includes(title));
   assert.doesNotMatch(html,/Published milestones|progressbar|1 of 4 completed|25%|Open to everyone/);
   assert.doesNotMatch(html,/Secret feature/);
-  assert.ok(html.indexOf('home-roadmap-completed') < html.indexOf('home-roadmap-in_progress'));
-  assert.ok(html.indexOf('home-roadmap-planned') < html.indexOf('home-roadmap-on_hold'));
+  assert.doesNotMatch(html,/A real published milestone|Platform|Last updated|Updated|Sort Order/);
+  assert.match(html,/TBD/);
 });
-test('homepage limits highlights, links to all published items and omits empty groups', () => {
-  const html = renderSummary([record('First','planned'),record('Second','planned'),record('Third','planned')]);
-  assert.match(html,/First/);assert.match(html,/Second/);assert.doesNotMatch(html,/>Third</);
-  assert.match(html,/\/roadmap#status-planned/);assert.match(html,/View all 3 planned items/);
-  assert.doesNotMatch(html,/home-roadmap-on_hold|home-roadmap-completed/);
+test('homepage selects six published items by closest target, with undated items last', () => {
+  const today = model.roadmapToday();
+  const items = Array.from({length:7},(_,i)=>({...record(`Feature ${i}`,'planned'), target_date:i===6 ? today : null}));
+  const html = renderSummary([...items,{...record('Private closest','planned','draft'),target_date:today}]);
+  assert.equal((html.match(/<article /g)||[]).length,6);
+  assert.ok(html.indexOf('Feature 6') < html.indexOf('Feature 0'));
+  assert.doesNotMatch(html,/>Feature 5<|Private closest/);
+  assert.match(html,/href="\/roadmap"/);
 });
 test('request failures remain distinct from empty roadmap data', () => {
   const html = renderSummary([],true);
   assert.match(html,/role="alert"/);assert.match(html,/temporarily unavailable/);
   assert.doesNotMatch(html,/Our public flight plan is taking shape/);
+});
+
+test('detailed cards keep full description, category and date information', () => {
+  const item = {...record('Detailed feature','completed'),target_date:'2026-10-20',completed_date:'2026-10-14'};
+  const html=renderToStaticMarkup(React.createElement(cards.RoadmapCard,{item}));
+  for(const text of ['Detailed feature','A real published milestone','Platform','Target date','Completed date','Last updated']) assert.ok(html.includes(text));
+  assert.doesNotMatch(html,/line-clamp/);
+});
+const dated = (id,target,updated='2026-10-15T00:00:00Z') => ({...record(id,'planned'),target_date:target,updated_at:updated});
+test('target sorting uses absolute calendar distance, includes overdue, and always puts undated last', () => {
+  const items=[dated('far','2026-12-01'),dated('none',null),dated('future','2026-10-17'),dated('past','2026-10-14'),dated('today','2026-10-15')];
+  assert.deepEqual(model.sortRoadmapItems(items,'target_closest','2026-10-15').map(i=>i.id),['today','past','future','far','none']);
+  assert.deepEqual(model.sortRoadmapItems(items,'target_farthest','2026-10-15').map(i=>i.id),['far','future','past','today','none']);
+  assert.equal(items[0].id,'far');
+});
+test('updated sorting works in both directions regardless of target dates', () => {
+  const items=[dated('older','2027-01-01','2026-10-01T00:00:00Z'),dated('newer',null,'2026-10-10T00:00:00Z')];
+  assert.deepEqual(model.sortRoadmapItems(items,'updated_newest').map(i=>i.id),['newer','older']);
+  assert.deepEqual(model.sortRoadmapItems(items,'updated_oldest').map(i=>i.id),['older','newer']);
+});
+test('equal distances and missing dates have deterministic ties without legacy sort order', () => {
+  const items=[dated('future','2026-10-16'),dated('past','2026-10-14'),dated('z',null),dated('a',null)];
+  assert.deepEqual(model.sortRoadmapItems(items,'target_closest','2026-10-15').map(i=>i.id),['past','future','a','z']);
+});
+test('filter supports all development and publication states without changing the source', () => {
+  const items=[record('a','planned','draft'),record('b','completed'),record('c','on_hold'),record('d','in_progress')];
+  assert.equal(model.filterRoadmapItems(items,'all').length,4);
+  for(const status of model.statuses) assert.equal(model.filterRoadmapItems(items,status).length,1);
+  assert.equal(model.filterRoadmapItems(items,'draft').length,1);assert.equal(model.filterRoadmapItems(items,'published').length,3);
+});
+test('server reference day is consistent around the project timezone midnight', () => {
+  assert.equal(model.roadmapToday(new Date('2026-10-14T15:59:00Z')),'2026-10-14');
+  assert.equal(model.roadmapToday(new Date('2026-10-14T16:00:00Z')),'2026-10-15');
 });

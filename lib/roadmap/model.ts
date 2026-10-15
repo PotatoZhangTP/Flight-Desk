@@ -19,6 +19,46 @@ export function roadmapCounts(items: RoadmapItem[]) {
 export function formatRoadmapDate(value: string) {
   return new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" }).format(new Date(value));
 }
+
+export const roadmapSortOptions = {
+  target_closest: "Target Date (Closest First)",
+  target_farthest: "Target Date (Farthest First)",
+  updated_newest: "Last Updated (Newest First)",
+  updated_oldest: "Last Updated (Oldest First)",
+} as const;
+export type RoadmapSort = keyof typeof roadmapSortOptions;
+export type RoadmapFilter = "all" | RoadmapStatus | "draft" | "published";
+
+// Resolve the reference day once on the server and pass it to client views.
+// A common project timezone prevents SSR/browser timezone disagreements.
+export function roadmapToday(now = new Date()) {
+  const parts = new Intl.DateTimeFormat("en", { timeZone: "Asia/Shanghai", year: "numeric", month: "2-digit", day: "2-digit" }).formatToParts(now);
+  const part = (type: string) => parts.find(value => value.type === type)!.value;
+  return `${part("year")}-${part("month")}-${part("day")}`;
+}
+
+export function sortRoadmapItems(items: RoadmapItem[], sort: RoadmapSort = "target_closest", today = roadmapToday()) {
+  const reference = Date.parse(`${today}T00:00:00Z`);
+  const tieBreak = (a: RoadmapItem, b: RoadmapItem) => (a.created_at ?? "").localeCompare(b.created_at ?? "") || a.id.localeCompare(b.id);
+  return [...items].sort((a, b) => {
+    if (sort === "target_closest" || sort === "target_farthest") {
+      // Null dates stay last in BOTH directions; never substitute a fake date.
+      if (!a.target_date && !b.target_date) return tieBreak(a, b);
+      if (!a.target_date) return 1;
+      if (!b.target_date) return -1;
+      const distanceA = Math.abs(Date.parse(`${a.target_date}T00:00:00Z`) - reference);
+      const distanceB = Math.abs(Date.parse(`${b.target_date}T00:00:00Z`) - reference);
+      const difference = sort === "target_closest" ? distanceA - distanceB : distanceB - distanceA;
+      return difference || a.target_date.localeCompare(b.target_date) || tieBreak(a, b);
+    }
+    const difference = Date.parse(a.updated_at) - Date.parse(b.updated_at);
+    return (sort === "updated_newest" ? -difference : difference) || tieBreak(a, b);
+  });
+}
+
+export function filterRoadmapItems(items: RoadmapItem[], filter: RoadmapFilter) {
+  return items.filter(item => filter === "all" || item.status === filter || item.publication_status === filter);
+}
 function dateValue(value: FormDataEntryValue | null): string | null {
   const text = String(value ?? "").trim();
   if (!text) return null;
@@ -32,15 +72,13 @@ export function parseRoadmapForm(form: FormData) {
   const status = String(form.get("status") ?? "");
   const publication_status = String(form.get("publication_status") ?? "");
   const priority = String(form.get("priority") ?? "") || null;
-  const orderText = String(form.get("sort_order") ?? "").trim();
-  const sort_order = Number(orderText);
   if (!title || [...title].length > 160) throw new Error("Title must be between 1 and 160 characters.");
   if ([...description].length > 5000) throw new Error("Description must be 5,000 characters or fewer.");
   if (!category || [...category].length > 80) throw new Error("Category must be between 1 and 80 characters.");
   if (!statuses.includes(status as RoadmapStatus)) throw new Error("Choose a valid development status.");
   if (!["draft", "published"].includes(publication_status)) throw new Error("Choose Draft or Published.");
   if (priority !== null && !["low", "medium", "high"].includes(priority)) throw new Error("Choose a valid priority.");
-  if (!/^-?\d+$/.test(orderText) || !Number.isInteger(sort_order) || sort_order < -2147483648 || sort_order > 2147483647) throw new Error("Display order must be a whole number within the supported range.");
-  return { title, description, category, status, publication_status, priority, sort_order,
+  // Leave legacy sort_order untouched on update; inserts use its database default.
+  return { title, description, category, status, publication_status, priority,
     target_date: dateValue(form.get("target_date")), completed_date: dateValue(form.get("completed_date")) };
 }
