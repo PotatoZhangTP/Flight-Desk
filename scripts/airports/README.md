@@ -51,6 +51,33 @@ are distinct; only explicit source `icao_code` supplies ICAO. Small airports do
 not need codes. CSV blanks are only for review; use the typed JSONL importer,
 not an ad-hoc browser CSV import that may change NULL/boolean semantics.
 
+## Download a reviewed CSV from GitHub Actions
+
+The `Download Global Airport CSV` workflow generates the same pinned snapshot
+without database credentials or database access. Its initial workflow-file push
+on `feature/supabase-auth` starts a run automatically. Open the repository's
+**Actions → Download Global Airport CSV → successful run → Artifacts →
+flightdesk-global-airports** to download a ZIP (GitHub sign-in required).
+Artifacts expire after 14 days. Use **Re-run all jobs** to regenerate them.
+`workflow_dispatch` is also supported for the feature branch, but GitHub may not
+show the manual Run workflow button until the workflow is registered on the
+default branch; do not merge main merely to enable that button.
+
+The job verifies all generated data hashes against the committed reviewed
+manifest before uploading. A new generation timestamp/Python patch version may
+change the manifest hash; the data-file hashes must remain identical. The ZIP
+contains the complete typed JSONL, CSV, sample, exception report, review report,
+manifest and licensing notice, never the timezone polygons or repository files.
+No Supabase secrets, migrations, import commands or deployments are configured
+in this workflow. Normal repository Vercel Preview integration may still run on
+the feature-branch push.
+
+For the separately reviewed manual Dashboard route, upload the unmodified CSV
+only to the operator-only `public.airports_import_staging` raw-text table, never
+directly to `public.airports`. This is staging, not a completed airport import:
+validate rows and NULL/boolean semantics before a separately approved typed,
+transactional merge. Do not relax staging permissions if Dashboard upload fails.
+
 ## Timezone quality
 
 Longitude/latitude points are queried against a Shapely STRtree of the pinned
