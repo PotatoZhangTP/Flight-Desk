@@ -87,7 +87,7 @@ test('invalid IDs cannot produce updates or deletes', async () => {
   assert.equal(env.calls.length,0);
 });
 test('statistics count provided published records by status', () => {
-  assert.deepEqual(model.roadmapCounts([{status:'planned'},{status:'completed'},{status:'planned'}]), {planned:2,in_progress:0,completed:1,on_hold:0});
+  assert.deepEqual(model.roadmapCounts([{status:'planned'},{status:'completed'},{status:'in_progress'}]), {planned:2,completed:1,on_hold:0});
 });
 
 const React = require('react');
@@ -108,6 +108,25 @@ const record = (title, status, publication_status = 'published') => ({
   target_date:null, completed_date:null, priority:null, updated_at:'2026-10-15T00:00:00Z',
 });
 const renderSummary = (items, failed = false) => renderToStaticMarkup(React.createElement(cards.RoadmapSummary, {items, failed}));
+test('legacy items retain identity, publication, dates and content while moving into planned', () => {
+  const legacy={...record('Legacy feature','in_progress'),target_date:'2026-10-20',completed_date:null};
+  const normalized=model.normalizeRoadmapItems([legacy]);
+  assert.deepEqual(normalized,[{...legacy,status:'planned'}]);
+  assert.equal(legacy.status,'in_progress');
+  assert.deepEqual(model.statuses,['planned','completed','on_hold']);
+  assert.throws(()=>model.parseRoadmapForm(form({status:'in_progress'})),/valid development status/);
+  const html=renderToStaticMarkup(React.createElement(cards.RoadmapBoard,{items:[legacy]}));
+  assert.match(html,/Legacy feature/);assert.doesNotMatch(html,/In Progress|status-in_progress/);
+});
+test('public Supabase loader normalizes legacy status without changing the publication filter', async () => {
+  const calls=[];const legacy=record('Published legacy item','in_progress');
+  const query={select(){return this;},eq(...args){calls.push(args);return this;},order(){return this;},abortSignal:async()=>({data:[legacy],error:null})};
+  const server=loadModule('lib/roadmap/server.ts',{'server-only':{},'./model':model,
+    '@/lib/supabase/server':{createClient:async()=>({from:table=>{assert.equal(table,'roadmap_items');return query;}})}});
+  const result=await server.publishedRoadmap();
+  assert.deepEqual(calls,[['publication_status','published']]);
+  assert.equal(result.items[0].status,'planned');assert.equal(result.failed,false);
+});
 test('landing uses a vertical product narrative with the exact hero copy and preserved navigation', async () => {
   const journey=loadModule('components/journey-demo.tsx',{'react/jsx-runtime':require('react/jsx-runtime')});
   const home=loadModule('app/page.tsx',{
@@ -182,22 +201,22 @@ test('unfinished entries show the requested message instead of navigating', () =
 test('homepage keeps three lightweight empty groups without fake cards or draft data', () => {
   for (const items of [[], [record('Unreviewed private draft','completed','draft')]]) {
     const html = renderSummary(items);
-    assert.match(html,/No published in progress items yet/);
+    assert.match(html,/No published on hold items yet/);
     assert.match(html,/No published planned items yet/);
     assert.match(html,/No published completed items yet/);
     assert.doesNotMatch(html,/role="progressbar"|<article|Unreviewed private draft/);
     assert.match(html,/href="\/roadmap"/);
   }
 });
-test('homepage shows three status rows in order without on-hold or draft items', () => {
+test('homepage shows the three remaining status rows and merges legacy work into planned', () => {
   const html=renderSummary([
     record('Completed feature','completed'),record('Work underway','in_progress'),
     record('Future feature','planned'),record('Paused feature','on_hold'),record('Secret feature','completed','draft'),
   ]);
-  for (const title of ['Completed feature','Work underway','Future feature']) assert.ok(html.includes(title));
-  assert.doesNotMatch(html,/Paused feature/);
-  assert.ok(html.indexOf('home-roadmap-in_progress') < html.indexOf('home-roadmap-planned'));
+  for (const title of ['Completed feature','Work underway','Future feature','Paused feature']) assert.ok(html.includes(title));
+  assert.doesNotMatch(html,/In Progress|home-roadmap-in_progress/);
   assert.ok(html.indexOf('home-roadmap-planned') < html.indexOf('home-roadmap-completed'));
+  assert.ok(html.indexOf('home-roadmap-completed') < html.indexOf('home-roadmap-on_hold'));
   assert.doesNotMatch(html,/Published milestones|progressbar|1 of 4 completed|25%|Open to everyone/);
   assert.doesNotMatch(html,/Secret feature/);
   assert.doesNotMatch(html,/A real published milestone|Last updated|Updated|Sort Order/);
@@ -248,15 +267,15 @@ test('landing cards show inline completion dates, honest fallbacks and no decora
 });
 test('landing groups use completed_date independently and limit each of the three published groups', () => {
   const items=[];
-  for(const status of ['in_progress','planned','completed']) {
+  for(const status of ['planned','completed','on_hold']) {
     for(let i=0;i<6;i++) items.push({...record(`${status}-${i}`,status),target_date:`2026-10-${String(15+i).padStart(2,'0')}`,completed_date:i===0?null:`2026-10-${String(20-i).padStart(2,'0')}`});
   }
   items.push({...record('secret','completed','draft'),completed_date:'2026-10-15'});
   const groups=model.landingRoadmapGroups(items,'2026-10-15');
-  assert.deepEqual(groups.map(g=>g.status),['in_progress','planned','completed']);
+  assert.deepEqual(groups.map(g=>g.status),['planned','completed','on_hold']);
   assert.deepEqual(groups.map(g=>g.items.length),[4,4,4]);
-  assert.deepEqual(groups[0].items.map(i=>i.id),['in_progress-0','in_progress-1','in_progress-2','in_progress-3']);
-  assert.deepEqual(groups[2].items.map(i=>i.id),['completed-5','completed-4','completed-3','completed-2']);
+  assert.deepEqual(groups[0].items.map(i=>i.id),['planned-0','planned-1','planned-2','planned-3']);
+  assert.deepEqual(groups[1].items.map(i=>i.id),['completed-5','completed-4','completed-3','completed-2']);
   assert.equal(items.length,19);
 });
 const dated = (id,target,updated='2026-10-15T00:00:00Z') => ({...record(id,'planned'),target_date:target,updated_at:updated});
@@ -278,7 +297,9 @@ test('equal distances and missing dates have deterministic ties without legacy s
 test('filter supports all development and publication states without changing the source', () => {
   const items=[record('a','planned','draft'),record('b','completed'),record('c','on_hold'),record('d','in_progress')];
   assert.equal(model.filterRoadmapItems(items,'all').length,4);
-  for(const status of model.statuses) assert.equal(model.filterRoadmapItems(items,status).length,1);
+  assert.equal(model.filterRoadmapItems(items,'planned').length,2);
+  for(const status of ['completed','on_hold']) assert.equal(model.filterRoadmapItems(items,status).length,1);
+  assert.equal(items[3].status,'in_progress');
   assert.equal(model.filterRoadmapItems(items,'draft').length,1);assert.equal(model.filterRoadmapItems(items,'published').length,3);
 });
 test('server reference day is consistent around the project timezone midnight', () => {

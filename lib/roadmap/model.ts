@@ -1,10 +1,10 @@
-export const statuses = ["planned", "in_progress", "completed", "on_hold"] as const;
+export const statuses = ["planned", "completed", "on_hold"] as const;
 export type RoadmapStatus = (typeof statuses)[number];
 export const statusLabels: Record<RoadmapStatus, string> = {
-  planned: "Planned", in_progress: "In Progress", completed: "Completed", on_hold: "On Hold",
+  planned: "Planned", completed: "Completed", on_hold: "On Hold",
 };
 export const statusStyles: Record<RoadmapStatus, string> = {
-  planned: "bg-planned-bg text-planned-fg", in_progress: "bg-progress-bg text-progress-fg",
+  planned: "bg-planned-bg text-planned-fg",
   completed: "bg-completed-bg text-completed-fg", on_hold: "bg-hold-bg text-hold-fg",
 };
 export type RoadmapItem = {
@@ -13,9 +13,15 @@ export type RoadmapItem = {
   target_date: string | null; completed_date: string | null; sort_order: number;
   created_at: string; updated_at: string;
 };
+export type LegacyRoadmapItem = Omit<RoadmapItem, "status"> & { status: RoadmapStatus | "in_progress" };
+// Keep every legacy record visible before the administrator runs the SQL migration.
+export function normalizeRoadmapItems(items: readonly LegacyRoadmapItem[]): RoadmapItem[] {
+  return items.map(item => ({ ...item, status: item.status === "in_progress" ? "planned" : item.status }));
+}
 export function roadmapItemAnchor(id: string) { return `roadmap-item-${id}`; }
 export function roadmapItemHref(id: string) { return `/roadmap?item=${encodeURIComponent(id)}`; }
-export function roadmapCounts(items: RoadmapItem[]) {
+export function roadmapCounts(input: LegacyRoadmapItem[]) {
+  const items = normalizeRoadmapItems(input);
   return Object.fromEntries(statuses.map(status => [status, items.filter(item => item.status === status).length])) as Record<RoadmapStatus, number>;
 }
 export function formatRoadmapDate(value: string) {
@@ -59,8 +65,9 @@ export function sortRoadmapItems(items: RoadmapItem[], sort: RoadmapSort = "targ
   });
 }
 
-export function landingRoadmapGroups(items: RoadmapItem[], today = roadmapToday()) {
-  return (["in_progress", "planned", "completed"] as const).map(status => ({
+export function landingRoadmapGroups(input: LegacyRoadmapItem[], today = roadmapToday()) {
+  const items = normalizeRoadmapItems(input);
+  return statuses.map(status => ({
     status,
     items: sortRoadmapItems(
       items.filter(item => item.publication_status === "published" && item.status === status),
@@ -69,7 +76,8 @@ export function landingRoadmapGroups(items: RoadmapItem[], today = roadmapToday(
   }));
 }
 
-export function filterRoadmapItems(items: RoadmapItem[], filter: RoadmapFilter) {
+export function filterRoadmapItems(input: LegacyRoadmapItem[], filter: RoadmapFilter) {
+  const items = normalizeRoadmapItems(input);
   return items.filter(item => filter === "all" || item.status === filter || item.publication_status === filter);
 }
 function dateValue(value: FormDataEntryValue | null): string | null {
