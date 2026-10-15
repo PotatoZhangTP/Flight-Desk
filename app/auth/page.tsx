@@ -1,5 +1,16 @@
 import Link from "next/link";
 import { Brand } from "@/components/brand";
 import { AuthForm } from "@/components/auth-form";
+import { AuthAircraft } from "@/components/auth-aircraft";
 
-export default async function AuthPage({ searchParams }: { searchParams: Promise<{ error?: string }> }) { const params = await searchParams; return <main className="grid min-h-screen bg-[#f7f9fc] lg:grid-cols-2"><section className="grid-paper flex flex-col justify-between p-8 lg:p-14"><Brand /><div className="max-w-md pb-10"><p className="text-sm font-bold uppercase tracking-[0.2em] text-[#e8753a]">Your personal logbook</p><h1 className="mt-5 text-5xl font-bold leading-tight tracking-tight text-[#102a43]">Keep every journey in view.</h1><p className="mt-5 text-lg leading-8 text-[#486581]">Sign in to manage your flights, explore your statistics, and build your personal flying history.</p></div><p className="text-sm text-[#829ab1]">Flight Desk · A clearer view of your flying</p></section><section className="flex items-center justify-center p-6"><div className="w-full max-w-md"><Link href="/" className="mb-8 inline-block text-sm font-semibold text-[#627d98]">← Back home</Link><AuthForm initialError={params.error} /></div></section></main>; }
+export default async function AuthPage({ searchParams }: { searchParams: Promise<{ error?: string }> }) {
+  const params = await searchParams;
+  return <main className="min-h-screen bg-page text-ink"><div className="mx-auto grid min-h-screen max-w-[1440px] lg:grid-cols-[1.1fr_.9fr]">
+    <section className="flex min-w-0 flex-col px-6 pb-8 pt-7 sm:px-10 lg:border-r lg:border-line lg:px-14 lg:py-10">
+      <Brand />
+      <div className="mx-auto mt-12 w-full max-w-xl lg:my-auto lg:pt-14"><p className="eyebrow">Your personal logbook</p><h1 className="mt-4 max-w-md text-4xl font-bold leading-[1.1] tracking-[-0.035em] sm:text-5xl">Keep every<br />journey in view.</h1><p className="mt-5 max-w-md text-base leading-7 text-muted">A place for your routes, your aircraft, and the moments that make you look up. Your next chapter starts here.</p><AuthAircraft /></div>
+      <p className="mt-8 hidden text-xs text-muted lg:block">Flight Desk · A clearer view of your flying</p>
+    </section>
+    <section aria-label="Account access" className="flex min-w-0 items-center justify-center px-6 pb-12 pt-3 sm:px-10 lg:px-12 lg:py-12"><div className="w-full max-w-md"><Link href="/" className="mb-6 inline-block rounded text-sm font-semibold text-brand transition hover:text-brand-hover focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand">← Back home</Link><AuthForm initialError={params.error} /><p className="mt-5 text-center text-xs leading-5 text-muted">Your personal flight history, private by default.</p></div></section>
+  </div></main>;
+}

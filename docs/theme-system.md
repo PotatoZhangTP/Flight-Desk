@@ -1,7 +1,7 @@
 # Flight Desk theme foundation
 
 Light mode is the default. The public landing page, shared brand/navigation/menu,
-public Roadmap and Roadmap workspace use semantic Tailwind color names backed by
+public Roadmap, Roadmap workspace and authentication screens use semantic Tailwind color names backed by
 CSS variables in `app/globals.css`.
 
 - `page`, `surface`, `surface-muted`: pure white page and cards; neutral gray accents.
@@ -29,7 +29,7 @@ in this release. A future selector can set one attribute on `<html>`; it does no
 need component-by-component color toggles. `light-dark()` requires a modern
 browser (Chrome/Edge 123+, Firefox 120+, Safari 17.5+).
 
-Remaining private flight/auth/settings screens still contain legacy hardcoded
+Remaining private flight/settings screens still contain legacy hardcoded
 colors and will need a focused token migration before dark mode is offered
 globally. Their flows and layouts have not been redesigned in this release.
 
