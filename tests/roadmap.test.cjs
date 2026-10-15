@@ -101,6 +101,24 @@ const record = (title, status, publication_status = 'published') => ({
   target_date:null, completed_date:null, priority:null, updated_at:'2026-10-15T00:00:00Z',
 });
 const renderSummary = (items, failed = false) => renderToStaticMarkup(React.createElement(cards.RoadmapSummary, {items, failed}));
+test('landing uses a vertical product narrative with the exact hero copy and preserved navigation', async () => {
+  const journey=loadModule('components/journey-demo.tsx',{'react/jsx-runtime':require('react/jsx-runtime')});
+  const home=loadModule('app/page.tsx',{
+    'react/jsx-runtime':require('react/jsx-runtime'),'next/link':require('next/link'),
+    '@/components/site-header':{SiteHeader:()=>React.createElement('header')},
+    '@/components/site-footer':{SiteFooter:()=>React.createElement('footer')},
+    '@/components/journey-demo':journey,'@/components/roadmap-cards':cards,
+    '@/lib/roadmap/server':{publishedRoadmap:async()=>({items:[record('Public milestone','planned')],failed:false})},
+  });
+  const html=renderToStaticMarkup(await home.default());
+  assert.match(html.replace(/<[^>]*>/g,''),/Your Flying, Clearly Logged\./);
+  assert.doesNotMatch(html,/Your own account\. Your own records\. Room to grow\.|grid-paper|bg-panel|background-image/);
+  assert.ok(html.indexOf('id="hero-title"') < html.indexOf('Product demo'));
+  assert.ok(html.indexOf('Product demo') < html.indexOf('id="features"'));
+  assert.ok(html.indexOf('id="features"') < html.indexOf('id="roadmap"'));
+  assert.ok(html.indexOf('id="roadmap"') < html.indexOf('id="how-it-works"'));
+  assert.match(html,/href="\/dashboard"/);assert.match(html,/href="\/roadmap\?item=/);
+});
 test('homepage keeps three lightweight empty groups without fake cards or draft data', () => {
   for (const items of [[], [record('Unreviewed private draft','completed','draft')]]) {
     const html = renderSummary(items);
