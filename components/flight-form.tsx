@@ -1,30 +1,200 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { airports, searchAirports, type Airport } from "@/lib/airports";
-import { getScheduledDuration, getScheduledFlightTime } from "@/lib/flight-time";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { airportCodes, airportFromSnapshot, type Airport } from "@/lib/airports";
+import { getScheduledDuration, getScheduledFlightTime, snapshotClockChoice, type PlannedTime } from "@/lib/flight-time";
+import { normalizeFlightInput } from "@/lib/flight-input";
 import { createFlight, updateFlight } from "@/app/flights/actions";
 import { CountryFlag } from "@/components/country-flag";
+import { AirportPicker } from "@/components/airport-picker";
 
 type Side = "departure" | "arrival";
-type FormState = { airport: string; date: string; time: string; timezone: string; terminal: string; gate: string };
-type FlightInitialData = { id?: string; departure_airport_iata?: string; departure_airport_icao?: string; departure_airport_name?: string; departure_country_code?: string; departure_local_date?: string; departure_local_time?: string; departure_timezone?: string; departure_terminal?: string; departure_gate?: string; arrival_airport_iata?: string; arrival_airport_icao?: string; arrival_airport_name?: string; arrival_country_code?: string; arrival_local_date?: string; arrival_local_time?: string; arrival_timezone?: string; arrival_terminal?: string; arrival_gate?: string; airline?: string; flight_number?: string; aircraft_type?: string; registration?: string; notes?: string; actual_duration_minutes?: number | null };
-const emptySide: FormState = { airport: "", date: "", time: "", timezone: "", terminal: "", gate: "" };
+type FormState = PlannedTime & { airport: Airport | null; terminal: string; gate: string };
+type FlightInitialData = { id?: string } & Record<string, unknown>;
+const inputClass = "mt-1.5 w-full rounded-xl border border-line-strong bg-surface px-3 py-3 text-sm font-normal text-ink outline-none focus:border-brand focus:ring-2 focus:ring-brand/15";
 
-export function FlightForm({ initialData }: { initialData?: FlightInitialData }) {
-  const [departure, setDeparture] = useState<FormState>({ airport: initialData?.departure_airport_iata || "", date: initialData?.departure_local_date || "", time: initialData?.departure_local_time?.slice(0, 5) || "", timezone: initialData?.departure_timezone || "", terminal: initialData?.departure_terminal || "", gate: initialData?.departure_gate || "" });
-  const [arrival, setArrival] = useState<FormState>({ airport: initialData?.arrival_airport_iata || "", date: initialData?.arrival_local_date || "", time: initialData?.arrival_local_time?.slice(0, 5) || "", timezone: initialData?.arrival_timezone || "", terminal: initialData?.arrival_terminal || "", gate: initialData?.arrival_gate || "" });
-  const [airline, setAirline] = useState(initialData?.airline || ""); const [flightNumber, setFlightNumber] = useState(initialData?.flight_number || ""); const [aircraftType, setAircraftType] = useState(initialData?.aircraft_type || ""); const [registration, setRegistration] = useState(initialData?.registration || ""); const [notes, setNotes] = useState(initialData?.notes || ""); const [actualHours, setActualHours] = useState(initialData?.actual_duration_minutes == null ? "" : String(Math.floor(initialData.actual_duration_minutes / 60))); const [actualMinutes, setActualMinutes] = useState(initialData?.actual_duration_minutes == null ? "" : String(initialData.actual_duration_minutes % 60)); const [error, setError] = useState(""); const [saving, setSaving] = useState(false);
-  const selectedDeparture = airports.find((a) => a.iata === departure.airport); const selectedArrival = airports.find((a) => a.iata === arrival.airport); const duration = useMemo(() => getScheduledDuration(departure, arrival), [departure, arrival]);
-  const setSide = (side: Side, patch: Partial<FormState>) => (side === "departure" ? setDeparture((value) => ({ ...value, ...patch })) : setArrival((value) => ({ ...value, ...patch })));
-  const chooseAirport = (side: Side, airport: Airport) => setSide(side, { airport: airport.iata, timezone: airport.timezone });
-  const getOptions = (value: string) => searchAirports(value).slice(0, 6);
-  async function submit(event: React.FormEvent) { event.preventDefault(); setError(""); if (!selectedDeparture || !selectedArrival) { setError("Choose a departure and arrival airport from the verified list."); return; } const depUtc = getScheduledFlightTime(departure.date, departure.time, departure.timezone); const arrUtc = getScheduledFlightTime(arrival.date, arrival.time, arrival.timezone); if (duration.error || !depUtc.iso || !arrUtc.iso) { setError(duration.error ?? "Check the planned date and time values."); return; } setSaving(true); const input = { departureAirportIata: selectedDeparture.iata, departureAirportIcao: selectedDeparture.icao, departureAirportName: selectedDeparture.name, departureCountryCode: selectedDeparture.countryCode, departureDate: departure.date, departureTime: departure.time, departureTimezone: departure.timezone, departureTerminal: departure.terminal, departureGate: departure.gate, departureUtc: depUtc.iso, arrivalAirportIata: selectedArrival.iata, arrivalAirportIcao: selectedArrival.icao, arrivalAirportName: selectedArrival.name, arrivalCountryCode: selectedArrival.countryCode, arrivalDate: arrival.date, arrivalTime: arrival.time, arrivalTimezone: arrival.timezone, arrivalTerminal: arrival.terminal, arrivalGate: arrival.gate, arrivalUtc: arrUtc.iso, airline, flightNumber, aircraftType, registration, notes, scheduledDurationMinutes: duration.minutes, actualDurationMinutes: actualHours || actualMinutes ? Number(actualHours || 0) * 60 + Number(actualMinutes || 0) : null }; const result = initialData?.id ? await updateFlight(initialData.id, input) : await createFlight(input); setSaving(false); if (result?.error) setError(result.error); }
-  return <form onSubmit={submit} className="space-y-6"><TicketPreview departure={selectedDeparture} arrival={selectedArrival} departureState={departure} arrivalState={arrival} airline={airline} flightNumber={flightNumber} duration={duration.minutes} /><section className="rounded-2xl border border-line bg-surface p-6"><div className="grid gap-6 md:grid-cols-2"><AirportField label="Departure airport" value={departure.airport} options={getOptions(departure.airport)} onChange={(value) => setSide("departure", { airport: value })} onSelect={(airport) => chooseAirport("departure", airport)} selected={selectedDeparture} /><AirportField label="Arrival airport" value={arrival.airport} options={getOptions(arrival.airport)} onChange={(value) => setSide("arrival", { airport: value })} onSelect={(airport) => chooseAirport("arrival", airport)} selected={selectedArrival} /></div><div className="mt-6 grid gap-6 md:grid-cols-2"><TimeFields label="Departure" state={departure} onChange={(patch) => setSide("departure", patch)} /><TimeFields label="Arrival" state={arrival} onChange={(patch) => setSide("arrival", patch)} /></div></section><section className="rounded-2xl border border-line bg-surface p-6"><h2 className="text-xl font-bold text-ink">Flight details</h2><div className="mt-5 grid gap-5 sm:grid-cols-2"><Field label="Airline" value={airline} onChange={setAirline} placeholder="e.g. Air China" /><Field label="Flight number" value={flightNumber} onChange={setFlightNumber} placeholder="e.g. CA1234" /><Field label="Aircraft type (optional)" value={aircraftType} onChange={setAircraftType} placeholder="e.g. Boeing 737-800" /><Field label="Registration (optional)" value={registration} onChange={setRegistration} placeholder="e.g. B-2087" /></div><div className="mt-6 grid gap-5 sm:grid-cols-2"><div><label className="text-sm font-semibold text-muted">Scheduled duration</label><div className="mt-1.5 rounded-xl bg-page px-4 py-3 text-ink">{duration.minutes == null ? "Calculated after times are valid" : `${Math.floor(duration.minutes / 60)}h ${duration.minutes % 60}m`}</div></div><div><label className="text-sm font-semibold text-muted">Actual duration <span className="font-normal text-subtle">(optional)</span></label><div className="mt-1.5 flex gap-2"><input type="number" min="0" max="99" value={actualHours} onChange={(e) => setActualHours(e.target.value)} className="min-w-0 w-full rounded-xl border border-line-strong bg-surface px-3 py-3 outline-none focus:border-brand focus:ring-2 focus:ring-brand/15" placeholder="Hours" /><input type="number" min="0" max="59" value={actualMinutes} onChange={(e) => setActualMinutes(e.target.value)} className="min-w-0 w-full rounded-xl border border-line-strong bg-surface px-3 py-3 outline-none focus:border-brand focus:ring-2 focus:ring-brand/15" placeholder="Minutes" /></div></div></div><label className="mt-5 block text-sm font-semibold text-muted">Notes<textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={4} className="mt-1.5 w-full rounded-xl border border-line-strong px-4 py-3 font-normal outline-none focus:border-brand focus:ring-2 focus:ring-brand/15" placeholder="Anything you want to remember…" /></label></section>{error && <p className="rounded-xl bg-danger-bg p-4 text-sm text-danger-fg">{error}</p>}<div className="flex justify-end"><button disabled={saving} className="rounded-full bg-brand px-7 py-3.5 font-bold text-on-brand shadow-lg shadow-brand/10 transition hover:bg-brand-hover focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand disabled:cursor-wait disabled:opacity-60">{saving ? "Saving flight…" : initialData?.id ? "Save changes →" : "Save flight →"}</button></div></form>;
+function initialText(data: Record<string, unknown>, key: string) {
+  return typeof data[key] === "string" ? data[key] as string : "";
+}
+function initialSide(data: Record<string, unknown>, side: Side): FormState {
+  const airport = airportFromSnapshot(data, side);
+  const date = initialText(data, side + "_local_date") || (side === "departure" ? initialText(data, "flight_date") : "");
+  const time = initialText(data, side + "_local_time").slice(0, 5);
+  const timezone = initialText(data, side + "_timezone");
+  return {
+    airport, date, time, timezone,
+    terminal: initialText(data, side + "_terminal"), gate: initialText(data, side + "_gate"),
+    disambiguation: snapshotClockChoice(date, time, timezone, initialText(data, side + "_scheduled_at_utc") || null),
+  };
 }
 
-function AirportField({ label, value, options, selected, onChange, onSelect }: { label: string; value: string; options: Airport[]; selected?: Airport; onChange: (value: string) => void; onSelect: (airport: Airport) => void }) { return <div className="relative"><label className="text-sm font-semibold text-muted">{label}<input required value={value} onChange={(e) => onChange(e.target.value.toUpperCase())} className="mt-1.5 w-full rounded-xl border border-line-strong px-4 py-3 uppercase outline-none focus:border-brand focus:ring-2 focus:ring-brand/15" placeholder="Search IATA, ICAO or airport name" />{value && !selected && <div className="absolute left-0 right-0 top-[74px] z-10 rounded-xl border border-line bg-surface p-1 shadow-xl">{options.map((airport) => <button type="button" key={airport.iata} onClick={() => onSelect(airport)} className="block w-full rounded-lg px-3 py-2 text-left text-sm hover:bg-page"><CountryFlag code={airport.countryCode} /> {airport.iata} · {airport.name}</button>)}</div>}</label>{selected && <p className="mt-2 text-xs text-muted"><CountryFlag code={selected.countryCode} /> {selected.name} · {selected.iata} · {selected.icao} · {selected.timezone}</p>}</div>; }
-function TimeFields({ label, state, onChange }: { label: string; state: FormState; onChange: (patch: Partial<FormState>) => void }) { return <div><h3 className="font-bold text-ink">{label} planned time</h3><div className="mt-3 grid grid-cols-2 gap-3"><Field label="Date" value={state.date} onChange={(value) => onChange({ date: value })} type="date" /><Field label="Local time" value={state.time} onChange={(value) => onChange({ time: value })} type="time" /></div><label className="mt-3 block text-xs font-bold uppercase tracking-wider text-subtle">Timezone<select required value={state.timezone} onChange={(e) => onChange({ timezone: e.target.value })} className="mt-1.5 w-full rounded-xl border border-line-strong bg-surface px-3 py-3 text-sm font-normal text-ink"><option value="">Select timezone</option>{["Asia/Shanghai", "Asia/Tokyo", "Europe/London", "Europe/Paris", "America/New_York", "America/Los_Angeles"].map((zone) => <option key={zone}>{zone}</option>)}</select></label><div className="mt-3 grid grid-cols-2 gap-3"><Field label="Terminal (optional)" value={state.terminal} onChange={(value) => onChange({ terminal: value })} /><Field label="Gate (optional)" value={state.gate} onChange={(value) => onChange({ gate: value })} /></div></div>; }
-function Field({ label, value, onChange, type = "text", placeholder }: { label: string; value: string; onChange: (value: string) => void; type?: string; placeholder?: string }) { return <label className="block text-xs font-bold uppercase tracking-wider text-subtle">{label}<input type={type} value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} className="mt-1.5 w-full rounded-xl border border-line-strong px-3 py-3 text-sm font-normal text-ink outline-none focus:border-brand focus:ring-2 focus:ring-brand/15" /></label>; }
-function TicketPreview({ departure, arrival, departureState, arrivalState, airline, flightNumber, duration }: { departure?: Airport; arrival?: Airport; departureState: FormState; arrivalState: FormState; airline: string; flightNumber: string; duration: number | null }) { return <section className="overflow-hidden rounded-[2rem] border border-line bg-surface shadow-xl shadow-ink/5"><div className="bg-panel p-6 text-on-panel"><p className="text-xs font-bold uppercase tracking-[0.2em] text-panel-accent">Flight ticket · planned journey</p><div className="mt-8 grid items-center gap-5 md:grid-cols-[1fr_auto_1fr]"><AirportBlock airport={departure} fallback="Departure" /><div className="text-center"><p className="text-sm font-semibold text-panel-accent">{airline || "Airline"} · {flightNumber || "Flight number"}</p><div className="mt-2 flex items-center gap-2 text-panel-accent"><span className="h-px w-16 bg-panel-accent" /><span>✈</span><span className="h-px w-16 bg-panel-accent" /></div><p className="mt-2 text-xs text-panel-muted">{duration == null ? "Duration pending" : `${Math.floor(duration / 60)}h ${duration % 60}m scheduled`}</p></div><AirportBlock airport={arrival} fallback="Arrival" align="right" /></div></div><div className="flex flex-wrap justify-between gap-3 bg-surface-muted px-6 py-4 text-xs text-muted"><span>{departureState.date || "Departure date"} · {departureState.time || "Local time"}</span><span>{arrivalState.date || "Arrival date"} · {arrivalState.time || "Local time"}</span></div></section>; }
-function AirportBlock({ airport, fallback, align = "left" }: { airport?: Airport; fallback: string; align?: "left" | "right" }) { return <div className={align === "right" ? "text-right" : "text-left"}><p className="text-2xl font-bold leading-tight sm:text-3xl">{airport?.name || fallback}</p><p className="mt-2 text-sm text-panel-muted">{airport ? <><CountryFlag code={airport.countryCode} /> {airport.iata} · {airport.icao}</> : "Select an airport"}</p></div>; }
+export function FlightForm({ initialData = {} }: { initialData?: FlightInitialData }) {
+  const [departure, setDeparture] = useState(() => initialSide(initialData, "departure"));
+  const [arrival, setArrival] = useState(() => initialSide(initialData, "arrival"));
+  const [airline, setAirline] = useState(initialText(initialData, "airline"));
+  const [flightNumber, setFlightNumber] = useState(initialText(initialData, "flight_number"));
+  const [aircraftType, setAircraftType] = useState(initialText(initialData, "aircraft_type"));
+  const [registration, setRegistration] = useState(initialText(initialData, "registration"));
+  const [notes, setNotes] = useState(initialText(initialData, "notes"));
+  const actual = typeof initialData.actual_duration_minutes === "number" ? initialData.actual_duration_minutes : null;
+  const [actualHours, setActualHours] = useState(actual == null ? "" : String(Math.floor(actual / 60)));
+  const [actualMinutes, setActualMinutes] = useState(actual == null ? "" : String(actual % 60));
+  const [error, setError] = useState("");
+  const [saving, setSaving] = useState(false);
+  const submitting = useRef(false);
+  const duration = useMemo(() => getScheduledDuration(departure, arrival), [departure, arrival]);
+
+  function setSide(side: Side, patch: Partial<FormState>) {
+    const clockChanged = ["date", "time", "timezone"].some(key => key in patch);
+    const change = (value: FormState) => ({ ...value, ...(clockChanged ? { disambiguation: undefined } : {}), ...patch });
+    if (side === "departure") setDeparture(change); else setArrival(change);
+  }
+  async function submit(event: React.FormEvent) {
+    event.preventDefault();
+    if (submitting.current) return;
+    setError("");
+    if (!departure.airport || !arrival.airport) {
+      setError("Select both airports or enter their information manually.");
+      return;
+    }
+    if (actualMinutes !== "" && (!Number.isInteger(Number(actualMinutes)) || Number(actualMinutes) < 0 || Number(actualMinutes) > 59)) {
+      setError("Actual duration minutes must be between 0 and 59."); return;
+    }
+    const input: Record<string, unknown> = {
+      airline, flightNumber, aircraftType, registration, notes,
+      actualDurationMinutes: actualHours !== "" || actualMinutes !== "" ? Number(actualHours || 0) * 60 + Number(actualMinutes || 0) : null,
+    };
+    for (const [side, state] of [["departure", departure], ["arrival", arrival]] as const) {
+      const airport = state.airport!;
+      Object.assign(input, {
+        [side + "AirportIata"]: airport.iata, [side + "AirportIcao"]: airport.icao,
+        [side + "AirportName"]: airport.name, [side + "AirportIdent"]: airport.ident,
+        [side + "CountryCode"]: airport.countryCode, [side + "Timezone"]: state.timezone,
+        [side + "Date"]: state.date, [side + "Time"]: state.time,
+        [side + "Disambiguation"]: state.disambiguation,
+        [side + "Terminal"]: state.terminal, [side + "Gate"]: state.gate,
+      });
+    }
+    const validated = normalizeFlightInput(input);
+    if (validated.error) { setError(validated.error); return; }
+    submitting.current = true; setSaving(true);
+    try {
+      const result = initialData.id ? await updateFlight(initialData.id, input) : await createFlight(input);
+      if (result?.error) setError(result.error);
+    } catch {
+      setError("The flight could not be saved. Check your connection and try again.");
+    } finally { submitting.current = false; setSaving(false); }
+  }
+
+  return <form onSubmit={submit}>
+    <fieldset disabled={saving} className="min-w-0 space-y-6">
+      <TicketPreview departure={departure} arrival={arrival} airline={airline} flightNumber={flightNumber} duration={duration.minutes} />
+      <section className="rounded-2xl border border-line bg-surface p-6">
+        <div className="grid gap-6 md:grid-cols-2">
+          {([["departure", departure], ["arrival", arrival]] as const).map(([side, state]) => <AirportPicker
+            key={side} label={side === "departure" ? "Departure airport" : "Arrival airport"} selected={state.airport}
+            onChange={(airport) => setSide(side, { airport })}
+            onSelect={(airport) => setSide(side, { airport, timezone: airport.timezone || "" })} />)}
+        </div>
+        <p className="mt-3 text-xs text-subtle">Airports: <a href="https://ourairports.com/data/" target="_blank" rel="noreferrer" className="hover:text-brand">OurAirports</a>. Timezone boundaries: <a href="https://github.com/evansiroky/timezone-boundary-builder" target="_blank" rel="noreferrer" className="hover:text-brand">timezone-boundary-builder / © OpenStreetMap contributors (ODbL)</a>.</p>
+        <div className="mt-6 grid gap-6 md:grid-cols-2">
+          <TimeFields label="Departure" state={departure} onChange={(patch) => setSide("departure", patch)} />
+          <TimeFields label="Arrival" state={arrival} onChange={(patch) => setSide("arrival", patch)} />
+        </div>
+      </section>
+      <section className="rounded-2xl border border-line bg-surface p-6">
+        <h2 className="text-xl font-bold text-ink">Flight details</h2>
+        <div className="mt-5 grid gap-5 sm:grid-cols-2">
+          <Field label="Airline" value={airline} onChange={setAirline} placeholder="e.g. Air China" />
+          <Field label="Flight number" value={flightNumber} onChange={setFlightNumber} placeholder="e.g. CA1234" />
+          <Field label="Aircraft type (optional)" value={aircraftType} onChange={setAircraftType} placeholder="e.g. Boeing 737-800" />
+          <Field label="Registration (optional)" value={registration} onChange={setRegistration} placeholder="e.g. B-2087" />
+        </div>
+        <div className="mt-6 grid gap-5 sm:grid-cols-2">
+          <div><label className="text-sm font-semibold text-muted">Scheduled duration</label>
+            <div aria-live="polite" className="mt-1.5 rounded-xl bg-page px-4 py-3 text-ink">
+              {duration.minutes == null ? "Calculated after times are valid" : Math.floor(duration.minutes / 60) + "h " + duration.minutes % 60 + "m"}
+            </div>
+          </div>
+          <div><p className="text-sm font-semibold text-muted">Actual duration <span className="font-normal text-subtle">(optional)</span></p>
+            <div className="mt-1.5 flex gap-2">
+              <input aria-label="Actual duration hours" type="number" min="0" max="99" step="1" value={actualHours} onChange={e => setActualHours(e.target.value)} className={inputClass + " min-w-0"} placeholder="Hours" />
+              <input aria-label="Actual duration minutes" type="number" min="0" max="59" step="1" value={actualMinutes} onChange={e => setActualMinutes(e.target.value)} className={inputClass + " min-w-0"} placeholder="Minutes" />
+            </div>
+          </div>
+        </div>
+        <label className="mt-5 block text-sm font-semibold text-muted">Notes<textarea value={notes} onChange={e => setNotes(e.target.value)} rows={4} maxLength={10000} className={inputClass} placeholder="Anything you want to remember…" /></label>
+      </section>
+      {error && <p role="alert" className="rounded-xl bg-danger-bg p-4 text-sm text-danger-fg">{error}</p>}
+      <div className="flex justify-end"><button disabled={saving} className="rounded-full bg-brand px-7 py-3.5 font-bold text-on-brand shadow-lg shadow-brand/10 transition hover:bg-brand-hover focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand disabled:cursor-wait disabled:opacity-60">
+        {saving ? "Saving flight…" : initialData.id ? "Save changes →" : "Save flight →"}
+      </button></div>
+    </fieldset>
+  </form>;
+}
+
+function TimeFields({ label, state, onChange }: { label: string; state: FormState; onChange: (patch: Partial<FormState>) => void }) {
+  const listId = useId();
+  const [zones, setZones] = useState<string[]>([]);
+  useEffect(() => {
+    try { setZones(Intl.supportedValuesOf("timeZone")); } catch { /* manual input still accepts valid IANA names */ }
+  }, []);
+  const clock = getScheduledFlightTime(state.date, state.time, state.timezone, state.disambiguation);
+  return <div>
+    <h3 className="font-bold text-ink">{label} planned time</h3>
+    <div className="mt-3 grid grid-cols-2 gap-3">
+      <Field label="Date" ariaLabel={label + " date"} value={state.date} onChange={date => onChange({ date })} type="date" required />
+      <Field label="Local time" ariaLabel={label + " local time"} value={state.time} onChange={time => onChange({ time })} type="time" required />
+    </div>
+    <label className="mt-3 block text-xs font-bold uppercase tracking-wider text-subtle">Timezone
+      <input required aria-label={label + " timezone"} autoComplete="off" maxLength={100} list={listId} value={state.timezone}
+        onChange={e => onChange({ timezone: e.target.value })} className={inputClass} placeholder="Select or type IANA timezone" />
+    </label>
+    <datalist id={listId}>{[...new Set([...zones, state.timezone].filter(Boolean))].sort().map(zone => <option key={zone} value={zone} />)}</datalist>
+    {clock.ambiguous && <label className="mt-3 block text-sm text-muted">Clock change — choose occurrence
+      <select required aria-label={label + " clock change"} value={state.disambiguation || ""} onChange={e => onChange({ disambiguation: e.target.value as "earlier" | "later" })} className={inputClass}>
+        <option value="">Choose earlier or later</option>{clock.choices.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
+      </select>
+    </label>}
+    {clock.error && state.date && state.time && state.timezone && <p role="status" className="mt-2 text-xs text-danger-fg">{clock.error}</p>}
+    <div className="mt-3 grid grid-cols-2 gap-3">
+      <Field label="Terminal (optional)" ariaLabel={label + " terminal"} value={state.terminal} onChange={terminal => onChange({ terminal })} />
+      <Field label="Gate (optional)" ariaLabel={label + " gate"} value={state.gate} onChange={gate => onChange({ gate })} />
+    </div>
+  </div>;
+}
+
+function Field({ label, ariaLabel, value, onChange, type = "text", placeholder, required = false }: {
+  label: string; ariaLabel?: string; value: string; onChange: (value: string) => void;
+  type?: string; placeholder?: string; required?: boolean;
+}) {
+  return <label className="block text-xs font-bold uppercase tracking-wider text-subtle">{label}<input type={type} aria-label={ariaLabel} required={required} value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder} className={inputClass} /></label>;
+}
+
+function TicketPreview({ departure, arrival, airline, flightNumber, duration }: {
+  departure: FormState; arrival: FormState; airline: string; flightNumber: string; duration: number | null;
+}) {
+  return <section className="overflow-hidden rounded-[2rem] border border-line bg-surface shadow-xl shadow-ink/5">
+    <div className="bg-panel p-6 text-on-panel">
+      <p className="text-xs font-bold uppercase tracking-[0.2em] text-panel-accent">Flight ticket · planned journey</p>
+      <div className="mt-8 grid items-center gap-5 md:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]">
+        <AirportBlock airport={departure.airport} fallback="Departure" />
+        <div className="text-center"><p className="text-sm font-semibold text-panel-accent">{airline || "Airline"} · {flightNumber || "Flight number"}</p>
+          <div className="mt-2 flex items-center justify-center gap-2 text-panel-accent"><span className="h-px w-16 bg-panel-accent" /><span>✈</span><span className="h-px w-16 bg-panel-accent" /></div>
+          <p className="mt-2 text-xs text-panel-muted">{duration == null ? "Duration pending" : Math.floor(duration / 60) + "h " + duration % 60 + "m scheduled"}</p>
+        </div>
+        <AirportBlock airport={arrival.airport} fallback="Arrival" align="right" />
+      </div>
+    </div>
+    <div className="flex flex-wrap justify-between gap-3 bg-surface-muted px-6 py-4 text-xs text-muted">
+      <span>{departure.date || "Departure date"} · {departure.time || "Local time"} {departure.timezone}</span>
+      <span>{arrival.date || "Arrival date"} · {arrival.time || "Local time"} {arrival.timezone}</span>
+    </div>
+  </section>;
+}
+function AirportBlock({ airport, fallback, align = "left" }: { airport: Airport | null; fallback: string; align?: "left" | "right" }) {
+  return <div className={align === "right" ? "min-w-0 text-right" : "min-w-0 text-left"}>
+    <p className="break-words text-2xl font-bold leading-tight sm:text-3xl">{airport?.name || fallback}</p>
+    <p className="mt-2 text-sm text-panel-muted">{airport ? <><CountryFlag code={airport.countryCode} /> {airportCodes(airport)}</> : "Select an airport"}</p>
+  </div>;
+}

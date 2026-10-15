@@ -1,0 +1,19 @@
+{
+  "ourairports_revision": "81d442d8361677cc3134bb18120409b1898c18ba",
+  "boundary_release": "2026e",
+  "boundary_variant": "comprehensive-land",
+  "inputs": {
+    "airports.csv": {
+      "url": "https://raw.githubusercontent.com/davidmegginson/ourairports-data/81d442d8361677cc3134bb18120409b1898c18ba/airports.csv",
+      "sha256": "536d6de0dfeed92d4bbe8fd7411ba6bc14c43251c2161f34b9fbfd50ee3f4113"
+    },
+    "countries.csv": {
+      "url": "https://raw.githubusercontent.com/davidmegginson/ourairports-data/81d442d8361677cc3134bb18120409b1898c18ba/countries.csv",
+      "sha256": "2a9dbee691125b0cdb8ceb5fe227c48c903f99c488963b8e53e2ab366521c639"
+    },
+    "timezones.geojson.zip": {
+      "url": "https://github.com/evansiroky/timezone-boundary-builder/releases/download/2026e/timezones.geojson.zip",
+      "sha256": "a75361c760d6de2fc95c63e97e0b1086d5dfe6fdb2bc6d96efeb3a94673aaa01"
+    }
+  }
+}

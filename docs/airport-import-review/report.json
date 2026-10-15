@@ -1,0 +1,94 @@
+{
+  "mode": "dry-run",
+  "database_connections": 0,
+  "database_writes": 0,
+  "source_total": 86251,
+  "valid": {
+    "records": 86251,
+    "missing_iata": 77197,
+    "missing_icao": 75697,
+    "timezone_matched": 85894,
+    "timezone_unresolved": 357,
+    "timezone_match_percent": 99.5861
+  },
+  "listed": {
+    "records": 72677,
+    "missing_iata": 63623,
+    "missing_icao": 62123,
+    "timezone_matched": 72362,
+    "timezone_unresolved": 315,
+    "timezone_match_percent": 99.5666
+  },
+  "closed": 13574,
+  "quarantined": 0,
+  "airport_types": {
+    "heliport": 23244,
+    "small_airport": 42817,
+    "closed": 13574,
+    "seaplane_base": 1273,
+    "medium_airport": 4104,
+    "balloonport": 63,
+    "large_airport": 1176
+  },
+  "issue_counts": {
+    "boundary_no_match": 257,
+    "boundary_ambiguous": 100
+  },
+  "duplicate_codes": {
+    "iata_code": {},
+    "icao_code": {},
+    "gps_code": {},
+    "ident": {}
+  },
+  "sample_count": 24,
+  "reference_checks": {
+    "LHR": {
+      "ident": "EGLL",
+      "timezone": "Europe/London",
+      "latitude": 51.470748,
+      "longitude": -0.459909
+    },
+    "JFK": {
+      "ident": "KJFK",
+      "timezone": "America/New_York",
+      "latitude": 40.639447,
+      "longitude": -73.779317
+    },
+    "LAX": {
+      "ident": "KLAX",
+      "timezone": "America/Los_Angeles",
+      "latitude": 33.942501,
+      "longitude": -118.407997
+    },
+    "HND": {
+      "ident": "RJTT",
+      "timezone": "Asia/Tokyo",
+      "latitude": 35.549678,
+      "longitude": 139.786958
+    },
+    "KTM": {
+      "ident": "VNKT",
+      "timezone": "Asia/Kathmandu",
+      "latitude": 27.6966,
+      "longitude": 85.3591
+    },
+    "ADL": {
+      "ident": "YPAD",
+      "timezone": "Australia/Adelaide",
+      "latitude": -34.947512,
+      "longitude": 138.533393
+    },
+    "PEK": {
+      "ident": "ZBAA",
+      "timezone": "Asia/Shanghai",
+      "latitude": 40.077349,
+      "longitude": 116.596702
+    },
+    "PKX": {
+      "ident": "ZBAD",
+      "timezone": "Asia/Shanghai",
+      "latitude": 39.501289,
+      "longitude": 116.413967
+    }
+  }
+}

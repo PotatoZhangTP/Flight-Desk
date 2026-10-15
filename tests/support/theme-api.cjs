@@ -9,6 +9,7 @@ function session(role){const exp=Math.floor(Date.now()/1000)+3600;return{access_
 const profiles=Object.fromEntries(Object.keys(ids).map(role=>[ids[role],{id:ids[role],display_name:role==='admin'?'Test Admin':'Test Pilot',bio:'Isolated browser test profile'}]));
 const flights=[{id:flightId,user_id:ids.member,flight_date:'2026-10-20',departure_airport:'PEK',arrival_airport:'JFK',departure_airport_iata:'PEK',departure_airport_icao:'ZBAA',departure_airport_name:'Beijing Capital',departure_country_code:'CN',arrival_airport_iata:'JFK',arrival_airport_icao:'KJFK',arrival_airport_name:'New York JFK',arrival_country_code:'US',departure_local_date:'2026-10-20',departure_local_time:'10:00',departure_timezone:'Asia/Shanghai',arrival_local_date:'2026-10-20',arrival_local_time:'12:00',arrival_timezone:'America/New_York',airline:'Test Airline',flight_number:'TEST981',aircraft_type:'Boeing 777-300ER',registration:'TEST-01',scheduled_duration_minutes:840,actual_duration_minutes:null,duration_minutes:null,notes:'Local test fixture, not a real flight.'}];
 const timestamp='2026-10-15T00:00:00Z';
+const airportReferences=require('node:fs').readFileSync(require('node:path').join(__dirname,'../../scripts/airports/fixtures/sample.jsonl'),'utf8').trim().split('\n').map(line=>{const r=JSON.parse(line);return{...r,id:r.source_id};});
 let items=['planned','completed','on_hold'].map((status,index)=>({id:`33333333-3333-4333-8333-${String(index+1).padStart(12,'0')}`,title:`Test ${status} milestone`,description:'Local browser test content',category:'Platform',status,publication_status:'published',priority:null,target_date:null,completed_date:null,sort_order:index,created_at:timestamp,updated_at:timestamp}));
 let content=Object.entries(landingDefaults).flatMap(([content_key,value])=>['draft','published'].map(publication_status=>({content_key,content:value,publication_status,updated_at:timestamp})));
 const server=http.createServer(async(req,res)=>{
@@ -27,12 +28,23 @@ const server=http.createServer(async(req,res)=>{
  if(url.pathname==='/auth/v1/user')return role?send(user(role)):send({message:'Not authenticated'},401);
  if(url.pathname==='/auth/v1/logout'||url.pathname==='/auth/v1/recover')return send({});
  if(url.pathname==='/rest/v1/rpc/is_site_admin'||url.pathname==='/rest/v1/rpc/is_roadmap_admin')return send(role==='admin');
+ if(url.pathname==='/rest/v1/rpc/search_airports'){
+  const q=String(body.search_query||'').toLowerCase();
+  if(q==='failure')return send({message:'Local reference failure'},503);
+  const found=airportReferences.filter(a=>a.status==='listed'&&['iata_code','icao_code','ident','name','municipality','country_name'].some(k=>String(a[k]||'').toLowerCase().includes(q)))
+   .sort((a,b)=>Number([b.iata_code,b.icao_code].some(v=>v?.toLowerCase()===q))-Number([a.iata_code,a.icao_code].some(v=>v?.toLowerCase()===q)));
+  return send(found.slice(0,Math.min(Number(body.result_limit)||12,20)));
+ }
  if(url.pathname==='/rest/v1/profiles'){
   if(!role||url.searchParams.get('id')!==`eq.${ids[role]}`)return deny();
   if(req.method==='PATCH')Object.assign(profiles[ids[role]],body);
   return rows([profiles[ids[role]]]);
  }
  if(url.pathname==='/rest/v1/flights'){
+  if(req.method==='POST'){
+   if(!role||body.user_id!==ids[role])return deny();
+   const item={...body,id:require('node:crypto').randomUUID()};flights.unshift(item);return rows([item]);
+  }
   if(!role||url.searchParams.get('user_id')!==`eq.${ids[role]}`)return deny();
   const filtered=flights.filter(item=>item.user_id===ids[role]&&(!url.searchParams.has('id')||url.searchParams.get('id')===`eq.${item.id}`));
   if(req.method==='PATCH')filtered.forEach(item=>Object.assign(item,body));
