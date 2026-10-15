@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Brand } from "./brand";
+import { ThemeMenu } from "./theme-controls";
 import { LogbookLink } from "./logbook-link";
 import { UpcomingButton } from "./upcoming-button";
 import { AccountControls } from "./account-controls";
@@ -10,6 +11,6 @@ export async function SiteHeader() {
   return <header className="relative z-20 border-b border-line bg-surface/95"><div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-x-4 gap-y-3 px-6 py-4 lg:px-12">
     <Brand />
     <nav aria-label="Main navigation" className="order-3 flex w-full flex-wrap items-center gap-x-5 gap-y-3 border-t border-surface-muted pt-3 text-sm font-semibold text-muted lg:order-none lg:w-auto lg:border-0 lg:pt-0"><Link className="rounded hover:text-brand focus-visible:outline-2 focus-visible:outline-brand" href="/#features">Features</Link>{["Blog", "Community", "Pricing"].map(label => <UpcomingButton key={label} className="cursor-pointer rounded transition hover:text-brand focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand">{label}</UpcomingButton>)}{user && <Link className="hover:text-brand" href="/dashboard">Dashboard</Link>}</nav>
-    {user ? <AccountControls email={user.email ?? ""} initials={(user.email ?? "P").slice(0, 2).toUpperCase()} isAdmin={isAdmin} /> : <LogbookLink />}
+    <div className="flex flex-wrap items-center gap-3"><ThemeMenu />{user ? <AccountControls email={user.email ?? ""} initials={(user.email ?? "P").slice(0, 2).toUpperCase()} isAdmin={isAdmin} /> : <LogbookLink />}</div>
   </div></header>;
 }

@@ -183,6 +183,7 @@ test('public navigation reserves unfinished pages without fake links; footer use
   const deps = {'react/jsx-runtime':require('react/jsx-runtime'),'next/link':require('next/link'),
     './brand':{Brand:()=>React.createElement('span',null,'Flight Desk')},'./logbook-link':logbookLink,'./upcoming-button':upcoming};
   const header=loadModule('components/site-header.tsx', {...deps,
+    './theme-controls':{ThemeMenu:()=>null},
     './account-controls':{AccountControls:()=>null},
     '@/lib/admin/server':{siteAdminAccess:async()=>({user:null,isAdmin:false})}});
   const html=renderToStaticMarkup(await header.SiteHeader());

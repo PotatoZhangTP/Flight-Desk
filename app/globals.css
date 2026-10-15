@@ -1,13 +1,14 @@
 @import "tailwindcss";
 :root {
-  color-scheme: light;
-  --page: light-dark(#ffffff, #101014);
-  --surface: light-dark(#ffffff, #1b1a20);
-  --surface-muted: light-dark(#f7f7f9, #222128);
+  color-scheme: light dark;
+  --page: light-dark(#ffffff, #101114);
+  --surface: light-dark(#ffffff, #1b1c21);
+  --surface-muted: light-dark(#f7f7f9, #22232a);
+  --elevated: light-dark(#ffffff, #25262d);
   --ink: light-dark(#111111, #f4f3f7);
-  --muted: light-dark(#64616d, #b8b5c2);
+  --muted: light-dark(#64616d, #b5b8c0);
   --subtle: light-dark(#74717e, #a5a0b3);
-  --line: light-dark(#e8e6ef, #34313d);
+  --line: light-dark(#e8e6ef, #34363d);
   --line-strong: light-dark(#c7c3d0, #56505f);
   --brand: light-dark(#7656c8, #a48be0);
   --brand-hover: light-dark(#6444b0, #bda7ed);
@@ -38,6 +39,7 @@
   --color-page: var(--page);
   --color-surface: var(--surface);
   --color-surface-muted: var(--surface-muted);
+  --color-elevated: var(--elevated);
   --color-ink: var(--ink);
   --color-muted: var(--muted);
   --color-subtle: var(--subtle);
@@ -68,6 +70,18 @@ body { margin: 0; background: var(--cream); color: var(--ink); font-family: Aria
 @layer base {
   a { color: inherit; text-decoration: none; }
   button, input { font: inherit; }
+  input:not([type="radio"]):not([type="checkbox"]), textarea, select { background-color: var(--surface); color: var(--ink); }
+  input::placeholder, textarea::placeholder { color: var(--subtle); opacity: 1; }
+  input:focus-visible, textarea:focus-visible, select:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+  input[type="radio"], input[type="checkbox"] { accent-color: var(--brand); }
+  input:-webkit-autofill { -webkit-text-fill-color: var(--ink); box-shadow: 0 0 0 1000px var(--surface) inset; }
+}
+.theme-dark-only { display: none; }
+:root[data-theme="dark"] .theme-light-only { display: none; }
+:root[data-theme="dark"] .theme-dark-only { display: block; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]):not([data-theme="dark"]) .theme-light-only { display: none; }
+  :root:not([data-theme="light"]):not([data-theme="dark"]) .theme-dark-only { display: block; }
 }
 .grid-paper { background-image: linear-gradient(var(--line) 1px, transparent 1px), linear-gradient(90deg, var(--line) 1px, transparent 1px); background-size: 28px 28px; }
 .eyebrow { color: var(--brand); font-size: 0.75rem; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; }
