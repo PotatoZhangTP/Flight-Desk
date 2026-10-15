@@ -20,6 +20,7 @@ function loadModule(file, dependencies = {}) {
   return module.exports;
 }
 const model = loadModule('lib/roadmap/model.ts');
+const contentModel = loadModule('lib/content/model.ts');
 function form(overrides = {}) {
   const data = new FormData();
   for (const [key, value] of Object.entries({title:'Flight map', description:'Routes', category:'Maps', status:'planned', publication_status:'draft', priority:'', target_date:'', completed_date:'', ...overrides})) data.set(key, value);
@@ -95,6 +96,7 @@ const cards = loadModule('components/roadmap-cards.tsx', {
   'react/jsx-runtime': require('react/jsx-runtime'),
   'next/link': require('next/link'),
   '@/lib/roadmap/model': model,
+  '@/lib/content/model': contentModel,
 });
 const record = (title, status, publication_status = 'published') => ({
   id: title, title, status, publication_status, category:'Platform', description:'A real published milestone',
@@ -109,9 +111,10 @@ test('landing uses a vertical product narrative with the exact hero copy and pre
     '@/components/site-footer':{SiteFooter:()=>React.createElement('footer')},
     '@/components/journey-demo':journey,'@/components/roadmap-cards':cards,
     '@/lib/roadmap/server':{publishedRoadmap:async()=>({items:[record('Public milestone','planned')],failed:false})},
+    '@/lib/content/server':{publishedLandingCopy:async()=>({...contentModel.landingDefaults})},
   });
   const html=renderToStaticMarkup(await home.default());
-  assert.match(html.replace(/<[^>]*>/g,''),/Your Flying, Clearly Logged\./);
+  assert.match(html.replace(/<[^>]*>/g,'').replace(/\s+/g,' '),/Your Flying, Clearly Logged\./);
   assert.doesNotMatch(html,/Your own account\. Your own records\. Room to grow\.|grid-paper|bg-panel|background-image/);
   assert.ok(html.indexOf('id="hero-title"') < html.indexOf('Product demo'));
   assert.ok(html.indexOf('Product demo') < html.indexOf('id="features"'));

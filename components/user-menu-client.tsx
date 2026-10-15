@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { signOut } from "@/app/auth/actions";
 
-export function UserMenuClient({ email, initials, isAdmin }: { email: string; initials: string; isAdmin: boolean }) {
+export function UserMenuClient({ email, initials }: { email: string; initials: string }) {
   const [open, setOpen] = useState(false);
   const root = useRef<HTMLDivElement>(null);
   const trigger = useRef<HTMLButtonElement>(null);
@@ -23,7 +23,6 @@ export function UserMenuClient({ email, initials, isAdmin }: { email: string; in
     {open && <div className="absolute right-0 z-30 mt-2 w-56 rounded-2xl border border-line bg-surface p-2 shadow-xl shadow-ink/10">
       <Link href="/profile" onClick={() => setOpen(false)} className={linkClass}>My Profile</Link>
       <Link href="/settings" onClick={() => setOpen(false)} className={linkClass}>Settings</Link>
-      {isAdmin && <Link href="/admin/roadmap" onClick={() => setOpen(false)} className={linkClass}>Manage Roadmap</Link>}
       <form action={signOut}><button className="w-full rounded-xl px-3 py-2.5 text-left text-sm font-semibold text-danger-fg hover:bg-danger-bg focus-visible:outline-2 focus-visible:outline-brand">Sign out</button></form>
     </div>}
   </div>;

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { formatRoadmapDate, landingRoadmapGroups, roadmapItemAnchor, roadmapItemHref, statuses, statusLabels, statusStyles, type RoadmapItem } from "@/lib/roadmap/model";
+import { landingDefaults, type LandingCopy } from "@/lib/content/model";
 
 export function RoadmapCard({ item, mode = "detailed" }: { item: RoadmapItem; mode?: "compact" | "detailed" }) {
   const showCompletedDate = item.status === "completed";
@@ -22,10 +23,10 @@ export function RoadmapCard({ item, mode = "detailed" }: { item: RoadmapItem; mo
   </article>;
 }
 
-export function RoadmapSummary({ items, failed }: { items: RoadmapItem[]; failed: boolean }) {
+export function RoadmapSummary({ items, failed, copy = landingDefaults }: { items: RoadmapItem[]; failed: boolean; copy?: LandingCopy }) {
   const groups = landingRoadmapGroups(items);
   return <section id="roadmap" className="border-y border-line bg-page py-16 sm:py-24"><div className="mx-auto max-w-7xl px-6 lg:px-12">
-    <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end"><div><p className="eyebrow">Our flight plan</p><h2 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">Building the Next Journey</h2><p className="mt-3 max-w-lg text-sm leading-6 text-muted">What’s ready, what’s taking shape, and what’s next.</p></div><Link href="/roadmap" className="shrink-0 rounded-lg py-1 text-sm font-semibold text-brand hover:underline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand">View Full Roadmap <span aria-hidden="true">→</span></Link></div>
+    <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end"><div><p className="eyebrow whitespace-pre-line">{copy["landing.roadmap.eyebrow"]}</p><h2 className="mt-3 whitespace-pre-line text-3xl font-bold tracking-tight sm:text-4xl">{copy["landing.roadmap.title"]}</h2><p className="mt-3 max-w-lg whitespace-pre-line text-sm leading-6 text-muted">{copy["landing.roadmap.description"]}</p></div><Link href="/roadmap" className="shrink-0 whitespace-pre-line rounded-lg py-1 text-sm font-semibold text-brand hover:underline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand">{copy["landing.roadmap.link_label"]} <span aria-hidden="true">→</span></Link></div>
     {failed ? <p role="alert" className="mt-6 rounded-xl border border-danger-line bg-surface p-4 text-sm text-danger-fg">The roadmap is temporarily unavailable. Please try again later.</p> : <div className="mt-7 space-y-6">{groups.map(group => <section key={group.status} aria-labelledby={`home-roadmap-${group.status}`}><h3 id={`home-roadmap-${group.status}`} className="mb-3 text-sm font-semibold text-muted">{statusLabels[group.status]}</h3>{group.items.length ? <div className="grid auto-rows-fr gap-4 sm:grid-cols-2 lg:grid-cols-4">{group.items.map(item => <RoadmapCard key={item.id} item={item} mode="compact" />)}</div> : <p className="rounded-xl border border-dashed border-line px-4 py-3 text-sm text-muted">No published {statusLabels[group.status].toLowerCase()} items yet.</p>}</section>)}</div>}
   </div></section>;
 }
