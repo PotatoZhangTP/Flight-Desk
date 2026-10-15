@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { LogbookLink } from "./logbook-link";
-import { formatRoadmapDate, landingRoadmapGroups, normalizeRoadmapItems, roadmapItemAnchor, roadmapItemHref, statuses, statusLabels, statusStyles, type RoadmapItem } from "@/lib/roadmap/model";
+import { formatRoadmapDate, landingRoadmapGroups, roadmapItemAnchor, roadmapItemHref, statuses, statusLabels, statusStyles, type RoadmapItem } from "@/lib/roadmap/model";
 import { landingDefaults, type LandingCopy } from "@/lib/content/model";
 
 export function RoadmapCard({ item, mode = "detailed" }: { item: RoadmapItem; mode?: "compact" | "detailed" }) {
@@ -39,6 +39,5 @@ export function RoadmapEmptyState({ compact = false }: { compact?: boolean }) {
 }
 
 export function RoadmapBoard({ items }: { items: RoadmapItem[] }) {
-  items = normalizeRoadmapItems(items);
   return <div className="mt-8 grid items-start gap-6 md:grid-cols-2 xl:grid-cols-3">{statuses.map(status => <section key={status} aria-labelledby={`status-${status}`} className="min-w-0"><h2 id={`status-${status}`} className="mb-4 flex items-center justify-between text-lg font-bold">{statusLabels[status]}<span className={`rounded-full px-3 py-1 text-sm ${statusStyles[status]}`}>{items.filter(item => item.status === status).length}</span></h2><div className="space-y-5">{items.filter(item => item.status === status).map(item => <RoadmapCard key={item.id} item={item} />)}{!items.some(item => item.status === status) && <p className="rounded-xl border border-dashed border-line-strong p-4 text-sm text-muted">No published items yet.</p>}</div></section>)}</div>;
 }

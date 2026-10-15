@@ -19,8 +19,6 @@
   --panel-accent: #a48be0;
   --completed-bg: light-dark(#eaf4ee, #1e3027);
   --completed-fg: light-dark(#326248, #a4d2b6);
-  --progress-bg: light-dark(#faf0e5, #352a1f);
-  --progress-fg: light-dark(#895723, #e5c193);
   --planned-bg: light-dark(#f0f1f5, #272a32);
   --planned-fg: light-dark(#555d70, #bec5d8);
   --hold-bg: light-dark(#f0ecf7, #2d253b);
@@ -55,8 +53,6 @@
   --color-panel-accent: var(--panel-accent);
   --color-completed-bg: var(--completed-bg);
   --color-completed-fg: var(--completed-fg);
-  --color-progress-bg: var(--progress-bg);
-  --color-progress-fg: var(--progress-fg);
   --color-planned-bg: var(--planned-bg);
   --color-planned-fg: var(--planned-fg);
   --color-hold-bg: var(--hold-bg);

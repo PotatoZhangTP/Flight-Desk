@@ -1,6 +1,6 @@
 import "server-only";
 import { createClient } from "@/lib/supabase/server";
-import { normalizeRoadmapItems, type LegacyRoadmapItem } from "./model";
+import { readRoadmapItems, type DatabaseRoadmapItem } from "./read-model.server";
 
 export async function roadmapAccess() {
   const supabase = await createClient();
@@ -17,5 +17,5 @@ export async function publishedRoadmap() {
     .select("id,title,description,category,status,publication_status,priority,target_date,completed_date,sort_order,created_at,updated_at")
     .eq("publication_status", "published").order("sort_order").order("created_at").order("id")
     .abortSignal(AbortSignal.timeout(8000));
-  return { items: normalizeRoadmapItems((data ?? []) as LegacyRoadmapItem[]), failed: Boolean(error) };
+  return { items: readRoadmapItems((data ?? []) as DatabaseRoadmapItem[]), failed: Boolean(error) };
 }

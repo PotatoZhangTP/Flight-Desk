@@ -17,7 +17,7 @@ function luminance(hex) {
 }
 for (const mode of ['light','dark']) {
   test(`${mode} theme normal text and semantic badges meet WCAG AA contrast`, () => {
-    const pairs=[['ink','page'],['ink','surface'],['muted','page'],['subtle','surface'],['brand','page'],['on-brand','brand'],['on-brand','brand-hover'],['on-panel','panel'],['panel-muted','panel'],['panel-accent','panel'],...['completed','progress','planned','hold','danger'].map(status=>[`${status}-fg`,`${status}-bg`])];
+    const pairs=[['ink','page'],['ink','surface'],['muted','page'],['subtle','surface'],['brand','page'],['on-brand','brand'],['on-brand','brand-hover'],['on-panel','panel'],['panel-muted','panel'],['panel-accent','panel'],...['completed','planned','hold','danger'].map(status=>[`${status}-fg`,`${status}-bg`])];
     for(const [foreground,background] of pairs) {
       const a=luminance(token(foreground,mode)),b=luminance(token(background,mode));
       const ratio=(Math.max(a,b)+0.05)/(Math.min(a,b)+0.05);

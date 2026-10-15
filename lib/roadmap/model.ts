@@ -13,15 +13,9 @@ export type RoadmapItem = {
   target_date: string | null; completed_date: string | null; sort_order: number;
   created_at: string; updated_at: string;
 };
-export type LegacyRoadmapItem = Omit<RoadmapItem, "status"> & { status: RoadmapStatus | "in_progress" };
-// Keep every legacy record visible before the administrator runs the SQL migration.
-export function normalizeRoadmapItems(items: readonly LegacyRoadmapItem[]): RoadmapItem[] {
-  return items.map(item => ({ ...item, status: item.status === "in_progress" ? "planned" : item.status }));
-}
 export function roadmapItemAnchor(id: string) { return `roadmap-item-${id}`; }
 export function roadmapItemHref(id: string) { return `/roadmap?item=${encodeURIComponent(id)}`; }
-export function roadmapCounts(input: LegacyRoadmapItem[]) {
-  const items = normalizeRoadmapItems(input);
+export function roadmapCounts(items: RoadmapItem[]) {
   return Object.fromEntries(statuses.map(status => [status, items.filter(item => item.status === status).length])) as Record<RoadmapStatus, number>;
 }
 export function formatRoadmapDate(value: string) {
@@ -65,9 +59,8 @@ export function sortRoadmapItems(items: RoadmapItem[], sort: RoadmapSort = "targ
   });
 }
 
-export function landingRoadmapGroups(input: LegacyRoadmapItem[], today = roadmapToday()) {
-  const items = normalizeRoadmapItems(input);
-  return statuses.map(status => ({
+export function landingRoadmapGroups(items: RoadmapItem[], today = roadmapToday()) {
+  return (["planned", "completed"] as const).map(status => ({
     status,
     items: sortRoadmapItems(
       items.filter(item => item.publication_status === "published" && item.status === status),
@@ -76,8 +69,7 @@ export function landingRoadmapGroups(input: LegacyRoadmapItem[], today = roadmap
   }));
 }
 
-export function filterRoadmapItems(input: LegacyRoadmapItem[], filter: RoadmapFilter) {
-  const items = normalizeRoadmapItems(input);
+export function filterRoadmapItems(items: RoadmapItem[], filter: RoadmapFilter) {
   return items.filter(item => filter === "all" || item.status === filter || item.publication_status === filter);
 }
 function dateValue(value: FormDataEntryValue | null): string | null {
