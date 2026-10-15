@@ -81,8 +81,9 @@ export default async function HomePage() {
         <h2 id="preview-title" className="text-3xl font-bold tracking-tight sm:text-4xl">Your Flights. All in One Place</h2>
         <p className="mx-auto mt-2 text-base leading-7 text-muted lg:whitespace-nowrap">A clearer way to organize your journeys, revisit past flights, and explore your flight history.</p>
       </div>
-      <figure data-product-preview className="mt-6 overflow-hidden rounded-2xl border border-line bg-surface shadow-sm shadow-ink/5">
-        <Image src="/images/add-flight-preview.webp" alt="Actual Add Flight page showing the flight ticket preview and fields for departure, arrival, planned local times and timezones." width={1024} height={800} sizes="(min-width: 1280px) 1184px, 100vw" className="h-auto w-full" />
+      {/* Fixed static product image, independent of the live Add Flight form. */}
+      <figure data-product-preview className="mx-auto mt-6 w-full max-w-3xl overflow-hidden rounded-2xl border border-line bg-surface shadow-sm shadow-ink/5">
+        <Image src="/images/add-flight-preview.webp" alt="Add Flight product preview showing the flight ticket and empty journey detail fields." width={1024} height={800} sizes="(min-width: 816px) 768px, calc(100vw - 48px)" className="h-auto w-full" unoptimized />
         <figcaption className="border-t border-line px-5 py-3 text-center text-xs leading-5 text-muted">Add Flight · Actual product interface, shown with an empty form</figcaption>
       </figure>
     </section>
