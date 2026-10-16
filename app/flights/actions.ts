@@ -41,5 +41,6 @@ export async function deleteFlight(id: string, _formData?: FormData) {
   if (error) return { error: "The flight could not be deleted. Please try again." };
   if (!data) return { error: "This flight is unavailable or you do not have permission to delete it." };
   revalidatePath("/dashboard"); revalidatePath("/profile");
-  redirect("/dashboard?deleted=1");
+  const returnTo = _formData?.get("returnTo");
+  redirect(typeof returnTo === "string" && returnTo.startsWith("/") ? `${returnTo}${returnTo.includes("?") ? "&" : "?"}deleted=1` : "/dashboard?deleted=1");
 }
