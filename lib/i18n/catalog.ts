@@ -249,6 +249,12 @@ dashboard.noMemories|Your flight memories will appear here when you have matchin
 dashboard.activityCalendar|Activity Calendar|活动日历
 dashboard.activityCalendarHelp|Your completed flight activity will appear here.|已完成的飞行活动将在这里展示。
 dashboard.noActivity|Complete a flight to start building your activity calendar.|完成一次航班后即可生成活动日历。
+map.viewFull|View Full Map|查看完整地图
+map.subtitle|Explore your completed journeys across the world.|探索你在世界各地完成的飞行旅程。
+map.empty|No completed flights with mapped airports yet.|暂时没有可映射机场的已完成航班。
+map.loading|Loading Flight Map…|正在加载飞行地图……
+map.loadError|The Flight Map Could Not Be Loaded. Please Check The Map Configuration And Try Again.|飞行地图无法加载，请检查地图配置后重试。
+map.styleMissing|A Production Map Style Is Not Configured Yet. Add NEXT_PUBLIC_MAP_STYLE_URL To Enable The Map.|尚未配置生产地图样式，请添加 NEXT_PUBLIC_MAP_STYLE_URL 以启用地图。
 dashboard.pageComingSoon|This Flight Desk feature is coming soon.|该 Flight Desk 功能即将上线。
 flight.add|Add a Flight|添加航班
 flight.addLink|＋ Add Flight|＋ 添加航班
