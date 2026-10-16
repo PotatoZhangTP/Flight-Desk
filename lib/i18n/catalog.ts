@@ -4,6 +4,8 @@ common.save|Save|保存
 common.cancel|Cancel|取消
 common.edit|Edit|编辑
 common.view|View|查看
+common.viewEdit|View/Edit|查看／编辑
+common.search|Search|搜索
 common.delete|Delete|删除
 common.saved|Saved|已保存
 common.saving|Saving…|正在保存…
@@ -146,6 +148,8 @@ dashboard.planned|Planned|计划中
 dashboard.filters|Filters|筛选
 dashboard.clearFilters|Clear Filters|清除筛选
 dashboard.importButton|Import|导入
+dashboard.viewAllFlights|View All Flights|查看全部航班
+dashboard.viewEdit|View/Edit|查看／编辑
 flight.status|Flight status|航班状态
 flight.planned|Planned|计划中
 flight.completed|Completed|已完成
@@ -173,6 +177,11 @@ dashboard.importHelp|Already have a spreadsheet? Bring your flights into Flight 
 dashboard.importSoon|Excel Import Coming Soon|Excel 导入即将上线
 dashboard.importFormats|.xlsx or .csv · Preview before saving|.xlsx 或 .csv · 保存前可预览
 dashboard.map|Flight Map|飞行地图
+dashboard.allFlights|All Flights|全部航班
+dashboard.allFlightsHelp|Manage Your Complete Flight History|管理完整航班记录
+dashboard.records|Records|条记录
+dashboard.number|#|序号
+dashboard.flight|Flight|航班号
 dashboard.mapHelp|Route visualisation will appear here as your logbook grows.|随着飞行日志不断丰富，你的航线将在这里呈现。
 dashboard.mapEmpty|✦ Map view reserved for your routes|✦ 为你的航线预留的地图空间
 dashboard.error|We couldn’t load your flight data. Please refresh and try again.|暂时无法加载航班数据，请刷新后重试。
