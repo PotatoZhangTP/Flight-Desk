@@ -33,7 +33,7 @@ function initialSide(data: Record<string, unknown>, side: Side): FormState {
   };
 }
 
-export function FlightForm({ initialData = {} }: { initialData?: FlightInitialData }) {
+export function FlightForm({ initialData = {}, formId }: { initialData?: FlightInitialData; formId?: string }) {
   const t = useText();
   const [departure, setDeparture] = useState(() => initialSide(initialData, "departure"));
   const [arrival, setArrival] = useState(() => initialSide(initialData, "arrival"));
@@ -97,7 +97,7 @@ export function FlightForm({ initialData = {} }: { initialData?: FlightInitialDa
     } finally { submitting.current = false; setSaving(false); } });
   }
 
-  return <form onSubmit={submit}>
+  return <form id={formId} onSubmit={submit}>
     <fieldset disabled={saving || pending} className="min-w-0 space-y-6">
       <TicketPreview departure={departure} arrival={arrival} airline={airline} flightNumber={flightNumber} duration={duration.minutes} />
       <section className="rounded-2xl border border-line bg-surface p-6">
