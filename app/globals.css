@@ -177,6 +177,8 @@ button:not(:disabled), summary { cursor: pointer; }
 .button-primary:focus-visible, .button-secondary:focus-visible, .button-danger:focus-visible { outline: 2px solid var(--brand); outline-offset: 3px; }
 .button-primary:disabled, .button-secondary:disabled, .button-danger:disabled { cursor: not-allowed; opacity: .6; }
 .settings-content-enter { animation: settings-content-enter 200ms ease-out both; }
+.dashboard-module { min-width: 0; border: 1px solid var(--line); border-radius: 1rem; background: var(--surface); padding: 1.25rem; box-shadow: 0 4px 16px color-mix(in srgb, var(--ink) 5%, transparent); }
+.dashboard-passport { border-color: #2d2940; background: #171427; }
 @keyframes settings-content-enter { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
 .skeleton-shimmer { background: linear-gradient(90deg, var(--surface-muted) 25%, color-mix(in srgb, var(--surface-muted) 55%, var(--surface)) 50%, var(--surface-muted) 75%); background-size: 200% 100%; animation: skeleton-shimmer 1.3s ease-in-out infinite; }
 @keyframes skeleton-shimmer { to { background-position: -200% 0; } }

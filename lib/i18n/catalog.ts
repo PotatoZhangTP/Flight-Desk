@@ -222,6 +222,31 @@ dashboard.flight|Flight|航班号
 dashboard.mapHelp|Route visualisation will appear here as your logbook grows.|随着飞行日志不断丰富，你的航线将在这里呈现。
 dashboard.mapEmpty|✦ Map view reserved for your routes|✦ 为你的航线预留的地图空间
 dashboard.error|We couldn’t load your flight data. Please refresh and try again.|暂时无法加载航班数据，请刷新后重试。
+dashboard.exploreMap|Explore Map|探索地图
+dashboard.dailyChallenge|Daily Challenge|每日挑战
+dashboard.dailyChallengeHelp|Build your flying rhythm with small daily goals.|用每日小目标保持你的飞行节奏。
+dashboard.viewChallenges|View Challenges|查看挑战
+dashboard.passport|Aviation Passport|航空护照
+dashboard.passportCover|Your Aviation Story|你的航空故事
+dashboard.passportPage|Passport Page|护照页面
+dashboard.passportEmpty|Your completed journeys will appear here as passport stamps.|完成的旅程将在这里生成护照印章。
+dashboard.previous|Previous|上一页
+dashboard.next|Next|下一页
+dashboard.achievements|Flight Achievements|飞行成就
+dashboard.achievementsHelp|Milestones from your completed journeys will appear here.|完成的旅程里程碑将在这里展示。
+dashboard.viewAllAchievements|View All Achievements|查看全部成就
+dashboard.reports|Flight Reports|飞行报告
+dashboard.reportsHelp|Review your flying by day, week, month, or year.|按日、周、月或年查看飞行记录。
+dashboard.viewReports|View Reports|查看报告
+dashboard.daily|Daily|每日
+dashboard.weekly|Weekly|每周
+dashboard.monthly|Monthly|每月
+dashboard.yearly|Yearly|每年
+dashboard.noReportData|Complete a flight to start building reports.|完成一次航班后即可生成报告。
+dashboard.memories|Flight Memories|飞行回忆
+dashboard.memoriesHelp|Keep meaningful moments from your journeys in one place.|将旅程中的珍贵瞬间记录在这里。
+dashboard.noMemories|Your flight memories will appear here when you have matching journeys or saved notes.|当你有符合条件的旅程或保存备注后，飞行回忆将在这里展示。
+dashboard.pageComingSoon|This Flight Desk feature is coming soon.|该 Flight Desk 功能即将上线。
 flight.add|Add a Flight|添加航班
 flight.addLink|＋ Add Flight|＋ 添加航班
 flight.edit|Edit Flight|编辑航班
