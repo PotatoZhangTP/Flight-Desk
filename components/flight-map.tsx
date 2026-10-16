@@ -16,6 +16,7 @@ export function FlightMap({ data, compact = false }: { data: FlightMapData; comp
   useEffect(() => {
     if (!container.current || !styleUrl) return;
     let live = true;
+    let loaded = false;
     try {
       const instance = new maplibregl.Map({ container: container.current, style: styleUrl, center: [0, 20], zoom: 1.3, attributionControl: {} });
       instance.setProjection({ type: mode === "3d" ? "globe" : "mercator" });
@@ -23,6 +24,7 @@ export function FlightMap({ data, compact = false }: { data: FlightMapData; comp
       instance.addControl(new maplibregl.NavigationControl({ showCompass: true }), "top-left");
       instance.on("load", () => {
         if (!live) return;
+        loaded = true;
         instance.addSource("flight-routes", { type: "geojson", data: data.routes });
         instance.addLayer({ id: "flight-routes", type: "line", source: "flight-routes", paint: { "line-color": "#7554C8", "line-width": compact ? 2 : 3, "line-opacity": 0.7 } });
         instance.addSource("flight-airports", { type: "geojson", data: data.airports });
@@ -35,12 +37,16 @@ export function FlightMap({ data, compact = false }: { data: FlightMapData; comp
         instance.on("mouseleave", "flight-routes", () => { instance.getCanvas().style.cursor = ""; });
         setReady(true);
       });
-      instance.on("error", event => { const message = event.error?.message || ""; if (!instance.isStyleLoaded() && /(style|source|glyph|sprite|token|configuration)/i.test(message)) setError(message || "Map could not be loaded."); });
+      instance.on("error", event => {
+        const message = event.error?.message || "";
+        const fatal = !loaded && /(style json|style specification|invalid style|could not load style|unauthorized|forbidden|\b401\b|\b403\b)/i.test(message);
+        if (fatal) { instance.remove(); map.current = null; setError(message || "Map could not be loaded."); }
+      });
       return () => { live = false; instance.remove(); map.current = null; };
     } catch (exception) { setError(exception instanceof Error ? exception.message : "Map could not be loaded."); }
   }, [data, compact]);
   useEffect(() => { if (!map.current) return; map.current.setProjection({ type: mode === "3d" ? "globe" : "mercator" }); try { localStorage.setItem("flightdesk-map-mode", mode); } catch { /* optional preference */ } }, [mode]);
   if (!styleUrl) return <div className="grid h-full min-h-[260px] place-items-center rounded-2xl border border-dashed border-line bg-page p-6 text-center text-sm text-muted"><T id="map.styleMissing" /></div>;
-  if (error) return <div role="alert" className="grid h-full min-h-[260px] place-items-center rounded-2xl border border-danger-line bg-danger-bg p-6 text-center text-sm text-danger-fg"><div><T id="map.loadError" /><Link href="/flight-map" className="button-secondary mt-4"><T id="common.retry" /></Link></div></div>;
+  if (error) return <div role="alert" className="flight-map-shell grid h-full min-h-[260px] place-items-center overflow-hidden rounded-2xl border border-danger-line bg-danger-bg p-6 text-center text-sm text-danger-fg"><div><T id="map.loadError" /><Link href="/flight-map" className="button-secondary mt-4"><T id="common.retry" /></Link></div></div>;
   return <div className="flight-map-shell relative h-full min-h-[260px] overflow-hidden rounded-2xl" style={{ minHeight: compact ? "260px" : "520px" }}><div ref={container} className="absolute inset-0 h-full w-full" />{ready && <div className="absolute right-3 top-3 z-10 flex rounded-full border border-line bg-elevated p-1 shadow-lg"><button type="button" onClick={() => setMode("2d")} className={`rounded-full px-3 py-1.5 text-xs font-bold ${mode === "2d" ? "bg-brand text-on-brand" : "text-brand"}`}>2D</button><button type="button" onClick={() => setMode("3d")} className={`rounded-full px-3 py-1.5 text-xs font-bold ${mode === "3d" ? "bg-brand text-on-brand" : "text-brand"}`}>3D</button></div>}{!ready && <div className="absolute inset-0 grid place-items-center bg-page/60 text-sm text-muted"><T id="map.loading" /></div>}</div>;
 }
