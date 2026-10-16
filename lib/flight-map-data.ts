@@ -3,7 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { airportCoordinateMap, airportLookupKey, type FlightStatRow } from "@/lib/flight-stats";
 
 type MapFlight = FlightStatRow & { id: string; flight_number?: string | null; flight_date?: string | null };
-export type FlightMapData = { routes: GeoJSON.FeatureCollection; airports: GeoJSON.FeatureCollection; skipped: number };
+export type FlightMapData = { routes: GeoJSON.FeatureCollection; airports: GeoJSON.FeatureCollection; skipped: number; completedFlights: number };
 
 function greatCircle(from: [number, number], to: [number, number]): [number, number][][] {
   const rad = Math.PI / 180;
@@ -28,5 +28,5 @@ export async function getFlightMapData(supabase: SupabaseClient, userId: string)
   for (const row of rows) { const from = airportLookupKey(row, "departure"); const to = airportLookupKey(row, "arrival"); if (!from || !to || !coordinates.has(from) || !coordinates.has(to)) { skipped++; continue; } airportCounts.set(from, (airportCounts.get(from) ?? 0) + 1); airportCounts.set(to, (airportCounts.get(to) ?? 0) + 1); const key = [from, to].sort().join("|"); const route = routeMap.get(key) ?? { from, to, count: 0, ids: [] }; route.count++; route.ids.push(row.id); routeMap.set(key, route); }
   const airportFeatures: GeoJSON.Feature[] = [...airportCounts].map(([code, count]) => { const d = details.get(code); const c = coordinates.get(code)!; return { type: "Feature", geometry: { type: "Point", coordinates: [c.longitude, c.latitude] }, properties: { code, name: d?.name ?? code, icao: d?.icao ?? code, iata: d?.iata ?? "", count } }; });
   const routeFeatures: GeoJSON.Feature[] = []; for (const route of routeMap.values()) { const from = coordinates.get(route.from)!; const to = coordinates.get(route.to)!; for (const segment of greatCircle([from.longitude, from.latitude], [to.longitude, to.latitude])) routeFeatures.push({ type: "Feature", geometry: { type: "LineString", coordinates: segment }, properties: { from: route.from, to: route.to, count: route.count, flightIds: route.ids.join(",") } }); }
-  return { routes: { type: "FeatureCollection", features: routeFeatures }, airports: { type: "FeatureCollection", features: airportFeatures }, skipped };
+  return { routes: { type: "FeatureCollection", features: routeFeatures }, airports: { type: "FeatureCollection", features: airportFeatures }, skipped, completedFlights: rows.length };
 }

@@ -251,7 +251,10 @@ dashboard.activityCalendarHelp|Your completed flight activity will appear here.|
 dashboard.noActivity|Complete a flight to start building your activity calendar.|完成一次航班后即可生成活动日历。
 map.viewFull|View Full Map|查看完整地图
 map.subtitle|Explore your completed journeys across the world.|探索你在世界各地完成的飞行旅程。
-map.empty|No completed flights with mapped airports yet.|暂时没有可映射机场的已完成航班。
+map.emptyTitle|Your Flight Map Awaits|你的飞行地图正等待开启
+map.emptyDescription|Every journey starts with a flight. Start yours today.|每段旅程都始于一次飞行。今天，就开启你的故事。
+map.addFirstFlight|Add Your First Flight|添加你的首段飞行
+map.emptyData|Completed flights exist, but none can be mapped yet.|已有已完成航班，但暂时无法匹配地图坐标。
 map.loading|Loading Flight Map…|正在加载飞行地图……
 map.loadError|The Flight Map Could Not Be Loaded. Please Check The Map Configuration And Try Again.|飞行地图无法加载，请检查地图配置后重试。
 map.styleMissing|A Production Map Style Is Not Configured Yet. Add NEXT_PUBLIC_MAP_STYLE_URL To Enable The Map.|尚未配置生产地图样式，请添加 NEXT_PUBLIC_MAP_STYLE_URL 以启用地图。
