@@ -246,6 +246,9 @@ dashboard.noReportData|Complete a flight to start building reports.|完成一次
 dashboard.memories|Flight Memories|飞行回忆
 dashboard.memoriesHelp|Keep meaningful moments from your journeys in one place.|将旅程中的珍贵瞬间记录在这里。
 dashboard.noMemories|Your flight memories will appear here when you have matching journeys or saved notes.|当你有符合条件的旅程或保存备注后，飞行回忆将在这里展示。
+dashboard.activityCalendar|Activity Calendar|活动日历
+dashboard.activityCalendarHelp|Your completed flight activity will appear here.|已完成的飞行活动将在这里展示。
+dashboard.noActivity|Complete a flight to start building your activity calendar.|完成一次航班后即可生成活动日历。
 dashboard.pageComingSoon|This Flight Desk feature is coming soon.|该 Flight Desk 功能即将上线。
 flight.add|Add a Flight|添加航班
 flight.addLink|＋ Add Flight|＋ 添加航班
