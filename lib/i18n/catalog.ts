@@ -12,6 +12,7 @@ common.publishing|Publishing…|正在发布…
 common.loading|Loading…|加载中…
 common.optional|(optional)|（选填）
 common.features|Features|功能
+common.roadmap|Roadmap|开发路线图
 common.blog|Blog|博客
 common.community|Community|社区
 common.pricing|Pricing|价格
@@ -156,7 +157,7 @@ dashboard.afterMap|Available after mapping|地图功能上线后提供
 dashboard.airports|Airports|机场
 dashboard.countries|Countries|国家与地区
 dashboard.flights|Flights|航班
-dashboard.aircraftTypes|Aircraft types|机型数量
+dashboard.aircraftTypes|Aircraft Types|机型数量
 dashboard.recent|Recent Flight|最近航班
 dashboard.latest|Your latest journeys|最近的飞行旅程
 dashboard.emptyRecent|No flights yet. Import your history or add your first flight.|还没有航班记录。你可以添加第一段飞行，或等待历史导入功能上线。
@@ -176,32 +177,32 @@ dashboard.error|We couldn’t load your flight data. Please refresh and try agai
 flight.add|Add a Flight|添加航班
 flight.addLink|＋ Add flight|＋ 添加航班
 flight.edit|Edit Flight|编辑航班
-flight.editEntry|Edit logbook entry|编辑飞行记录
-flight.editHelp|Update your journey details below.|在下方更新这段旅程的详细信息。
+flight.editEntry|Edit Logbook Entry|编辑飞行记录
+flight.editHelp|Update Your Journey Details Below.|在下方更新这段旅程的详细信息。
 flight.record|Flight record|飞行记录
 flight.savedInfo|Saved flight information|已保存的航班信息
-flight.ticket|Flight ticket · planned journey|航班机票 · 计划行程
+flight.ticket|Flight Ticket · Planned Journey|航班机票 · 计划行程
 flight.departure|Departure|出发
 flight.arrival|Arrival|到达
-flight.departureAirport|Departure airport|出发机场
-flight.arrivalAirport|Arrival airport|到达机场
-flight.departureDate|Departure date|出发日期
-flight.arrivalDate|Arrival date|到达日期
-flight.plannedTime|planned time|计划时间
+flight.departureAirport|Departure Airport|出发机场
+flight.arrivalAirport|Arrival Airport|到达机场
+flight.departureDate|Departure Date|出发日期
+flight.arrivalDate|Arrival Date|到达日期
+flight.plannedTime|Planned Time|计划时间
 flight.localTime|Local time|当地时间
 flight.timezone|Timezone|时区
-flight.chooseTimezone|Select or type IANA timezone|选择或输入 IANA 时区
-flight.clockChange|Clock change — choose occurrence|夏令时切换 — 选择对应时刻
-flight.chooseClock|Choose earlier or later|选择较早或较晚的时刻
-flight.terminal|Terminal (optional)|航站楼（选填）
-flight.gate|Gate (optional)|登机口（选填）
+flight.chooseTimezone|Select or Type IANA Timezone|选择或输入 IANA 时区
+flight.clockChange|Clock Change — Choose Occurrence|夏令时切换 — 选择对应时刻
+flight.chooseClock|Choose Earlier or Later|选择较早或较晚的时刻
+flight.terminal|Terminal (Optional)|航站楼（选填）
+flight.gate|Gate (Optional)|登机口（选填）
 flight.details|Flight details|航班详情
 flight.airline|Airline|航空公司
 flight.number|Flight number|航班号
 flight.airlineHint|e.g. Air China|例如：中国国际航空
-flight.type|Aircraft type (optional)|机型（选填）
+flight.type|Aircraft Type (Optional)|机型（选填）
 flight.typeHint|e.g. Boeing 737-800|例如：Boeing 737-800
-flight.registration|Registration (optional)|注册号（选填）
+flight.registration|Registration (Optional)|注册号（选填）
 flight.scheduled|Scheduled duration|计划飞行时长
 flight.actual|Actual duration|实际飞行时长
 flight.actualHours|Actual duration hours|实际飞行时长（小时）
