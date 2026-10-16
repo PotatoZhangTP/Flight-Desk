@@ -1,5 +1,5 @@
 "use client";
-import { T, useText, UiError, LocalizedDuration } from "@/components/i18n";
+import { T, useLanguage, useText, UiError, LocalizedDuration } from "@/components/i18n";
 
 
 import { useEffect, useId, useMemo, useRef, useState } from "react";
@@ -13,6 +13,7 @@ import { AsyncButton } from "./async-button";
 import { useTransition } from "react";
 import { unstable_rethrow } from "next/navigation";
 import { DateTime, IANAZone } from "luxon";
+import { TimePicker, formatTimeValue } from "@/components/time-picker";
 
 type Side = "departure" | "arrival";
 type FormState = PlannedTime & { airport: Airport | null; terminal: string; gate: string };
@@ -159,7 +160,7 @@ function TimeFields({ label, state, onChange }: { label: string; state: FormStat
     <h3 className="font-bold text-ink"><T source={label} /><T id="flight.plannedTime" /></h3>
     <div className="mt-3 grid grid-cols-2 gap-3">
       <Field label="Date" ariaLabel={label + " date"} value={state.date} onChange={date => onChange({ date })} type="date" required />
-      <Field label="Local time" ariaLabel={label + " local time"} value={state.time} onChange={time => onChange({ time })} type="time" required />
+      <label className="block text-xs font-bold uppercase tracking-wider text-subtle"><T source="Local time" /><TimePicker label={label + " local time"} value={state.time} onChange={time => onChange({ time })} required /></label>
     </div>
     <label className="mt-3 block text-xs font-bold uppercase tracking-wider text-subtle"><T id="flight.timezone" /><input required aria-label={t(label + " timezone")} autoComplete="off" maxLength={100} list={listId} value={state.timezone}
         onChange={e => onChange({ timezone: e.target.value })} className={inputClass} placeholder={t("Select or type IANA timezone")} />
@@ -188,6 +189,7 @@ function Field({ label, ariaLabel, value, onChange, type = "text", placeholder, 
 function TicketPreview({ departure, arrival, airline, flightNumber, duration }: {
   departure: FormState; arrival: FormState; airline: string; flightNumber: string; duration: number | null;
 }) {
+  const { preferences } = useLanguage();
   return <section className="overflow-hidden rounded-[2rem] border border-line bg-surface shadow-xl shadow-ink/5">
     <div className="bg-brand-soft p-6 text-ink">
       <p className="text-xs font-bold uppercase tracking-[0.2em] text-brand"><T id="flight.ticket" /></p>
@@ -201,8 +203,8 @@ function TicketPreview({ departure, arrival, airline, flightNumber, duration }: 
       </div>
     </div>
     <div className="flex flex-wrap justify-between gap-3 bg-surface-muted px-6 py-4 text-xs text-muted">
-      <span>{departure.date || <T source="Departure date" />} · {departure.time || <T source="Local time" />} {departure.timezone}</span>
-      <span>{arrival.date || <T source="Arrival date" />} · {arrival.time || <T source="Local time" />} {arrival.timezone}</span>
+      <span>{departure.date || <T source="Departure date" />} · {formatTimeValue(departure.time, preferences.timeFormat)} {departure.timezone}</span>
+      <span>{arrival.date || <T source="Arrival date" />} · {formatTimeValue(arrival.time, preferences.timeFormat)} {arrival.timezone}</span>
     </div>
   </section>;
 }
