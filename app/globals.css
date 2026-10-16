@@ -67,6 +67,61 @@
 }
 * { box-sizing: border-box; }
 body { margin: 0; background: var(--cream); color: var(--ink); font-family: Arial, Helvetica, sans-serif; }
+/* Shared public-site grid; padding is part of the container at every breakpoint. */
+:root { --site-width: 1440px; --site-gutter: 16px; }
+.site-container { width: 100%; max-width: var(--site-width); margin-inline: auto; padding-inline: var(--site-gutter); min-width: 0; }
+.landing-section { padding-block: 40px; }
+.landing-hero { padding-block: 48px 40px; }
+.landing-ticket { max-width: 960px; }
+.landing-preview { max-width: 1024px; }
+.feature-feed { display: grid; gap: 12px; }
+.feature-item { display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: 14px; padding: 16px; overflow-wrap: anywhere; }
+.site-footer nav { min-width: 0; }
+.site-footer li > :is(a, button) { display: inline-flex; align-items: center; min-height: 44px; text-align: start; overflow-wrap: anywhere; }
+.site-header nav > :is(a, button) { display: inline-flex; align-items: center; min-height: 44px; }
+.site-header select { min-height: 44px; }
+.site-header button[aria-controls="theme-choices"] { min-width: 44px; min-height: 44px; }
+.landing-roadmap-desktop { display: none; }
+.roadmap-filters { display: flex; gap: 8px; overflow-x: auto; padding: 4px; scroll-padding-inline: 4px; }
+.roadmap-disclosure { overflow-wrap: anywhere; transition: border-color 160ms; }
+.roadmap-disclosure summary { list-style: none; }
+.roadmap-disclosure summary::-webkit-details-marker { display: none; }
+.roadmap-chevron { transition: transform 180ms; }
+.roadmap-disclosure[open] .roadmap-chevron { transform: rotate(180deg); }
+.roadmap-disclosure:focus-within { border-color: var(--brand); }
+/* Progressive enhancement: native details remains fully usable without this API. */
+@supports (interpolate-size: allow-keywords) {
+  .roadmap-disclosure { interpolate-size: allow-keywords; }
+  .roadmap-disclosure::details-content { height: 0; overflow: clip; transition: height 180ms ease, content-visibility 180ms allow-discrete; }
+  .roadmap-disclosure[open]::details-content { height: auto; }
+}
+@media (hover: hover) and (pointer: fine) {
+  .roadmap-disclosure summary:hover { background: var(--brand-soft); }
+}
+.landing-page :is(.feature-item, .roadmap-disclosure summary, .roadmap-filters button):active { background: var(--brand-soft); }
+@media (min-width: 640px) {
+  :root { --site-gutter: 32px; }
+  .landing-section { padding-block: 56px; }
+  .landing-hero { padding-block: 80px 56px; }
+  .feature-feed { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; grid-auto-rows: 1fr; }
+  .feature-item { display: block; padding: 24px; }
+  .feature-icon { margin-bottom: 12px; }
+  .landing-roadmap-mobile { display: none; }
+  .landing-roadmap-desktop { display: block; }
+}
+@media (min-width: 1024px) {
+  .feature-feed { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (max-width: 639px) {
+  .site-header-controls { width: 100%; gap: 8px; }
+  .site-header-controls > a { width: auto; flex: 1; min-width: 0; padding-inline: 10px; }
+  .site-header-controls > div:has(> label) { flex: 0 1 auto; }
+  .site-header-controls > div:has(> label) select { width: 100%; }
+  .site-header-controls > div:has(> a[href="/admin"]) { flex-wrap: wrap; justify-content: flex-end; width: 100%; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .roadmap-disclosure, .roadmap-chevron, .roadmap-disclosure::details-content { transition: none; }
+}
 @layer base {
   a { color: inherit; text-decoration: none; }
   button, input { font: inherit; }

@@ -4,6 +4,7 @@ import Link from "@/components/navigation-link";
 import { LogbookLink } from "./logbook-link";
 import { formatRoadmapDate, landingRoadmapGroups, roadmapItemAnchor, roadmapItemHref, statuses, statusLabels, statusStyles, type RoadmapItem } from "@/lib/roadmap/model";
 import { landingDefaults, type LandingCopy } from "@/lib/content/model";
+import { LandingRoadmapMobile } from "./landing-roadmap-mobile";
 
 export function RoadmapCard({ item, mode = "detailed" }: { item: RoadmapItem; mode?: "compact" | "detailed" }) {
   const showCompletedDate = item.status === "completed";
@@ -28,9 +29,12 @@ export function RoadmapCard({ item, mode = "detailed" }: { item: RoadmapItem; mo
 
 export function RoadmapSummary({ items, failed, copy = landingDefaults }: { items: RoadmapItem[]; failed: boolean; copy?: LandingCopy }) {
   const groups = landingRoadmapGroups(items);
-  return <RoadmapContentScope items={items}><section id="roadmap" className="border-y border-line bg-page py-12 sm:py-16"><div className="mx-auto max-w-7xl px-6 lg:px-12">
+  return <RoadmapContentScope items={items}><section id="roadmap" className="landing-section border-y border-line bg-page"><div className="site-container">
     <div className="text-center"><h2 className="whitespace-pre-line text-3xl font-bold tracking-tight sm:text-4xl"><CmsText id="content.roadmapTitle" source={copy["landing.roadmap.title"].replace(/[.。]+\s*$/, "")} /></h2><p className="mx-auto mt-2 max-w-2xl whitespace-pre-line text-base leading-7 text-muted"><CmsText id="content.roadmapDescription" source={copy["landing.roadmap.description"]} /></p><Link href="/roadmap" className="mt-4 inline-block whitespace-pre-line rounded-lg py-1 text-sm font-semibold text-brand hover:underline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand"><CmsText id="content.roadmapLink" source={copy["landing.roadmap.link_label"]} /> <span aria-hidden="true">→</span></Link></div>
-    {failed ? <p role="alert" className="mt-6 rounded-xl border border-danger-line bg-surface p-4 text-sm text-danger-fg"><T id="roadmap.homeError" /></p> : <div className="mt-6 space-y-6">{groups.map(group => <section key={group.status} aria-labelledby={`home-roadmap-${group.status}`}><h3 id={`home-roadmap-${group.status}`} className="mb-3 text-lg font-semibold text-muted"><T source={statusLabels[group.status]} /></h3>{group.items.length ? <div className="grid auto-rows-fr gap-4 sm:grid-cols-2 lg:grid-cols-4">{group.items.map(item => <RoadmapCard key={item.id} item={item} mode="compact" />)}</div> : <p className="rounded-xl border border-dashed border-line px-4 py-3 text-sm text-muted"><T id={group.status === "planned" ? "roadmap.noPlanned" : "roadmap.noCompleted"} /></p>}</section>)}</div>}
+    {failed ? <p role="alert" className="mt-6 rounded-xl border border-danger-line bg-surface p-4 text-sm text-danger-fg"><T id="roadmap.homeError" /></p> : <>
+      <LandingRoadmapMobile items={items.filter(item => item.publication_status === "published")} />
+      <div className="landing-roadmap-desktop mt-6 space-y-6">{groups.map(group => <section key={group.status} aria-labelledby={`home-roadmap-${group.status}`}><h3 id={`home-roadmap-${group.status}`} className="mb-3 text-lg font-semibold text-muted"><T source={statusLabels[group.status]} /></h3>{group.items.length ? <div className="grid auto-rows-fr gap-4 sm:grid-cols-2 lg:grid-cols-4">{group.items.map(item => <RoadmapCard key={item.id} item={item} mode="compact" />)}</div> : <p className="rounded-xl border border-dashed border-line px-4 py-3 text-sm text-muted"><T id={group.status === "planned" ? "roadmap.noPlanned" : "roadmap.noCompleted"} /></p>}</section>)}</div>
+    </>}
     <div className="mt-10 flex justify-center"><LogbookLink /></div>
   </div></section></RoadmapContentScope>;
 }

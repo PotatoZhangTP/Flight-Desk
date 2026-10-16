@@ -540,6 +540,12 @@ translations.invalid|Invalid translation. Check the text and placeholders.|译�
 translations.failed|The translation request could not be confirmed. Check before retrying.|无法确认翻译操作结果，请检查后再重试。
 translations.englishReadOnly|English source is read-only. Saving applies Chinese changes immediately.|英文原文只读。保存后中文修改将立即生效。
 translations.empty|No matching translations.|没有匹配的翻译。
+landing.roadmapFilters|Filter roadmap by status|按状态筛选开发路线图
+landing.roadmapAll|All|全部
+landing.roadmapCount|Showing {shown} of {total} items|已显示 {shown} 项，共 {total} 项
+landing.roadmapDetails|Toggle details|展开或收起详情
+landing.roadmapViewItem|View on roadmap|在路线图中查看
+landing.roadmapMore|Show more|查看更多
 loading.page|Opening page|正在打开页面
 loading.auth|Opening account access|正在打开账号页面
 loading.flights|Loading your flight|正在加载航班

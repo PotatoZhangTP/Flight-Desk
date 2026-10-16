@@ -11,6 +11,8 @@ const flights=[{id:flightId,user_id:ids.member,flight_date:'2026-10-20',departur
 const timestamp='2026-10-15T00:00:00Z';
 const airportReferences=require('node:fs').readFileSync(require('node:path').join(__dirname,'../../scripts/airports/fixtures/sample.jsonl'),'utf8').trim().split('\n').map(line=>{const r=JSON.parse(line);return{...r,id:r.source_id};});
 let items=['planned','completed','on_hold'].map((status,index)=>({id:`33333333-3333-4333-8333-${String(index+1).padStart(12,'0')}`,title:`Test ${status} milestone`,description:'Local browser test content',category:'Platform',status,publication_status:'published',priority:null,target_date:null,completed_date:null,sort_order:index,created_at:timestamp,updated_at:timestamp}));
+// Optional larger dataset for responsive pagination/filter tests; never deployed.
+if(process.env.LANDING_RESPONSIVE_FIXTURE==='1') items=Array.from({length:16},(_,index)=>({...items[index%3],id:`33333333-3333-4333-8333-${String(index+1).padStart(12,'0')}`,title:`Responsive milestone ${index+1}`,description:'A detailed roadmap description with enough information to test concise summaries and expandable content. Flight Desk keeps PEK / JFK and Boeing 737-800 unchanged.',publication_status:index===15?'draft':'published',sort_order:index}));
 let content=Object.entries(landingDefaults).flatMap(([content_key,value])=>['draft','published'].map(publication_status=>({content_key,content:value,publication_status,updated_at:timestamp})));
 let translations=[];
 const dynamicTranslations=require('./content-translation-fixture.cjs')(()=>items);

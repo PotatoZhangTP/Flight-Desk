@@ -100,6 +100,10 @@ const logbookLink = loadModule('components/logbook-link.tsx', {
   'react/jsx-runtime': require('react/jsx-runtime'), '@/components/navigation-link': require('next/link'),
 });
 const cards = loadModule('components/roadmap-cards.tsx', {
+  './landing-roadmap-mobile': loadModule('components/landing-roadmap-mobile.tsx', {
+    react: React, 'react/jsx-runtime': require('react/jsx-runtime'),
+    './navigation-link': require('next/link'), '@/lib/roadmap/model': model,
+  }),
   './logbook-link': logbookLink,
   'react/jsx-runtime': require('react/jsx-runtime'),
   '@/components/navigation-link': require('next/link'),
@@ -220,11 +224,14 @@ test('homepage keeps two lightweight empty groups without fake cards or draft da
     assert.match(html,/href="\/roadmap"/);
   }
 });
-test('homepage shows only planned and completed while full roadmap retains on hold', () => {
-  const html=renderSummary([
+test('desktop summary preserves planned/completed and mobile includes real on-hold status', () => {
+  const summary=renderSummary([
     record('Completed feature','completed'),record('Future work','planned'),
     record('Future feature','planned'),record('Paused feature','on_hold'),record('Secret feature','completed','draft'),
   ]);
+  assert.match(summary,/Paused feature/);
+  assert.doesNotMatch(summary,/Secret feature/);
+  const html=summary.slice(summary.indexOf('class="landing-roadmap-desktop'));
   for (const title of ['Completed feature','Future work','Future feature']) assert.ok(html.includes(title));
   assert.doesNotMatch(html,/Paused feature|home-roadmap-on_hold/);
   assert.doesNotMatch(html,/In Progress|home-roadmap-in_progress/);
@@ -241,11 +248,15 @@ test('homepage shows only planned and completed while full roadmap retains on ho
 test('homepage caps each group at four, sorts dates first and preserves all items on full board', () => {
   const today = model.roadmapToday();
   const items = Array.from({length:7},(_,i)=>({...record(`Feature ${i}`,'planned'), target_date:i===6 ? today : null}));
-  const html = renderSummary([...items,{...record('Private closest','planned','draft'),target_date:today}]);
+  const summary = renderSummary([...items,{...record('Private closest','planned','draft'),target_date:today}]);
+  assert.equal((summary.match(/<details /g)||[]).length,4);
+  assert.match(summary,/Show more/);
+  assert.doesNotMatch(summary,/Private closest/);
+  const html=summary.slice(summary.indexOf('class="landing-roadmap-desktop'));
   assert.equal((html.match(/<article /g)||[]).length,4);
   assert.ok(html.indexOf('Feature 6') < html.indexOf('Feature 0'));
   assert.doesNotMatch(html,/>Feature [345]<|Private closest/);
-  assert.match(html,/href="\/roadmap"/);
+  assert.match(summary,/href="\/roadmap"/);
   const full=renderToStaticMarkup(React.createElement(cards.RoadmapBoard,{items}));
   assert.equal((full.match(/<article /g)||[]).length,7);
 });
