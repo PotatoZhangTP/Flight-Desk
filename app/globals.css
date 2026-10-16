@@ -67,18 +67,7 @@
 }
 * { box-sizing: border-box; }
 .flight-map-shell { position: relative; isolation: isolate; }
-.flight-map-shell .maplibregl-map { position: absolute !important; inset: 0 !important; width: 100% !important; height: 100% !important; overflow: hidden; }
-.flight-map-shell .maplibregl-canvas-container,
-.flight-map-shell .maplibregl-canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
-.flight-map-shell .maplibregl-control-container { position: absolute; inset: 0; pointer-events: none; }
-.flight-map-shell .maplibregl-ctrl-top-left,
-.flight-map-shell .maplibregl-ctrl-top-right,
-.flight-map-shell .maplibregl-ctrl-bottom-left,
-.flight-map-shell .maplibregl-ctrl-bottom-right { position: absolute; pointer-events: auto; }
-.flight-map-shell .maplibregl-ctrl-top-left { top: 0; left: 0; }
-.flight-map-shell .maplibregl-ctrl-top-right { top: 0; right: 0; }
-.flight-map-shell .maplibregl-ctrl-bottom-left { bottom: 0; left: 0; }
-.flight-map-shell .maplibregl-ctrl-bottom-right { right: 0; bottom: 0; }
+.flight-map-shell > .maplibregl-map { position: absolute; inset: 0; width: 100%; height: 100%; overflow: hidden; }
 body { margin: 0; background: var(--cream); color: var(--ink); font-family: Arial, Helvetica, sans-serif; }
 /* Shared public-site grid; padding is part of the container at every breakpoint. */
 :root { --site-width: 1440px; --site-gutter: 16px; }

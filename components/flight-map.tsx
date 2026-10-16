@@ -38,9 +38,9 @@ export function FlightMap({ data, compact = false }: { data: FlightMapData; comp
         setReady(true);
       });
       instance.on("error", event => {
-        const message = event.error?.message || "";
-        const fatal = !loaded && /(style json|style specification|invalid style|could not load style|unauthorized|forbidden|\b401\b|\b403\b)/i.test(message);
-        if (fatal) { instance.remove(); map.current = null; setError(message || "Map could not be loaded."); }
+        // MapLibre also emits this event for individual tiles and glyphs. Those
+        // resources are recoverable and must not replace the live map DOM.
+        if (!loaded) console.warn("Flight Map initialization resource error", event.error);
       });
       return () => { live = false; instance.remove(); map.current = null; };
     } catch (exception) { setError(exception instanceof Error ? exception.message : "Map could not be loaded."); }
