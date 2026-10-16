@@ -7,6 +7,7 @@ import { LanguageSelector } from "./language-selector";
 import { ThemeIcon } from "./theme-controls";
 import { useTheme } from "./theme-provider";
 import { themeModes } from "@/lib/theme";
+import Link from "@/components/navigation-link";
 
 /** One entry point; existing providers still own language/theme persistence. */
 export function PreferencesMenu() {
@@ -37,6 +38,7 @@ export function PreferencesMenu() {
       <div className="mb-4 flex items-center justify-between gap-3"><h2 id={`${id}-title`} className="text-base font-bold"><T id="preferences.title" /></h2><button type="button" popoverTarget={id} popoverTargetAction="hide" aria-label={t("preferences.close")} className="grid h-11 w-11 place-items-center rounded-full text-muted hover:bg-brand-soft"><span aria-hidden="true">×</span></button></div>
       <fieldset><legend className="mb-2 text-sm font-semibold"><T id="settings.appearance" /></legend><div className="grid grid-cols-3 gap-2">{themeModes.map(mode => <label key={mode} className={`flex min-h-16 min-w-0 cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border px-1 py-3 text-xs font-semibold focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-brand ${theme === mode ? "border-brand bg-brand-soft text-brand" : "border-line text-muted hover:bg-brand-soft"}`}><input type="radio" name={`${id}-theme`} value={mode} checked={theme === mode} onChange={() => setTheme(mode)} className="sr-only" /><ThemeIcon mode={mode} /><T source={{ light: "Light", dark: "Dark", system: "System" }[mode]} /></label>)}</div></fieldset>
       <section aria-labelledby={`${id}-language`} className="mt-5 border-t border-line pt-4"><h3 id={`${id}-language`} className="mb-3 flex items-center gap-2 text-sm font-semibold"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" className="h-5 w-5 text-brand"><circle cx="12" cy="12" r="9" /><ellipse cx="12" cy="12" rx="4" ry="9" /><path d="M3 12h18M5 6.5h14M5 17.5h14" /></svg><T id="language.label" /></h3><LanguageSelector feedback /></section>
+      <Link href="/settings" className="mt-5 block border-t border-line pt-4 text-sm font-bold text-brand hover:underline"><T id="settings.fullSettings" /> <span aria-hidden="true">→</span></Link>
     </div>
   </div>;
 }

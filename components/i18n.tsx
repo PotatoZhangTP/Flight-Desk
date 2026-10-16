@@ -3,14 +3,16 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { createTranslator, NextIntlClientProvider } from "next-intl";
 import { formatDateUTC, defaultDateFormat } from "@/lib/date-format";
+import { defaultPreferences, normalizePreferences, type UserPreferences } from "@/lib/preferences";
 import { baseMessages, byKey, localeCookie, normalizeLocale, sourceKeys, type Locale } from "@/lib/i18n/catalog";
 
 const fallback = createTranslator({ locale: "en", messages: baseMessages("en") });
-const Context = createContext({ locale: "en" as Locale, accountReady: false, setLocale: (_locale: Locale) => {}, translate: (key: string, values?: Record<string, string | number>) => fallback(key.replaceAll(".", "__"), values) });
+const Context = createContext({ locale: "en" as Locale, accountReady: false, preferences: defaultPreferences, setLocale: (_locale: Locale) => {}, setPreferences: (_preferences: UserPreferences) => {}, translate: (key: string, values?: Record<string, string | number>) => fallback(key.replaceAll(".", "__"), values) });
 
-export function LanguageProvider({ initialLocale, overrides: initialOverrides, accountReady, children }: { initialLocale: Locale; overrides: Record<string, string>; accountReady: boolean; children: ReactNode }) {
+export function LanguageProvider({ initialLocale, overrides: initialOverrides, accountReady, initialPreferences = defaultPreferences, children }: { initialLocale: Locale; overrides: Record<string, string>; accountReady: boolean; initialPreferences?: UserPreferences; children: ReactNode }) {
   const [locale, updateLocale] = useState(initialLocale);
   const [overrides, setOverrides] = useState(initialOverrides);
+  const [preferences, updatePreferences] = useState(initialPreferences);
   const messages = useMemo(() => ({ ...baseMessages(locale), ...(locale === "zh-CN" ? Object.fromEntries(Object.entries(overrides).filter(([key]) => byKey[key]).map(([key, value]) => [key.replaceAll(".", "__"), value])) : {}) }), [locale, overrides]);
   const translator = useMemo(() => createTranslator({ locale, messages, onError: () => {}, getMessageFallback: ({ key }) => byKey[key.replaceAll("__", ".")]?.en ?? "Content unavailable" }), [locale, messages]);
   function setLocale(next: Locale) {
@@ -37,7 +39,9 @@ export function LanguageProvider({ initialLocale, overrides: initialOverrides, a
     window.addEventListener("storage", storage);
     return () => { live = false; controller.abort(); clearInterval(interval); window.removeEventListener("focus", reload); window.removeEventListener("flightdesk-translations-updated", reload); window.removeEventListener("storage", storage); document.removeEventListener("visibilitychange", reload); };
   }, []);
-  return <NextIntlClientProvider locale={locale} messages={messages} timeZone="UTC"><Context.Provider value={{ locale, accountReady, setLocale, translate: (key, values) => translator(key.replaceAll(".", "__"), values) }}>{children}</Context.Provider></NextIntlClientProvider>;
+  function setPreferences(next: UserPreferences) { const value = normalizePreferences(next); updatePreferences(value); try { localStorage.setItem("flightdesk-preferences", JSON.stringify(value)); } catch { /* Server state remains authoritative. */ } }
+  useEffect(() => { try { const saved = JSON.parse(localStorage.getItem("flightdesk-preferences") || "null"); if (saved) updatePreferences(normalizePreferences(saved)); } catch { /* Use server defaults. */ } }, []);
+  return <NextIntlClientProvider locale={locale} messages={messages} timeZone="UTC"><Context.Provider value={{ locale, accountReady, preferences, setLocale, setPreferences, translate: (key, values) => translator(key.replaceAll(".", "__"), values) }}>{children}</Context.Provider></NextIntlClientProvider>;
 }
 
 export const useLanguage = () => useContext(Context);
@@ -76,8 +80,8 @@ export function StatisticDetail({ value }: { value: string }) {
   return <>{extra ? t("common.additionalMinutes", { minutes: Number(extra[1]) }) : <T source={value} />}</>;
 }
 export function LocalizedDate({ value, monthOnly = false }: { value: string; monthOnly?: boolean }) {
-  const { locale } = useLanguage();
-  return <>{locale === "en" ? formatDateUTC(value, defaultDateFormat, monthOnly) : formatDateUTC(value, "YYYY-MM-DD", monthOnly)}</>;
+  const { preferences } = useLanguage();
+  return <>{formatDateUTC(value, preferences.dateFormat || defaultDateFormat, monthOnly)}</>;
 }
 
 export function LocalizedDuration({ minutes, scheduled = false }: { minutes: number | null; scheduled?: boolean }) {

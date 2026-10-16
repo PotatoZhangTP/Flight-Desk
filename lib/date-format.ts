@@ -1,4 +1,6 @@
-export type DateFormat = "MM/DD/YYYY" | "DD/MM/YYYY" | "YYYY-MM-DD";
+import type { DateFormat } from "./preferences";
+export { defaultPreferences } from "./preferences";
+export type { DateFormat } from "./preferences";
 export const defaultDateFormat: DateFormat = "MM/DD/YYYY";
 export function formatDateUTC(value: string, format: DateFormat = defaultDateFormat, monthOnly = false) {
   const date = new Date(value.length === 10 ? value + "T12:00:00Z" : value);

@@ -149,6 +149,17 @@ settings.passwordUpdateError|The Password Could Not Be Updated. Please Try Again
 settings.passwordResetRequired|Password Reset Is Required For This Account.|此账号需要通过密码重置流程设置密码。
 settings.passwordEmail|Check your email for a secure password change link.|请前往邮箱查看安全的密码修改链接。
 settings.passwordError|The email request could not be confirmed. Check your connection and inbox before retrying.|暂时无法确认邮件发送结果，请检查网络和收件箱后再试。
+settings.general|General Settings|常规设置
+settings.generalHelp|Manage how Flight Desk displays your information.|管理 Flight Desk 的显示方式。
+settings.account|Account Settings|账户设置
+settings.flightPreferences|Flight Preferences|飞行偏好
+settings.flightPreferencesHelp|More flight preferences will appear here as they become available.|更多飞行偏好将在相关功能推出后显示。
+settings.dateFormat|Date Format|日期格式
+settings.distanceUnit|Distance Unit|距离单位
+settings.timeFormat|Time Format|时间格式
+settings.saved|Settings Saved.|设置已保存。
+settings.saveError|Settings Could Not Be Saved. Please Try Again.|设置无法保存，请重试。
+settings.fullSettings|Go To Full Settings|进入完整设置
 dashboard.personal|Personal Logbook|个人飞行日志
 dashboard.greeting|Hello Captain|你好，机长
 dashboard.aircraftCount|Aircraft|飞机
