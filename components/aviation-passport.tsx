@@ -113,7 +113,7 @@ export function AviationPassport({ displayName, memberSince, userId, flights, to
       <div className={`passport-front-cover-v3 ${phase} ${turnedSheetCount >= 1 ? "is-open" : ""} ${turnedSheetCount > 1 ? "is-behind" : ""}`} onAnimationEnd={(event) => { if (event.currentTarget !== event.target) return; if (phase === "opening") { setTurnedSheetCount(1); setPhase("open"); } if (phase === "closing") { setTurnedSheetCount(0); setPhase("closed"); } }}>
         <div className="passport-cover-side passport-cover-outer">{coverFace}</div><div className="passport-cover-side passport-cover-inner">{identityPage}</div>
       </div>
-      {Array.from({ length: physicalSheetCount }, (_, index) => {
+      {Array.from({ length: visaSheetCount }, (_, index) => {
         const stableTurned = index < turnedSheetCount - 1;
         const isTurning = index === turningSheetIndex;
         const sheetState = isTurning ? (phase === "turning-forward" ? "turning-forward" : "turning-backward") : stableTurned ? "is-turned" : "is-unturned";
@@ -125,13 +125,26 @@ export function AviationPassport({ displayName, memberSince, userId, flights, to
           <div className="passport-sheet-face passport-sheet-front">{index < visaSheetCount ? stampPage(index * 2) : endingPage}</div><div className="passport-sheet-face passport-sheet-back">{index < visaSheetCount ? stampPage(index * 2 + 1) : blankPage}</div>
         </div>;
       })}
-      <div className={`passport-back-cover-v3 ${phase === "turning-forward" && turningSheetIndex === physicalSheetCount - 1 ? "closing-to-back" : ""} ${phase === "turning-backward" && turningSheetIndex === physicalSheetCount - 1 ? "opening-from-back" : ""} ${phase === "book-flipping-front" ? "book-flipping-front" : ""}`} onAnimationEnd={(event) => {
+      <div className={`passport-ending-assembly-v3 ${phase === "turning-forward" && turningSheetIndex === physicalSheetCount - 1 ? "closing-to-back" : ""} ${phase === "turning-backward" && turningSheetIndex === physicalSheetCount - 1 ? "opening-from-back" : ""} ${turnedSheetCount > physicalSheetCount ? "is-closed-back" : ""}`} style={{ zIndex: turningSheetIndex === physicalSheetCount - 1 ? 50 : physicalSheetCount + 10 }} onAnimationEnd={(event) => {
+        if (event.currentTarget !== event.target || turningSheetIndex !== physicalSheetCount - 1) return;
+        finishSheetTurn();
+      }}>
+        <div className="passport-ending-sheet-v3">
+          <div className="passport-ending-face passport-ending-front">{endingPage}</div>
+          <div className="passport-ending-face passport-ending-back">{blankPage}</div>
+        </div>
+        <div className="passport-ending-back-cover-v3">
+          <div className="passport-ending-cover-face passport-ending-cover-inner" aria-hidden="true" />
+          <div className="passport-ending-cover-face passport-ending-cover-outer" aria-hidden="true" />
+        </div>
+      </div>
+      <div className={`passport-closed-book-v3 ${phase === "book-flipping-front" ? "book-flipping-front" : ""}`} onAnimationEnd={(event) => {
         if (event.currentTarget !== event.target || phase !== "book-flipping-front") return;
         setTurnedSheetCount(0);
         setPhase("closed");
       }}>
-        <div className="passport-back-cover-side passport-back-cover-outer" aria-hidden="true" />
-        <div className="passport-back-cover-side passport-back-cover-front">{phase === "book-flipping-front" ? coverFace : null}</div>
+        <div className="passport-closed-book-face passport-closed-book-back" aria-hidden="true" />
+        <div className="passport-closed-book-face passport-closed-book-front">{coverFace}</div>
       </div>
       <div className="passport-spine-v2" />
     </div></div></div>
