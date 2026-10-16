@@ -34,7 +34,7 @@ export function AviationPassport({ displayName, memberSince, userId, flights, to
   const [theme, setTheme] = useState<keyof typeof themes>("navy");
   const stamps = useMemo(() => makeStamps(flights), [flights]);
   const [cover, metal] = themes[theme];
-  const sheetCount = Math.max(1, Math.ceil(Math.max(1, Math.ceil(stamps.length / 5)) / 2));
+  const sheetCount = Math.max(2, Math.ceil(Math.max(1, Math.ceil(stamps.length / 5)) / 2));
   const passportNo = `FD-${hash(userId).toString().padStart(4, "0")}`;
 
   useEffect(() => { try { setTheme((localStorage.getItem("flightdesk-passport-theme") as keyof typeof themes) || "navy"); } catch {} }, []);
