@@ -186,11 +186,14 @@ button:not(:disabled), summary { cursor: pointer; }
 .passport-cover { display: grid; place-items: center; align-content: center; gap: 18px; width: min(100%, 250px); aspect-ratio: 88 / 125; margin: auto; border: 1px solid color-mix(in srgb, var(--passport-metal) 55%, transparent); border-radius: 10px 14px 14px 10px; background: radial-gradient(circle at 50% 42%, color-mix(in srgb, var(--passport-cover) 82%, white), var(--passport-cover)); color: var(--passport-metal); box-shadow: inset 10px 0 0 color-mix(in srgb, #000 22%, transparent), 0 18px 35px color-mix(in srgb, #000 22%, transparent); transition: transform 220ms ease-out, box-shadow 220ms ease-out; }
 .passport-cover:hover { transform: translateY(-4px) rotateY(-3deg); box-shadow: inset 10px 0 0 color-mix(in srgb, #000 22%, transparent), 0 24px 42px color-mix(in srgb, #000 28%, transparent); }
 .passport-logo { width: 120px; height: 34px; object-fit: contain; filter: sepia(1) saturate(.45) brightness(1.6); }
+.passport-brand { position: absolute; left: 22px; top: 20px; display: flex; align-items: center; gap: 7px; font-size: .65rem; font-weight: 700; letter-spacing: .04em; }.passport-brand img { width: 30px; height: 22px; object-fit: contain; filter: sepia(1) saturate(.45) brightness(1.6); }
 .passport-kicker, .passport-eyebrow { font-size: .7rem; font-weight: 800; letter-spacing: .18em; }
 .passport-kicker { font-size: 1rem; letter-spacing: .18em; text-shadow: 0 1px 0 color-mix(in srgb, #fff 25%, transparent); }
+.passport-cover::after { content: ""; position: absolute; inset: 8px; pointer-events: none; border: 1px solid color-mix(in srgb, var(--passport-metal) 28%, transparent); border-radius: 5px 9px 9px 5px; }.passport-cover { position: relative; }
 .passport-inner { display: grid; grid-template-columns: 1fr 1fr; gap: 0; width: 100%; min-height: 270px; border-radius: 10px; overflow: hidden; box-shadow: 0 16px 32px color-mix(in srgb, #000 15%, transparent); }
 .passport-page { min-width: 0; padding: 20px; background: #f7f0df; color: #34291c; }
 .passport-inner { animation: passport-open 420ms ease-out both; transform-origin: center; }
+.passport-phase-opening .passport-cover { animation: passport-cover-open 420ms ease-out both; }.passport-phase-closing .passport-inner { animation: passport-cover-close 420ms ease-in both; }.passport-page.is-turning { animation: passport-page-turn 460ms ease-in-out both; transform-origin: left center; }
 .passport-page + .passport-page { border-left: 1px solid #d5b36a; }
 .passport-identity h3 { margin: 16px 0; font-size: 1.25rem; }
 .passport-identity dl { display: grid; gap: 8px; font-size: .75rem; }
@@ -210,6 +213,9 @@ button:not(:disabled), summary { cursor: pointer; }
 .passport-swatch { width: 34px; height: 34px; border: 2px solid var(--surface); border-radius: 50%; box-shadow: 0 0 0 1px var(--line-strong); }
 @media (max-width: 639px) { .passport-inner { grid-template-columns: 1fr; } .passport-page + .passport-page { border-left: 0; border-top: 1px solid #d5b36a; } .passport-stage { min-height: 420px; } }
 @keyframes passport-open { from { opacity: 0; transform: rotateY(-70deg) scale(.94); } to { opacity: 1; transform: rotateY(0) scale(1); } }
+@keyframes passport-cover-open { from { opacity: 1; transform: rotateY(0); } to { opacity: .2; transform: rotateY(-88deg); } }
+@keyframes passport-cover-close { from { opacity: 1; transform: rotateY(0); } to { opacity: 0; transform: rotateY(88deg); } }
+@keyframes passport-page-turn { 0% { transform: rotateY(0); filter: brightness(1); } 45% { transform: rotateY(-78deg); filter: brightness(.78); } 100% { transform: rotateY(0); filter: brightness(1); } }
 @keyframes passport-popover-in { from { opacity: 0; transform: translateY(-5px) scale(.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
 @media (prefers-reduced-motion: reduce) { .passport-inner, .passport-popover, .passport-customizer, .passport-cover { animation: none; transition: none; } }
 @keyframes settings-content-enter { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
