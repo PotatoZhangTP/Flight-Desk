@@ -29,7 +29,7 @@ export function FlightMap({ data, compact = false }: { data: FlightMapData; comp
     };
 
     try {
-      instance = new maplibregl.Map({ container: target, style: styleUrl, center: [0, 20], zoom: 1.3, attributionControl: {} });
+      instance = new maplibregl.Map({ container: target, style: styleUrl, center: [0, 20], zoom: 1.3, renderWorldCopies: false, attributionControl: {} });
       map.current = instance;
       instance.addControl(new maplibregl.NavigationControl({ showCompass: true }), "top-left");
       resizeObserver = typeof ResizeObserver !== "undefined" ? new ResizeObserver(() => instance?.resize()) : null;

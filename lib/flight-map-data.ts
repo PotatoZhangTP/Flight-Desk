@@ -10,10 +10,8 @@ function greatCircle(from: [number, number], to: [number, number]): [number, num
   const a = [from[0] * rad, from[1] * rad]; const b = [to[0] * rad, to[1] * rad];
   const dot = Math.max(-1, Math.min(1, Math.sin(a[1]) * Math.sin(b[1]) + Math.cos(a[1]) * Math.cos(b[1]) * Math.cos(b[0] - a[0])));
   const angle = Math.acos(dot); const steps = Math.max(12, Math.ceil(angle / (5 * rad))); const points: [number, number][] = [];
-  for (let i = 0; i <= steps; i++) { const f = i / steps; const sinAngle = Math.sin(angle); const x = sinAngle ? Math.sin((1 - f) * angle) / sinAngle : 1 - f; const y = sinAngle ? Math.sin(f * angle) / sinAngle : f; const lat = Math.atan2(y * Math.sin(b[1]) + x * Math.sin(a[1]), Math.sqrt((y * Math.cos(b[1]) * Math.cos(b[0]) + x * Math.cos(a[1]) * Math.cos(a[0])) ** 2 + (y * Math.cos(b[1]) * Math.sin(b[0]) + x * Math.cos(a[1]) * Math.sin(a[0])) ** 2)) / rad; let lon = Math.atan2(y * Math.cos(b[1]) * Math.sin(b[0]) + x * Math.cos(a[1]) * Math.sin(a[0]), y * Math.cos(b[1]) * Math.cos(b[0]) + x * Math.cos(a[1]) * Math.cos(a[0])) / rad; if (lon > 180) lon -= 360; if (lon < -180) lon += 360; points.push([lon, lat]); }
-  const parts: [number, number][][] = [[]];
-  for (const point of points) { const previous = parts[parts.length - 1].at(-1); if (previous && Math.abs(point[0] - previous[0]) > 180) parts.push([]); parts.at(-1)!.push(point); }
-  return parts.filter(part => part.length > 1);
+  for (let i = 0; i <= steps; i++) { const f = i / steps; const sinAngle = Math.sin(angle); const x = sinAngle ? Math.sin((1 - f) * angle) / sinAngle : 1 - f; const y = sinAngle ? Math.sin(f * angle) / sinAngle : f; const lat = Math.atan2(y * Math.sin(b[1]) + x * Math.sin(a[1]), Math.sqrt((y * Math.cos(b[1]) * Math.cos(b[0]) + x * Math.cos(a[1]) * Math.cos(a[0])) ** 2 + (y * Math.cos(b[1]) * Math.sin(b[0]) + x * Math.cos(a[1]) * Math.sin(a[0])) ** 2)) / rad; const normalizedLon = Math.atan2(y * Math.cos(b[1]) * Math.sin(b[0]) + x * Math.cos(a[1]) * Math.sin(a[0]), y * Math.cos(b[1]) * Math.cos(b[0]) + x * Math.cos(a[1]) * Math.cos(a[0])) / rad; const previousLon = points.at(-1)?.[0] ?? from[0]; let lon = normalizedLon; while (lon - previousLon > 180) lon -= 360; while (lon - previousLon < -180) lon += 360; points.push([lon, lat]); }
+  return points.length > 1 ? [points] : [];
 }
 
 export async function getFlightMapData(supabase: SupabaseClient, userId: string): Promise<FlightMapData> {
