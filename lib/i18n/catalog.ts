@@ -240,6 +240,7 @@ passport.flightTime|Flight Time|飞行时间
 passport.stamps|Visas & Stamps|国家印章
 passport.empty|Your passport is ready for its first stamp.|你的航空护照已准备好，等待第一枚印章。
 passport.openHint|Click To Open Your Passport|点击打开你的航空护照
+passport.open|Open Passport|打开护照
 passport.close|Close Passport|合上护照
 passport.totalVisits|Total Visits|到访次数
 passport.firstVisit|First Visit|首次到访

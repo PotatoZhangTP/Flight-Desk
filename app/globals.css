@@ -183,13 +183,14 @@ button:not(:disabled), summary { cursor: pointer; }
 .dashboard-passport { aspect-ratio: 125 / 88; min-height: 360px; border-color: #2d2940; background: #171427; }
 @media (max-width: 1023px) { .dashboard-passport { aspect-ratio: auto; min-height: 360px; } }
 .passport-stage { position: relative; width: min(100%, 620px); min-height: 270px; perspective: 1400px; }
-.passport-cover { display: grid; place-items: center; align-content: center; gap: 14px; width: min(100%, 390px); aspect-ratio: 125 / 88; margin: auto; border: 1px solid color-mix(in srgb, var(--passport-metal) 55%, transparent); border-radius: 10px 14px 14px 10px; background: var(--passport-cover); color: var(--passport-metal); box-shadow: inset 10px 0 0 color-mix(in srgb, #000 22%, transparent), 0 18px 35px color-mix(in srgb, #000 22%, transparent); transition: transform 220ms ease-out, box-shadow 220ms ease-out; }
+.passport-cover { display: grid; place-items: center; align-content: center; gap: 18px; width: min(100%, 250px); aspect-ratio: 88 / 125; margin: auto; border: 1px solid color-mix(in srgb, var(--passport-metal) 55%, transparent); border-radius: 10px 14px 14px 10px; background: radial-gradient(circle at 50% 42%, color-mix(in srgb, var(--passport-cover) 82%, white), var(--passport-cover)); color: var(--passport-metal); box-shadow: inset 10px 0 0 color-mix(in srgb, #000 22%, transparent), 0 18px 35px color-mix(in srgb, #000 22%, transparent); transition: transform 220ms ease-out, box-shadow 220ms ease-out; }
 .passport-cover:hover { transform: translateY(-4px) rotateY(-3deg); box-shadow: inset 10px 0 0 color-mix(in srgb, #000 22%, transparent), 0 24px 42px color-mix(in srgb, #000 28%, transparent); }
 .passport-logo { width: 120px; height: 34px; object-fit: contain; filter: sepia(1) saturate(.45) brightness(1.6); }
 .passport-kicker, .passport-eyebrow { font-size: .7rem; font-weight: 800; letter-spacing: .18em; }
-.passport-cover strong { letter-spacing: .24em; }
+.passport-kicker { font-size: 1rem; letter-spacing: .18em; text-shadow: 0 1px 0 color-mix(in srgb, #fff 25%, transparent); }
 .passport-inner { display: grid; grid-template-columns: 1fr 1fr; gap: 0; width: 100%; min-height: 270px; border-radius: 10px; overflow: hidden; box-shadow: 0 16px 32px color-mix(in srgb, #000 15%, transparent); }
 .passport-page { min-width: 0; padding: 20px; background: #f7f0df; color: #34291c; }
+.passport-inner { animation: passport-open 420ms ease-out both; transform-origin: center; }
 .passport-page + .passport-page { border-left: 1px solid #d5b36a; }
 .passport-identity h3 { margin: 16px 0; font-size: 1.25rem; }
 .passport-identity dl { display: grid; gap: 8px; font-size: .75rem; }
@@ -198,15 +199,19 @@ button:not(:disabled), summary { cursor: pointer; }
 .passport-identity dd { margin: 0; font-weight: 700; text-align: right; }
 .passport-identity small { display: block; margin-top: 18px; color: #806d4d; }
 .passport-stamp-field { display: flex; flex-wrap: wrap; align-content: flex-start; justify-content: center; gap: 14px; padding-top: 18px; }
-.passport-stamp { display: grid; place-items: center; width: 82px; height: 82px; border: 2px solid currentColor; border-radius: 50%; background: transparent; color: #9d4646; font-size: .7rem; opacity: .82; }
+.passport-stamp { display: grid; place-items: center; width: 82px; height: 82px; border: 2px solid currentColor; background: transparent; color: #9d4646; font-size: .7rem; opacity: .82; }
+.stamp-circle { border-radius: 50%; }.stamp-square { border-radius: 8px; }.stamp-triangle { clip-path: polygon(50% 0, 100% 100%, 0 100%); padding-top: 18px; }.stamp-hex { clip-path: polygon(25% 3%, 75% 3%, 100% 50%, 75% 97%, 25% 97%, 0 50%); }
 .passport-stamp b { font-size: 1rem; letter-spacing: .06em; }
 .passport-stamp span { font-size: .58rem; }
 .stamp-blue { color: #3d648b; border-radius: 45%; }.stamp-green { color: #4b775f; border-radius: 40%; }.stamp-purple { color: #704d79; border-radius: 46%; }
 .passport-empty { display: grid; place-items: center; min-height: 180px; text-align: center; font-size: .85rem; color: #806d4d; }
-.passport-popover, .passport-customizer { position: absolute; z-index: 20; right: 12px; top: 12px; max-width: min(280px, calc(100% - 24px)); border: 1px solid var(--line); border-radius: 14px; background: var(--surface); padding: 16px; color: var(--ink); box-shadow: 0 14px 35px color-mix(in srgb, #000 20%, transparent); }
+.passport-popover, .passport-customizer { position: absolute; z-index: 20; right: 12px; top: 4.25rem; max-width: min(280px, calc(100% - 24px)); border: 1px solid var(--line); border-radius: 14px; background: var(--surface); padding: 16px; color: var(--ink); box-shadow: 0 14px 35px color-mix(in srgb, #000 20%, transparent); animation: passport-popover-in 180ms ease-out both; }
 .passport-popover button:first-child { float: right; font-size: 1.25rem; }.passport-popover h3, .passport-customizer h3 { margin: 0 0 10px; color: var(--brand); }.passport-popover p { margin: 5px 0; font-size: .8rem; }
 .passport-swatch { width: 34px; height: 34px; border: 2px solid var(--surface); border-radius: 50%; box-shadow: 0 0 0 1px var(--line-strong); }
 @media (max-width: 639px) { .passport-inner { grid-template-columns: 1fr; } .passport-page + .passport-page { border-left: 0; border-top: 1px solid #d5b36a; } .passport-stage { min-height: 420px; } }
+@keyframes passport-open { from { opacity: 0; transform: rotateY(-70deg) scale(.94); } to { opacity: 1; transform: rotateY(0) scale(1); } }
+@keyframes passport-popover-in { from { opacity: 0; transform: translateY(-5px) scale(.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
+@media (prefers-reduced-motion: reduce) { .passport-inner, .passport-popover, .passport-customizer, .passport-cover { animation: none; transition: none; } }
 @keyframes settings-content-enter { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
 .skeleton-shimmer { background: linear-gradient(90deg, var(--surface-muted) 25%, color-mix(in srgb, var(--surface-muted) 55%, var(--surface)) 50%, var(--surface-muted) 75%); background-size: 200% 100%; animation: skeleton-shimmer 1.3s ease-in-out infinite; }
 @keyframes skeleton-shimmer { to { background-position: -200% 0; } }
