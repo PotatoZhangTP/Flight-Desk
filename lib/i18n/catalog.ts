@@ -167,6 +167,9 @@ settings.twelveHour|12-hour (AM/PM)|12小时制（上午/下午）
 settings.twentyFourHour|24-hour|24小时制
 timePicker.open|Open time picker|打开时间选择器
 timePicker.title|Time picker|时间选择器
+timePicker.hour|Hour|小时
+timePicker.minute|Minute|分钟
+timePicker.period|AM/PM|上午/下午
 dashboard.personal|Personal Logbook|个人飞行日志
 dashboard.greeting|Hello Captain|你好，机长
 dashboard.aircraftCount|Aircraft|飞机
