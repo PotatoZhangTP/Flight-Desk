@@ -9,3 +9,7 @@ This rule applies to user-visible interface labels, not to complete sentences, e
 ## Date display rules
 
 User-visible dates must use the shared `LocalizedDate` component and `lib/date-format.ts`. The default English display format is `MM/DD/YYYY`; stored ISO dates, UTC values, sorting, filtering, and form input values must not be changed. Future date-format preferences should be added to the shared format configuration rather than implemented per page.
+
+## Button Design Rules
+
+Use the shared `button-primary`, `button-secondary`, and `button-danger` classes for independent actions. Keep their common height, rounded shape, typography, spacing, hover, focus-visible, and disabled behavior consistent across themes and screen sizes. Do not turn ordinary prose links or breadcrumbs into buttons.
