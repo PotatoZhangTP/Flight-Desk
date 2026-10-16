@@ -160,6 +160,11 @@ settings.timeFormat|Time Format|时间格式
 settings.saved|Settings Saved.|设置已保存。
 settings.saveError|Settings Could Not Be Saved. Please Try Again.|设置无法保存，请重试。
 settings.fullSettings|Go To Full Settings|进入完整设置
+settings.kilometers|Kilometers (km)|千米 (km)
+settings.miles|Miles (mi)|英里 (mi)
+settings.nauticalMiles|Nautical Miles (nm)|海里 (nm)
+settings.twelveHour|12-hour (AM/PM)|12小时制（上午/下午）
+settings.twentyFourHour|24-hour|24小时制
 dashboard.personal|Personal Logbook|个人飞行日志
 dashboard.greeting|Hello Captain|你好，机长
 dashboard.aircraftCount|Aircraft|飞机
