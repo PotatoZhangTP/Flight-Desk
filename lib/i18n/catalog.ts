@@ -29,22 +29,22 @@ common.dashboard|Dashboard|飞行概览
 common.settings|Settings|设置
 common.profile|My Profile|个人资料
 common.openLogbook|Open Your Logbook|打开飞行日志
-common.openLogbookLower|Open your logbook|打开飞行日志
+common.openLogbookLower|Open Your Logbook|打开飞行日志
 common.explore|Explore Flight Desk|探索 Flight Desk
-common.soon|Coming soon|即将上线
-common.next|Coming next|后续上线
+common.soon|Coming Soon|即将上线
+common.next|Coming Next|后续上线
 common.available|Available|已上线
 common.unavailable|Not available yet|暂无数据
-common.backHome|← Back home|← 返回首页
+common.backHome|← Back Home|← 返回首页
 common.backLanding|← Back to Landing Page|← 返回 Landing Page
-common.backDashboard|← Back to dashboard|← 返回飞行概览
+common.backDashboard|← Back To Dashboard|← 返回飞行概览
 common.backMain|← Back to Main Page|← 返回首页
-common.backFlight|← Back to flight|← 返回航班详情
-common.backSignIn|← Back to sign in|← 返回登录
-common.backDashboardArrow|Back to dashboard →|返回飞行概览 →
+common.backFlight|← Back To Flight|← 返回航班详情
+common.backSignIn|← Back To Sign In|← 返回登录
+common.backDashboardArrow|Back To Dashboard →|返回飞行概览 →
 common.dismiss|Dismiss notification|关闭提示
-common.mainNav|Main navigation|主导航
-common.footerNav|{group} footer navigation|{group}页脚导航
+common.mainNav|Main Navigation|主导航
+common.footerNav|{group} Footer Navigation|{group}页脚导航
 common.copyright|© 2026 Flight Desk. All rights reserved.|© 2026 Flight Desk。保留所有权利。
 common.upcoming|该功能即将上线，敬请期待|该功能即将上线，敬请期待
 common.upcomingEnglish|This feature is coming soon. Stay tuned.|该功能即将上线，敬请期待。
@@ -63,31 +63,31 @@ auth.intro|Sign in to pick up where you left off.|登录，继续记录你的飞
 auth.signupIntro|Create your account and keep every journey together.|创建账号，珍藏每一段飞行旅程。
 auth.mode|Account access mode|登录或注册
 auth.access|Account access|账号登录
-auth.signIn|Sign in|登录
-auth.signUp|Create account|创建账号
+auth.signIn|Sign In|登录
+auth.signUp|Create Account|创建账号
 auth.email|Email|邮箱
 auth.password|Password|密码
 auth.passwordHint|At least 6 characters|至少 6 个字符
 auth.show|Show password|显示密码
 auth.hide|Hide password|隐藏密码
 auth.forgot|Forgot password?|忘记密码？
-auth.signingIn|Signing in…|正在登录…
-auth.creating|Creating account…|正在创建账号…
-auth.signOut|Sign out|退出登录
-auth.signingOut|Signing out…|正在退出…
-auth.openMenu|Open user menu|打开账号菜单
+auth.signingIn|Signing In…|正在登录…
+auth.creating|Creating Account…|正在创建账号…
+auth.signOut|Sign Out|退出登录
+auth.signingOut|Signing Out…|正在退出…
+auth.openMenu|Open User Menu|打开账号菜单
 auth.invalidCredentials|Email or password is incorrect.|邮箱或密码不正确。
 auth.created|Account created. Check your inbox to verify your email before signing in.|账号已创建，请先前往邮箱完成验证，再登录。
 auth.networkError|Sign in or account creation could not be confirmed. Check your connection before trying again.|暂时无法确认登录或注册结果，请检查网络后再试。
-auth.resetTitle|Reset your password|重置密码
+auth.resetTitle|Reset Your Password|重置密码
 auth.resetIntro|We’ll send a secure reset link to your email address.|我们将向你的邮箱发送安全的密码重置链接。
-auth.sendReset|Send reset link|发送重置链接
-auth.sendingReset|Sending reset link…|正在发送重置链接…
+auth.sendReset|Send Reset Link|发送重置链接
+auth.sendingReset|Sending Reset Link…|正在发送重置链接…
 auth.resetSent|Check your inbox for the password reset link.|请前往邮箱查看密码重置链接。
-auth.newPasswordTitle|Choose a new password|设置新密码
-auth.newPassword|New password|新密码
-auth.updatePassword|Update password|更新密码
-auth.updatingPassword|Updating password…|正在更新密码…
+auth.newPasswordTitle|Choose A New Password|设置新密码
+auth.newPassword|New Password|新密码
+auth.updatePassword|Update Password|更新密码
+auth.updatingPassword|Updating Password…|正在更新密码…
 auth.passwordUpdated|Password updated successfully.|密码已更新。
 auth.updateError|The update could not be confirmed. Check your connection before retrying.|暂时无法确认更新结果，请检查网络后再试。
 auth.invalidLink|The authentication link is invalid or expired.|验证链接无效或已过期。
@@ -97,16 +97,16 @@ auth.keepEvery|Keep Every|珍藏每一段
 auth.journeyView|Journey In View.|飞行旅程。
 auth.capture|Capture the journeys and memories that make you love aviation.|记录那些让你热爱航空的旅程与回忆。
 profile.account|Account|账号
-profile.details|Profile details|个人资料
-profile.displayName|Display name|显示名称
-profile.editName|Edit display name|编辑显示名称
+profile.details|Profile Details|个人资料
+profile.displayName|Display Name|显示名称
+profile.editName|Edit Display Name|编辑显示名称
 profile.defaultAvatar|Default avatar · uploads coming later|默认头像 · 上传功能将在后续推出
-profile.emailTitle|Sign-in email|登录邮箱
+profile.emailTitle|Sign-In Email|登录邮箱
 profile.emailHelp|This is the email connected to your Flight Desk account.|这是与你的 Flight Desk 账号关联的邮箱。
 profile.settingsHelp|Manage your account details and preferences.|管理账号资料与偏好设置。
-profile.aviation|Aviation profile|航空爱好者资料
-profile.memberSince|Member since|加入时间
-profile.bio|Profile bio|个人简介
+profile.aviation|Aviation Profile|航空爱好者资料
+profile.memberSince|Member Since|加入时间
+profile.bio|Profile Bio|个人简介
 profile.bioEmpty|Add a short introduction about your aviation journey.|写几句话，介绍你的航空之旅。
 profile.addBio|Add bio|添加简介
 profile.editBio|Edit bio|编辑简介
@@ -135,23 +135,23 @@ settings.passwordHelp|Your password is protected and can never be viewed here.|�
 settings.changePassword|Change password|修改密码
 settings.passwordEmail|Check your email for a secure password change link.|请前往邮箱查看安全的密码修改链接。
 settings.passwordError|The email request could not be confirmed. Check your connection and inbox before retrying.|暂时无法确认邮件发送结果，请检查网络和收件箱后再试。
-dashboard.personal|Personal logbook|个人飞行日志
+dashboard.personal|Personal Logbook|个人飞行日志
 dashboard.greeting|Hello Captain|你好，机长
 dashboard.aircraftCount|Aircraft|飞机
 dashboard.status|Status|状态
 dashboard.completed|Completed|已完成
 dashboard.planned|Planned|计划中
 dashboard.filters|Filters|筛选
-dashboard.clearFilters|Clear filters|清除筛选
+dashboard.clearFilters|Clear Filters|清除筛选
 dashboard.importButton|Import|导入
 flight.status|Flight status|航班状态
 flight.planned|Planned|计划中
 flight.completed|Completed|已完成
 dashboard.glance|Here’s your flying at a glance.|你的飞行经历，一目了然。
-dashboard.total|Total flights|航班总数
-dashboard.recorded|Your recorded flights|已记录的航班
+dashboard.total|Total Flights|航班总数
+dashboard.recorded|Your Recorded Flights|已记录的航班
 dashboard.empty|No flights recorded yet|尚未记录航班
-dashboard.time|Flight time|飞行时长
+dashboard.time|Flight Time|飞行时长
 dashboard.noTime|No duration data yet|暂无时长数据
 dashboard.afterMap|Available after mapping|地图功能上线后提供
 dashboard.airports|Airports|机场
@@ -159,28 +159,28 @@ dashboard.countries|Countries|国家与地区
 dashboard.flights|Flights|航班
 dashboard.aircraftTypes|Aircraft Types|机型数量
 dashboard.recent|Recent Flight|最近航班
-dashboard.latest|Your latest journeys|最近的飞行旅程
+dashboard.latest|Your Latest Journeys|最近的飞行旅程
 dashboard.emptyRecent|No flights yet. Import your history or add your first flight.|还没有航班记录。你可以添加第一段飞行，或等待历史导入功能上线。
 dashboard.date|Date|日期
 dashboard.route|Route|航线
 dashboard.aircraft|Aircraft|飞机
 dashboard.duration|Duration|时长
 dashboard.action|Action|操作
-dashboard.import|Import your history|导入历史记录
+dashboard.import|Import Your History|导入历史记录
 dashboard.importHelp|Already have a spreadsheet? Bring your flights into Flight Desk in a few clicks.|已有航班表格？未来可通过导入功能，轻松整理到 Flight Desk。
-dashboard.importSoon|Excel import coming soon|Excel 导入即将上线
+dashboard.importSoon|Excel Import Coming Soon|Excel 导入即将上线
 dashboard.importFormats|.xlsx or .csv · Preview before saving|.xlsx 或 .csv · 保存前可预览
 dashboard.map|Your flying map|你的飞行地图
 dashboard.mapHelp|Route visualisation will appear here as your logbook grows.|随着飞行日志不断丰富，你的航线将在这里呈现。
 dashboard.mapEmpty|✦ Map view reserved for your routes|✦ 为你的航线预留的地图空间
 dashboard.error|We couldn’t load your flight data. Please refresh and try again.|暂时无法加载航班数据，请刷新后重试。
 flight.add|Add a Flight|添加航班
-flight.addLink|＋ Add flight|＋ 添加航班
+flight.addLink|＋ Add Flight|＋ 添加航班
 flight.edit|Edit Flight|编辑航班
 flight.editEntry|Edit Logbook Entry|编辑飞行记录
 flight.editHelp|Update Your Journey Details Below.|在下方更新这段旅程的详细信息。
-flight.record|Flight record|飞行记录
-flight.savedInfo|Saved flight information|已保存的航班信息
+flight.record|Flight Record|飞行记录
+flight.savedInfo|Saved Flight Information|已保存的航班信息
 flight.ticket|Flight Ticket · Planned Journey|航班机票 · 计划行程
 flight.departure|Departure|出发
 flight.arrival|Arrival|到达
@@ -189,32 +189,32 @@ flight.arrivalAirport|Arrival Airport|到达机场
 flight.departureDate|Departure Date|出发日期
 flight.arrivalDate|Arrival Date|到达日期
 flight.plannedTime|Planned Time|计划时间
-flight.localTime|Local time|当地时间
+flight.localTime|Local Time|当地时间
 flight.timezone|Timezone|时区
 flight.chooseTimezone|Select or Type IANA Timezone|选择或输入 IANA 时区
 flight.clockChange|Clock Change — Choose Occurrence|夏令时切换 — 选择对应时刻
 flight.chooseClock|Choose Earlier or Later|选择较早或较晚的时刻
 flight.terminal|Terminal (Optional)|航站楼（选填）
 flight.gate|Gate (Optional)|登机口（选填）
-flight.details|Flight details|航班详情
+flight.details|Flight Details|航班详情
 flight.airline|Airline|航空公司
-flight.number|Flight number|航班号
+flight.number|Flight Number|航班号
 flight.airlineHint|e.g. Air China|例如：中国国际航空
 flight.type|Aircraft Type (Optional)|机型（选填）
 flight.typeHint|e.g. Boeing 737-800|例如：Boeing 737-800
 flight.registration|Registration (Optional)|注册号（选填）
-flight.scheduled|Scheduled duration|计划飞行时长
-flight.actual|Actual duration|实际飞行时长
-flight.actualHours|Actual duration hours|实际飞行时长（小时）
-flight.actualMinutes|Actual duration minutes|实际飞行时长（分钟）
+flight.scheduled|Scheduled Duration|计划飞行时长
+flight.actual|Actual Duration|实际飞行时长
+flight.actualHours|Actual Duration Hours|实际飞行时长（小时）
+flight.actualMinutes|Actual Duration Minutes|实际飞行时长（分钟）
 flight.hours|Hours|小时
 flight.minutes|Minutes|分钟
 flight.calculated|Calculated after times are valid|有效日期和时间填写完成后自动计算
 flight.notes|Notes|备注
 flight.notesHint|Anything you want to remember…|记下这段旅程中值得珍藏的细节…
-flight.save|Save flight →|保存航班 →
-flight.update|Save changes →|保存修改 →
-flight.saving|Saving flight…|正在保存航班…
+flight.save|Save Flight →|保存航班 →
+flight.update|Save Changes →|保存修改 →
+flight.saving|Saving Flight…|正在保存航班…
 flight.updating|Updating Flight…|正在更新航班…
 flight.saved|Flight saved successfully.|航班已保存。
 flight.updated|Flight updated successfully.|航班已更新。
@@ -236,12 +236,12 @@ flight.gap|This local time does not exist in the selected timezone. Check the cl
 flight.overlap|This local time occurs twice. Choose the earlier or later occurrence.|夏令时切换导致这个当地时刻出现两次，请选择较早或较晚的一次。
 flight.arrivalBefore|Arrival must not precede departure; check the dates and timezones.|到达时间不能早于出发时间，请检查日期和时区。
 airport.name|Airport name|机场名称
-airport.searchHint|Search IATA, ICAO, name, city or country|搜索 IATA、ICAO、机场名称、城市或国家
-airport.searching|Searching airports…|正在搜索机场…
+airport.searchHint|Search IATA, ICAO, Name, City Or Country|搜索 IATA、ICAO、机场名称、城市或国家
+airport.searching|Searching Airports…|正在搜索机场…
 airport.error|Airport search is unavailable. Try again or enter manually.|机场搜索暂时不可用，请重试或手动填写。
 airport.empty|No matching airports. Try another name or enter manually.|未找到匹配机场，请尝试其他关键词或手动填写。
-airport.manual|Enter airport manually|手动填写机场
-airport.editManual|Edit airport manually|手动编辑机场
+airport.manual|Enter Airport Manually|手动填写机场
+airport.editManual|Edit Airport Manually|手动编辑机场
 airport.manualEntry|· manual entry|· 手动填写
 airport.back|Back to airport search|返回机场搜索
 airport.iata|IATA (optional)|IATA（选填）
