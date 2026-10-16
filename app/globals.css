@@ -176,6 +176,10 @@ button:not(:disabled), summary { cursor: pointer; }
 @media (hover: hover) and (pointer: fine) { .button-primary:hover { border-color: var(--brand-hover); background: var(--brand-hover); } .button-secondary:hover { background: var(--brand-soft); } .button-danger:hover { background: var(--danger-bg); } }
 .button-primary:focus-visible, .button-secondary:focus-visible, .button-danger:focus-visible { outline: 2px solid var(--brand); outline-offset: 3px; }
 .button-primary:disabled, .button-secondary:disabled, .button-danger:disabled { cursor: not-allowed; opacity: .6; }
+.settings-content-enter { animation: settings-content-enter 200ms ease-out both; }
+@keyframes settings-content-enter { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+.skeleton-shimmer { background: linear-gradient(90deg, var(--surface-muted) 25%, color-mix(in srgb, var(--surface-muted) 55%, var(--surface)) 50%, var(--surface-muted) 75%); background-size: 200% 100%; animation: skeleton-shimmer 1.3s ease-in-out infinite; }
+@keyframes skeleton-shimmer { to { background-position: -200% 0; } }
 main > a[href="/dashboard"] { display: inline-flex; min-height: 2.75rem; align-items: center; justify-content: center; border: 1px solid var(--brand); border-radius: 9999px; background: var(--surface); padding: .625rem 1.25rem; color: var(--brand); font-size: .875rem; font-weight: 700; transition: background-color 160ms ease-out, border-color 160ms ease-out, color 160ms ease-out, box-shadow 160ms ease-out; }
 main > a[href="/dashboard"]:hover { background: var(--brand-soft); }
 main > a[href="/dashboard"]:focus-visible { outline: 2px solid var(--brand); outline-offset: 3px; }
