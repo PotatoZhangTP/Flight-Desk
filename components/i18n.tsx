@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { createTranslator, NextIntlClientProvider } from "next-intl";
+import { formatDateUTC, defaultDateFormat } from "@/lib/date-format";
 import { baseMessages, byKey, localeCookie, normalizeLocale, sourceKeys, type Locale } from "@/lib/i18n/catalog";
 
 const fallback = createTranslator({ locale: "en", messages: baseMessages("en") });
@@ -76,9 +77,7 @@ export function StatisticDetail({ value }: { value: string }) {
 }
 export function LocalizedDate({ value, monthOnly = false }: { value: string; monthOnly?: boolean }) {
   const { locale } = useLanguage();
-  const date = new Date(value.length === 10 ? value + "T12:00:00Z" : value);
-  if (!Number.isFinite(date.getTime())) return <>—</>;
-  return <>{new Intl.DateTimeFormat(locale === "en" ? "en-GB" : "zh-CN", { timeZone: "UTC", year: "numeric", month: monthOnly ? "long" : "short", ...(monthOnly ? {} : { day: "2-digit" }) }).format(date)}</>;
+  return <>{locale === "en" ? formatDateUTC(value, defaultDateFormat, monthOnly) : formatDateUTC(value, "YYYY-MM-DD", monthOnly)}</>;
 }
 
 export function LocalizedDuration({ minutes, scheduled = false }: { minutes: number | null; scheduled?: boolean }) {

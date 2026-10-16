@@ -173,6 +173,8 @@ button:not(:disabled), summary { cursor: pointer; }
   .interaction-card:hover { border-color: var(--brand); box-shadow: 0 4px 16px color-mix(in srgb, var(--brand) 10%, transparent); transform: translateY(-2px); }
 }
 .interaction-spinner { animation: interaction-spin .8s linear infinite; }
+table tbody td:last-child a { display: inline-flex; min-height: 2.25rem; align-items: center; justify-content: center; border: 1px solid var(--brand); border-radius: 9999px; padding: .5rem .75rem; font-size: .75rem; font-weight: 700; color: var(--brand); }
+table tbody td:last-child a:hover { background: var(--brand-soft); }
 @keyframes interaction-spin { to { transform: rotate(360deg); } }
 .route-enter > main, .route-enter > div > main { animation: route-enter 180ms ease-out; }
 @keyframes route-enter { from { opacity: .65; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
