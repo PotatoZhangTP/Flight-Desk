@@ -7,7 +7,7 @@ import { LocalizedDate, T } from "@/components/i18n";
 type Flight = { id: string; flight_date: string; departure_country_code?: string | null; arrival_country_code?: string | null };
 type Stamp = { code: string; first: string; latest: string; visits: number; flights: number; rotation: number; tone: string; shape: string };
 type Props = { displayName: string; memberSince: string; userId: string; flights: Flight[]; totalFlights: number; countries: number; minutes: number };
-type Phase = "closed" | "opening" | "open" | "turning-forward" | "turning-backward" | "closing";
+type Phase = "closed" | "opening" | "open" | "turning-forward" | "turning-backward" | "closing" | "back-cover" | "book-flipping-front";
 
 const themes = { navy: ["#171427", "#d5b36a"], purple: ["#26163d", "#c8b6e9"], green: ["#12352d", "#d0b86b"], burgundy: ["#481d2b", "#e7c18c"], charcoal: ["#202126", "#c7c8d0"] } as const;
 const hash = (value: string) => [...value].reduce((sum, character) => (sum * 31 + character.charCodeAt(0)) % 997, 0);
@@ -44,7 +44,7 @@ export function AviationPassport({ displayName, memberSince, userId, flights, to
   const saveTheme = (next: keyof typeof themes) => { setTheme(next); try { localStorage.setItem("flightdesk-passport-theme", next); } catch {} };
 
   const turnForward = () => {
-    if (phase !== "open" || turnedSheetCount < 1 || turnedSheetCount > visaSheetCount) return;
+    if (phase !== "open" || turnedSheetCount < 1 || turnedSheetCount > physicalSheetCount) return;
     setTurningSheetIndex(turnedSheetCount - 1);
     setPhase("turning-forward");
   };
@@ -64,7 +64,10 @@ export function AviationPassport({ displayName, memberSince, userId, flights, to
     const nextCount = phase === "turning-forward" ? turnedSheetCount + 1 : turnedSheetCount - 1;
     setTurnedSheetCount(nextCount);
     setTurningSheetIndex(null);
-    if (!closeRequested.current) { setPhase("open"); return; }
+    if (!closeRequested.current) {
+      setPhase(nextCount === physicalSheetCount + 1 ? "back-cover" : "open");
+      return;
+    }
     if (nextCount > 1) {
       setPhase("open");
       requestAnimationFrame(() => { setTurningSheetIndex(nextCount - 2); setPhase("turning-backward"); });
@@ -74,7 +77,12 @@ export function AviationPassport({ displayName, memberSince, userId, flights, to
   useEffect(() => {
     function outside(event: PointerEvent) {
       const target = event.target as Node, book = root.current?.querySelector(".passport-book-v3");
-      if (phase === "open" && root.current?.contains(target) && book && !book.contains(target)) selected ? setSelected(null) : requestClose();
+      if (target instanceof Element && target.closest(".passport-customizer, .passport-popover, button, a")) return;
+      if (root.current?.contains(target) && book && !book.contains(target)) {
+        if (selected) setSelected(null);
+        else if (phase === "open") requestClose();
+        else if (phase === "back-cover") setPhase("book-flipping-front");
+      }
     }
     document.addEventListener("pointerdown", outside); return () => document.removeEventListener("pointerdown", outside);
   }, [phase, selected, turnedSheetCount]);
@@ -87,6 +95,11 @@ export function AviationPassport({ displayName, memberSince, userId, flights, to
 
   const handleBookClick = (event: React.MouseEvent<HTMLDivElement>) => {
     if (phase === "closed") { setPhase("opening"); return; }
+    if (phase === "back-cover") {
+      setTurningSheetIndex(physicalSheetCount - 1);
+      setPhase("turning-backward");
+      return;
+    }
     if (phase !== "open" || (event.target as HTMLElement).closest("button, a")) return;
     const bounds = event.currentTarget.getBoundingClientRect();
     if (event.clientX < bounds.left + bounds.width / 2) turnedSheetCount === 1 ? setPhase("closing") : turnBackward();
@@ -105,10 +118,21 @@ export function AviationPassport({ displayName, memberSince, userId, flights, to
         const isTurning = index === turningSheetIndex;
         const sheetState = isTurning ? (phase === "turning-forward" ? "turning-forward" : "turning-backward") : stableTurned ? "is-turned" : "is-unturned";
         const stackLevel = stableTurned ? index + 10 : physicalSheetCount - index + 10;
-        return <div key={`passport-sheet-${index}`} className={`passport-page-sheet-v3 ${sheetState}`} style={{ zIndex: isTurning ? 50 : stackLevel }} onAnimationEnd={(event) => { if (isTurning && event.currentTarget === event.target) finishSheetTurn(); }}>
+        return <div key={`passport-sheet-${index}`} className={`passport-page-sheet-v3 ${sheetState}`} style={{ zIndex: isTurning ? 50 : stackLevel }} onAnimationEnd={(event) => {
+          if (event.currentTarget !== event.target) return;
+          if (isTurning) finishSheetTurn();
+        }}>
           <div className="passport-sheet-face passport-sheet-front">{index < visaSheetCount ? stampPage(index * 2) : endingPage}</div><div className="passport-sheet-face passport-sheet-back">{index < visaSheetCount ? stampPage(index * 2 + 1) : blankPage}</div>
         </div>;
       })}
+      <div className={`passport-back-cover-v3 ${phase === "book-flipping-front" ? "book-flipping-front" : ""}`} onAnimationEnd={(event) => {
+        if (event.currentTarget !== event.target || phase !== "book-flipping-front") return;
+        setTurnedSheetCount(0);
+        setPhase("closed");
+      }}>
+        <div className="passport-back-cover-side passport-back-cover-outer" aria-hidden="true" />
+        <div className="passport-back-cover-side passport-back-cover-front">{coverFace}</div>
+      </div>
       <div className="passport-spine-v2" />
     </div></div></div>
     {selected && <div className="passport-popover" role="dialog"><button type="button" aria-label="Close" onClick={() => setSelected(null)}>×</button><h3>{selected.code}</h3><p><T id="passport.totalVisits" />: {selected.visits}</p><p><T id="passport.firstVisit" />: <LocalizedDate value={selected.first} /></p><p><T id="passport.latestVisit" />: <LocalizedDate value={selected.latest} /></p><p><T id="passport.relatedFlights" />: {selected.flights}</p></div>}

@@ -281,14 +281,22 @@ button:not(:disabled), summary { cursor: pointer; }
 .passport-page-sheet-v3.is-turned { transform: translateZ(2px) rotateY(-179.9deg); }
 .passport-page-sheet-v3.turning-forward { animation: passport-sheet-forward-v3 900ms cubic-bezier(.45,.05,.25,1) both; }
 .passport-page-sheet-v3.turning-backward { animation: passport-sheet-backward-v3 900ms cubic-bezier(.45,.05,.25,1) both; }
+.passport-back-cover-v3 { position: absolute; z-index: 0; top: 0; right: 0; width: 50%; height: 100%; transform-style: preserve-3d; transform-origin: center center; }
+.passport-back-cover-side { position: absolute; inset: 0; overflow: hidden; backface-visibility: hidden; -webkit-backface-visibility: hidden; transform-style: preserve-3d; -webkit-transform-style: preserve-3d; border: 1px solid color-mix(in srgb, var(--passport-metal) 55%, transparent); background: var(--passport-cover); }
+.passport-back-cover-outer { border-radius: 10px 14px 14px 10px; transform: translateZ(.2px) rotateY(0deg); box-shadow: inset 10px 0 0 color-mix(in srgb, #000 22%, transparent), 0 18px 35px color-mix(in srgb, #000 22%, transparent); }
+.passport-back-cover-front { display: grid; place-items: center; align-content: center; gap: 18px; border-radius: 14px 10px 10px 14px; color: var(--passport-metal); transform: translateZ(-.2px) rotateY(180deg); box-shadow: inset -10px 0 0 color-mix(in srgb, #000 22%, transparent), 0 18px 35px color-mix(in srgb, #000 22%, transparent); }
+.passport-phase-back-cover .passport-back-cover-v3 { z-index: 60; }
+.passport-phase-back-cover .passport-front-cover-v3, .passport-phase-back-cover .passport-page-sheet-v3 { visibility: hidden; }
+.passport-back-cover-v3.book-flipping-front { z-index: 60; animation: passport-book-flip-front-v3 900ms cubic-bezier(.45,.05,.25,1) both; }
 .passport-phase-closed .passport-page-sheet-v3, .passport-phase-opening .passport-page-sheet-v3 { pointer-events: none; }
 @keyframes passport-sheet-forward-v3 { from { transform: translateZ(1px) rotateY(0deg); box-shadow: 0 0 0 transparent; } 50% { box-shadow: -10px 0 24px color-mix(in srgb, #000 32%, transparent); } to { transform: translateZ(2px) rotateY(-179.9deg); box-shadow: 0 0 0 transparent; } }
 @keyframes passport-sheet-backward-v3 { from { transform: translateZ(2px) rotateY(-179.9deg); box-shadow: 0 0 0 transparent; } 50% { box-shadow: 10px 0 24px color-mix(in srgb, #000 32%, transparent); } to { transform: translateZ(1px) rotateY(0deg); box-shadow: 0 0 0 transparent; } }
 @keyframes passport-cover-open-v3 { from { transform: translateZ(4px) rotateY(0deg); } to { transform: translateZ(0) rotateY(-180deg); } }
 @keyframes passport-cover-close-v3 { from { transform: translateZ(0) rotateY(-180deg); } to { transform: translateZ(4px) rotateY(0deg); } }
+@keyframes passport-book-flip-front-v3 { from { transform: translateZ(4px) rotateY(0deg); } 50% { transform: translateZ(10px) rotateY(-90deg); } to { transform: translateZ(4px) rotateY(-180deg); } }
 @media (max-width: 639px) { .passport-stage-v3 { width: 100%; } }
 @media (prefers-reduced-motion: reduce) {
-  .passport-front-cover-v3.opening, .passport-front-cover-v3.closing, .passport-page-sheet-v3.turning-forward, .passport-page-sheet-v3.turning-backward { animation-duration: 1ms; }
+  .passport-front-cover-v3.opening, .passport-front-cover-v3.closing, .passport-page-sheet-v3.turning-forward, .passport-page-sheet-v3.turning-backward, .passport-back-cover-v3.book-flipping-front { animation-duration: 1ms; }
 }
 @media (prefers-reduced-motion: reduce) { .passport-inner, .passport-popover, .passport-customizer, .passport-cover, .passport-flipping-page, .passport-opening-sheet { animation: none; transition: none; } }
 @keyframes settings-content-enter { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
