@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import "maplibre-gl/dist/maplibre-gl.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { themeInitScript } from "@/lib/theme";
 import { NavigationFeedback } from "@/components/navigation-feedback";
