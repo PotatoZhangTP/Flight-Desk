@@ -27,9 +27,11 @@ export function AuthForm({ initialError = "" }: { initialError?: string }) {
       const result = mode === "login" ? await createClient().auth.signInWithPassword({ email, password }) : await signUpWithEmail(email, password);
       if (result.error) {
         const text = typeof result.error === "string" ? result.error : result.error.message;
-        setError(text.toLowerCase().includes("invalid login") ? "Email or password is incorrect." : text); return;
+        const lower = text.toLowerCase();
+        if (mode === "signup" && (lower.includes("already registered") || lower.includes("already exists") || lower.includes("user exists"))) { setError("auth.signupExisting"); return; }
+        setError(lower.includes("invalid login") ? "Email or password is incorrect." : text); return;
       }
-      if (mode === "signup") { setMessage("Account created. Check your inbox to verify your email before signing in."); return; }
+      if (mode === "signup") { setMessage("auth.created"); return; }
       setNavigating(true); router.push("/dashboard"); router.refresh();
     }, () => setError("Sign in or account creation could not be confirmed. Check your connection before trying again."));
   }
@@ -46,8 +48,8 @@ export function AuthForm({ initialError = "" }: { initialError?: string }) {
       <div><label htmlFor="auth-email" className="block text-sm font-semibold"><T id="auth.email" /></label><input disabled={loading} id="auth-email" required type="email" autoComplete="email" value={email} onChange={e => setEmail(e.target.value)} className={fieldClass} placeholder="you@example.com" /></div>
       <div><label htmlFor="auth-password" className="block text-sm font-semibold"><T id="auth.password" /></label><div className="relative"><input disabled={loading} id="auth-password" required minLength={6} autoComplete={mode === "signup" ? "new-password" : "current-password"} type={showPassword ? "text" : "password"} value={password} onChange={e => setPassword(e.target.value)} className={`${fieldClass} pr-12`} placeholder={t("At least 6 characters")} /><button type="button" onClick={() => setShowPassword(!showPassword)} aria-label={t(showPassword ? "Hide password" : "Show password")} aria-pressed={showPassword} className="absolute bottom-1 right-1 grid h-10 w-10 place-items-center rounded-lg text-muted transition hover:bg-brand-soft hover:text-brand focus-visible:outline-2 focus-visible:outline-brand"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" className="h-5 w-5"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6Z" /><circle cx="12" cy="12" r="3" />{showPassword && <path d="m3 3 18 18" />}</svg></button></div></div>
       {mode === "login" && <Link href="/auth/reset-password" className="block rounded text-right text-sm font-semibold text-brand transition hover:text-brand-hover focus-visible:outline-2 focus-visible:outline-brand"><T id="auth.forgot" /></Link>}
-      {error && <p role="alert" className="rounded-xl border border-danger-line bg-danger-bg p-3 text-sm leading-6 text-danger-fg"><UiError message={error} /></p>}
-      {message && <p role="status" className="rounded-xl border border-line bg-brand-soft p-3 text-sm leading-6 text-brand"><T source={message} /></p>}
+      {error && <div role="alert" className="rounded-xl border border-danger-line bg-danger-bg p-3 text-sm leading-6 text-danger-fg"><UiError message={error} />{error === "auth.signupExisting" && <p className="mt-2 flex flex-wrap gap-3 font-bold"><button type="button" onClick={() => { setMode("login"); setError(""); }} className="underline underline-offset-2"><T id="auth.signIn" /></button><Link href="/auth/reset-password" className="underline underline-offset-2"><T id="auth.forgot" /></Link></p>}</div>}
+      {message && <p role="status" className="rounded-xl border border-line bg-brand-soft p-3 text-sm leading-6 text-brand"><T id={message} /></p>}
       <AsyncButton busy={loading} busyLabel={t(mode === "login" ? "Signing in…" : "Creating account…")} className="w-full rounded-full bg-brand px-5 py-3.5 text-sm font-bold text-on-brand transition hover:bg-brand-hover focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand disabled:cursor-wait disabled:opacity-60"><T source={mode === "login" ? "Sign in" : "Create account"} /></AsyncButton>
     </form>
   </div>;

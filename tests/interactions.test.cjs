@@ -50,6 +50,15 @@ test('shared async button disables submits and exposes spinner, busy text and li
   const idle=renderToStaticMarkup(React.createElement(AsyncButton,{busy:false,busyLabel:'Saving…'},'Save'));
   assert.doesNotMatch(idle,/disabled=""|interaction-spinner/); assert.match(idle,/>Save</);
 });
+test('signup uses one guarded action and shows neutral email verification copy',()=>{
+  const form=fs.readFileSync('components/auth-form.tsx','utf8');
+  const action=fs.readFileSync('app/auth/actions.ts','utf8');
+  assert.equal((form.match(/signUpWithEmail\(/g)||[]).length,1);
+  assert.match(form,/if \(loading\) return/);
+  assert.match(form,/setMessage\("auth\.created"\)/);
+  assert.doesNotMatch(form,/Account created\. Check your inbox/);
+  assert.equal((action.match(/auth\.signUp\(/g)||[]).length,1);
+});
 test('navigation stays Next-native and loading UI is available for every page family',()=>{
   const link=fs.readFileSync('components/navigation-link.tsx','utf8');
   assert.match(link,/useLinkStatus/); assert.match(link,/<NextLink/);

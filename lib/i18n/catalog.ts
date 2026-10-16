@@ -81,7 +81,8 @@ auth.signOut|Sign Out|退出登录
 auth.signingOut|Signing Out…|正在退出…
 auth.openMenu|Open User Menu|打开账号菜单
 auth.invalidCredentials|Email or password is incorrect.|邮箱或密码不正确。
-auth.created|Account created. Check your inbox to verify your email before signing in.|账号已创建，请先前往邮箱完成验证，再登录。
+auth.created|Please Check Your Email For Verification Instructions.|请查看邮箱中的验证说明。
+auth.signupExisting|We Could Not Create This Account. If You Already Have An Account, Please Sign In Or Reset Your Password.|无法创建账号。如果你已有账号，请直接登录或重置密码。
 auth.networkError|Sign in or account creation could not be confirmed. Check your connection before trying again.|暂时无法确认登录或注册结果，请检查网络后再试。
 auth.resetTitle|Reset Your Password|重置密码
 auth.resetIntro|We’ll send a secure reset link to your email address.|我们将向你的邮箱发送安全的密码重置链接。
