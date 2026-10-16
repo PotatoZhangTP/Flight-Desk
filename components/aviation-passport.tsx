@@ -34,14 +34,17 @@ export function AviationPassport({ displayName, memberSince, userId, flights, to
   const [theme, setTheme] = useState<keyof typeof themes>("navy");
   const stamps = useMemo(() => makeStamps(flights), [flights]);
   const [cover, metal] = themes[theme];
-  const sheetCount = Math.max(2, Math.ceil(Math.max(1, Math.ceil(stamps.length / 5)) / 2));
+  const requiredVisaPageCount = Math.max(1, Math.ceil(stamps.length / 5));
+  const visaPageCount = Math.max(4, requiredVisaPageCount + (requiredVisaPageCount % 2));
+  const visaSheetCount = visaPageCount / 2;
+  const physicalSheetCount = visaSheetCount + 1;
   const passportNo = `FD-${hash(userId).toString().padStart(4, "0")}`;
 
   useEffect(() => { try { setTheme((localStorage.getItem("flightdesk-passport-theme") as keyof typeof themes) || "navy"); } catch {} }, []);
   const saveTheme = (next: keyof typeof themes) => { setTheme(next); try { localStorage.setItem("flightdesk-passport-theme", next); } catch {} };
 
   const turnForward = () => {
-    if (phase !== "open" || turnedSheetCount < 1 || turnedSheetCount > sheetCount) return;
+    if (phase !== "open" || turnedSheetCount < 1 || turnedSheetCount > visaSheetCount) return;
     setTurningSheetIndex(turnedSheetCount - 1);
     setPhase("turning-forward");
   };
@@ -78,6 +81,8 @@ export function AviationPassport({ displayName, memberSince, userId, flights, to
 
   const stampPage = (index: number) => <div className="passport-page passport-stamps"><p className="passport-eyebrow"><T id="passport.stamps" /> · {index + 1}</p><div className="passport-stamp-field">{stamps.slice(index * 5, index * 5 + 5).map((stamp) => <button key={stamp.code} type="button" className={`passport-stamp ${stamp.tone} ${stamp.shape}`} style={{ transform: `rotate(${stamp.rotation}deg)` }} onClick={(event) => { event.stopPropagation(); setSelected(stamp); }}><b>{stamp.code}</b><span><LocalizedDate value={stamp.first} /></span></button>)}</div>{!stamps.length && index === 0 && <div className="passport-empty"><T id="passport.empty" /><Link href="/flights/new" className="button-primary mt-4"><T id="map.addFirstFlight" /></Link></div>}</div>;
   const identityPage = <div className="passport-page passport-identity"><p className="passport-eyebrow"><T id="passport.identity" /></p><h3>Captain {displayName}</h3><dl><div><dt><T id="passport.memberSince" /></dt><dd><LocalizedDate value={memberSince} /></dd></div><div><dt><T id="passport.totalFlights" /></dt><dd>{totalFlights}</dd></div><div><dt><T id="passport.countriesVisited" /></dt><dd>{countries}</dd></div><div><dt><T id="passport.flightTime" /></dt><dd>{Math.floor(minutes / 60)}h {minutes % 60}m</dd></div><div><dt>Passport No.</dt><dd>{passportNo}</dd></div></dl></div>;
+  const endingPage = <div className="passport-page passport-ending"><div className="passport-ending-rule" /><p className="passport-ending-primary"><T id="passport.endingPrimary" /></p><p className="passport-ending-secondary"><T id="passport.endingSecondary" /></p></div>;
+  const blankPage = <div className="passport-page passport-blank" aria-hidden="true" />;
   const coverFace = <><span className="passport-brand"><img src="/images/flight-desk-logo-dark.svg" alt="Flight Desk" /><span>Flight Desk</span></span><span className="passport-kicker">AVIATION<br />PASSPORT</span></>;
 
   const handleBookClick = (event: React.MouseEvent<HTMLDivElement>) => {
@@ -95,13 +100,13 @@ export function AviationPassport({ displayName, memberSince, userId, flights, to
       <div className={`passport-front-cover-v3 ${phase} ${turnedSheetCount >= 1 ? "is-open" : ""} ${turnedSheetCount > 1 ? "is-behind" : ""}`} onAnimationEnd={(event) => { if (event.currentTarget !== event.target) return; if (phase === "opening") { setTurnedSheetCount(1); setPhase("open"); } if (phase === "closing") { setTurnedSheetCount(0); setPhase("closed"); } }}>
         <div className="passport-cover-side passport-cover-outer">{coverFace}</div><div className="passport-cover-side passport-cover-inner">{identityPage}</div>
       </div>
-      {Array.from({ length: sheetCount }, (_, index) => {
+      {Array.from({ length: physicalSheetCount }, (_, index) => {
         const stableTurned = index < turnedSheetCount - 1;
         const isTurning = index === turningSheetIndex;
         const sheetState = isTurning ? (phase === "turning-forward" ? "turning-forward" : "turning-backward") : stableTurned ? "is-turned" : "is-unturned";
-        const stackLevel = stableTurned ? index + 10 : sheetCount - index + 10;
+        const stackLevel = stableTurned ? index + 10 : physicalSheetCount - index + 10;
         return <div key={`passport-sheet-${index}`} className={`passport-page-sheet-v3 ${sheetState}`} style={{ zIndex: isTurning ? 50 : stackLevel }} onAnimationEnd={(event) => { if (isTurning && event.currentTarget === event.target) finishSheetTurn(); }}>
-          <div className="passport-sheet-face passport-sheet-front">{stampPage(index * 2)}</div><div className="passport-sheet-face passport-sheet-back">{stampPage(index * 2 + 1)}</div>
+          <div className="passport-sheet-face passport-sheet-front">{index < visaSheetCount ? stampPage(index * 2) : endingPage}</div><div className="passport-sheet-face passport-sheet-back">{index < visaSheetCount ? stampPage(index * 2 + 1) : blankPage}</div>
         </div>;
       })}
       <div className="passport-spine-v2" />

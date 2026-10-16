@@ -208,6 +208,11 @@ button:not(:disabled), summary { cursor: pointer; }
 .stamp-circle { border-radius: 50%; }.stamp-square { border-radius: 8px; }.stamp-triangle { clip-path: polygon(50% 0, 100% 100%, 0 100%); padding-top: 18px; }.stamp-hex { clip-path: polygon(25% 3%, 75% 3%, 100% 50%, 75% 97%, 25% 97%, 0 50%); }
 .passport-stamp b { font-size: 1rem; letter-spacing: .06em; }
 .passport-stamp span { font-size: .58rem; }
+.passport-ending { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; background: #f7f0df; color: #24314c; }
+.passport-ending-rule { width: 54px; height: 1px; margin-bottom: 24px; background: #b99652; }
+.passport-ending-primary { max-width: 240px; font-family: Georgia, "Times New Roman", serif; font-size: clamp(1.05rem, 2.2vw, 1.45rem); line-height: 1.35; letter-spacing: .025em; }
+.passport-ending-secondary { max-width: 230px; margin-top: 12px; color: #806d4d; font-family: Georgia, "Times New Roman", serif; font-size: clamp(.8rem, 1.6vw, 1rem); line-height: 1.5; }
+.passport-blank { background: #f7f0df; }
 .stamp-blue { color: #3d648b; border-radius: 45%; }.stamp-green { color: #4b775f; border-radius: 40%; }.stamp-purple { color: #704d79; border-radius: 46%; }
 .passport-empty { display: grid; place-items: center; min-height: 180px; text-align: center; font-size: .85rem; color: #806d4d; }
 .passport-popover, .passport-customizer { position: absolute; z-index: 20; right: 12px; top: 4.25rem; max-width: min(280px, calc(100% - 24px)); border: 1px solid var(--line); border-radius: 14px; background: var(--surface); padding: 16px; color: var(--ink); box-shadow: 0 14px 35px color-mix(in srgb, #000 20%, transparent); animation: passport-popover-in 180ms ease-out both; }
