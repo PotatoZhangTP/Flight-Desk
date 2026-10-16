@@ -157,7 +157,7 @@ dashboard.airports|Airports|机场
 dashboard.countries|Countries|国家与地区
 dashboard.flights|Flights|航班
 dashboard.aircraftTypes|Aircraft types|机型数量
-dashboard.recent|Recent flights|最近航班
+dashboard.recent|Recent Flight|最近航班
 dashboard.latest|Your latest journeys|最近的飞行旅程
 dashboard.emptyRecent|No flights yet. Import your history or add your first flight.|还没有航班记录。你可以添加第一段飞行，或等待历史导入功能上线。
 dashboard.date|Date|日期
@@ -175,7 +175,7 @@ dashboard.mapEmpty|✦ Map view reserved for your routes|✦ 为你的航线预�
 dashboard.error|We couldn’t load your flight data. Please refresh and try again.|暂时无法加载航班数据，请刷新后重试。
 flight.add|Add a Flight|添加航班
 flight.addLink|＋ Add flight|＋ 添加航班
-flight.edit|Edit flight|编辑航班
+flight.edit|Edit Flight|编辑航班
 flight.editEntry|Edit logbook entry|编辑飞行记录
 flight.editHelp|Update your journey details below.|在下方更新这段旅程的详细信息。
 flight.record|Flight record|飞行记录
@@ -214,7 +214,7 @@ flight.notesHint|Anything you want to remember…|记下这段旅程中值得珍
 flight.save|Save flight →|保存航班 →
 flight.update|Save changes →|保存修改 →
 flight.saving|Saving flight…|正在保存航班…
-flight.updating|Updating flight…|正在更新航班…
+flight.updating|Updating Flight…|正在更新航班…
 flight.saved|Flight saved successfully.|航班已保存。
 flight.updated|Flight updated successfully.|航班已更新。
 flight.pending|Duration pending|等待计算时长
