@@ -12,6 +12,7 @@ import { AirportPicker } from "@/components/airport-picker";
 import { AsyncButton } from "./async-button";
 import { useTransition } from "react";
 import { unstable_rethrow } from "next/navigation";
+import { DateTime, IANAZone } from "luxon";
 
 type Side = "departure" | "arrival";
 type FormState = PlannedTime & { airport: Airport | null; terminal: string; gate: string };
@@ -153,6 +154,7 @@ function TimeFields({ label, state, onChange }: { label: string; state: FormStat
     try { setZones(Intl.supportedValuesOf("timeZone")); } catch { /* manual input still accepts valid IANA names */ }
   }, []);
   const clock = getScheduledFlightTime(state.date, state.time, state.timezone, state.disambiguation);
+  const zoneOptions = [...new Set([...zones, state.timezone].filter(zone => zone && IANAZone.isValidZone(zone)))].map(zone => { const value = DateTime.fromISO(`${state.date || "2020-01-01"}T${state.time || "12:00"}`, { zone }); return { zone, offset: value.isValid ? value.offset : 0, label: value.isValid ? value.toFormat("ZZ") : "+00:00"}; }).sort((a,b) => a.offset - b.offset || a.zone.localeCompare(b.zone));
   return <div>
     <h3 className="font-bold text-ink"><T source={label} /><T id="flight.plannedTime" /></h3>
     <div className="mt-3 grid grid-cols-2 gap-3">
@@ -162,7 +164,7 @@ function TimeFields({ label, state, onChange }: { label: string; state: FormStat
     <label className="mt-3 block text-xs font-bold uppercase tracking-wider text-subtle"><T id="flight.timezone" /><input required aria-label={t(label + " timezone")} autoComplete="off" maxLength={100} list={listId} value={state.timezone}
         onChange={e => onChange({ timezone: e.target.value })} className={inputClass} placeholder={t("Select or type IANA timezone")} />
     </label>
-    <datalist id={listId}>{[...new Set([...zones, state.timezone].filter(Boolean))].sort().map(zone => <option key={zone} value={zone} />)}</datalist>
+    <datalist id={listId}>{zoneOptions.map(option => <option key={option.zone} value={option.zone} label={`(UTC${option.label}) ${option.zone}`}>{`(UTC${option.label}) ${option.zone}`}</option>)}</datalist>
     {clock.ambiguous && <label className="mt-3 block text-sm text-muted"><T id="flight.clockChange" /><select required aria-label={t(label + " clock change")} value={state.disambiguation || ""} onChange={e => onChange({ disambiguation: e.target.value as "earlier" | "later" })} className={inputClass}>
         <option value=""><T id="flight.chooseClock" /></option>{clock.choices.map(c => <option key={c.value} value={c.value}>{t(c.value === "earlier" ? "flight.earlierOffset" : "flight.laterOffset", { offset: c.label.match(/UTC([^)]+)/)?.[1] ?? "" })}</option>)}
       </select>

@@ -164,7 +164,7 @@ dashboard.airports|Airports|机场
 dashboard.countries|Countries|国家与地区
 dashboard.flights|Flights|航班
 dashboard.aircraftTypes|Aircraft Types|机型数量
-dashboard.recent|Recent Flight|最近航班
+dashboard.recent|Recent Flights|最近航班
 dashboard.latest|Your Latest Journeys|最近的飞行旅程
 dashboard.emptyRecent|No flights yet. Import your history or add your first flight.|还没有航班记录。你可以添加第一段飞行，或等待历史导入功能上线。
 dashboard.date|Date|日期
