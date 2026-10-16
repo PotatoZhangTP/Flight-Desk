@@ -180,6 +180,7 @@ dashboard.map|Flight Map|飞行地图
 dashboard.allFlights|All Flights|全部航班
 dashboard.allFlightsHelp|Manage Your Complete Flight History|管理完整航班记录
 dashboard.records|Records|条记录
+dashboard.durationFilterError|Duration values must be non-negative, and Max Duration cannot be less than Min Duration.|时长必须为非负数，且最大时长不能小于最小时长。
 dashboard.number|#|序号
 dashboard.flight|Flight|航班号
 dashboard.mapHelp|Route visualisation will appear here as your logbook grows.|随着飞行日志不断丰富，你的航线将在这里呈现。
