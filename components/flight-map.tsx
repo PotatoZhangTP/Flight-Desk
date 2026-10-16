@@ -8,10 +8,10 @@ import type { FlightMapData } from "@/lib/flight-map-data";
 
 const styleUrl = process.env.NEXT_PUBLIC_MAP_STYLE_URL;
 
-export function FlightMap({ data, compact = false }: { data: FlightMapData; compact?: boolean }) {
+export function FlightMap({ data, compact = false, defaultMode, persistMode = true }: { data: FlightMapData; compact?: boolean; defaultMode?: "2d" | "3d"; persistMode?: boolean }) {
   const container = useRef<HTMLDivElement>(null);
   const map = useRef<MapLibreMap | null>(null);
-  const [mode, setMode] = useState<"2d" | "3d">(() => typeof window !== "undefined" && localStorage.getItem("flightdesk-map-mode") === "3d" ? "3d" : "2d");
+  const [mode, setMode] = useState<"2d" | "3d">(() => defaultMode ?? (typeof window !== "undefined" && localStorage.getItem("flightdesk-map-mode") === "3d" ? "3d" : "2d"));
   const [ready, setReady] = useState(false);
   const [error, setError] = useState("");
 
@@ -61,8 +61,8 @@ export function FlightMap({ data, compact = false }: { data: FlightMapData; comp
   useEffect(() => {
     if (!map.current || !ready) return;
     try { map.current.setProjection({ type: mode === "3d" ? "globe" : "mercator" }); map.current.resize(); } catch (exception) { console.error("[Flight Map] projection switch failed", exception); }
-    try { localStorage.setItem("flightdesk-map-mode", mode); } catch { /* optional preference */ }
-  }, [mode, ready]);
+    if (persistMode) try { localStorage.setItem("flightdesk-map-mode", mode); } catch { /* optional preference */ }
+  }, [mode, ready, persistMode]);
 
   if (!styleUrl) return <div className="grid h-full min-h-[260px] place-items-center rounded-2xl border border-dashed border-line bg-page p-6 text-center text-sm text-muted"><T id="map.styleMissing" /></div>;
   if (error) return <div role="alert" className="flight-map-shell grid h-full min-h-[260px] place-items-center overflow-hidden rounded-2xl border border-danger-line bg-danger-bg p-6 text-center text-sm text-danger-fg"><div><T id="map.loadError" /><Link href="/flight-map" className="button-secondary mt-4"><T id="common.retry" /></Link></div></div>;
