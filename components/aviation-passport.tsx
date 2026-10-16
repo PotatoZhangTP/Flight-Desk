@@ -125,13 +125,13 @@ export function AviationPassport({ displayName, memberSince, userId, flights, to
           <div className="passport-sheet-face passport-sheet-front">{index < visaSheetCount ? stampPage(index * 2) : endingPage}</div><div className="passport-sheet-face passport-sheet-back">{index < visaSheetCount ? stampPage(index * 2 + 1) : blankPage}</div>
         </div>;
       })}
-      <div className={`passport-back-cover-v3 ${phase === "book-flipping-front" ? "book-flipping-front" : ""}`} onAnimationEnd={(event) => {
+      <div className={`passport-back-cover-v3 ${phase === "turning-forward" && turningSheetIndex === physicalSheetCount - 1 ? "closing-to-back" : ""} ${phase === "turning-backward" && turningSheetIndex === physicalSheetCount - 1 ? "opening-from-back" : ""} ${phase === "book-flipping-front" ? "book-flipping-front" : ""}`} onAnimationEnd={(event) => {
         if (event.currentTarget !== event.target || phase !== "book-flipping-front") return;
         setTurnedSheetCount(0);
         setPhase("closed");
       }}>
         <div className="passport-back-cover-side passport-back-cover-outer" aria-hidden="true" />
-        <div className="passport-back-cover-side passport-back-cover-front">{coverFace}</div>
+        <div className="passport-back-cover-side passport-back-cover-front">{phase === "book-flipping-front" ? coverFace : null}</div>
       </div>
       <div className="passport-spine-v2" />
     </div></div></div>
