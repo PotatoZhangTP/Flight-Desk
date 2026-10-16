@@ -6,6 +6,7 @@ import { SiteHeader } from "@/components/site-header";
 import { AdminDenied } from "@/components/admin-denied";
 import { AdminNavigation } from "@/components/admin-navigation";
 import { TranslationManager } from "@/components/translation-manager";
+import Link from "@/components/navigation-link";
 import { T } from "@/components/i18n";
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Translations — Flight Desk", robots: { index: false, follow: false } };
@@ -20,5 +21,5 @@ export default async function TranslationsPage() {
     const hash = createHash("sha256").update(entry.en).digest("hex");
     return { ...entry, text: override?.translation_text ?? entry.zh, version: override?.version ?? null, updatedAt: override?.updated_at ?? null, review: Boolean(override && override.source_hash !== hash) };
   });
-  return <><SiteHeader /><main className="mx-auto max-w-7xl px-6 py-12 lg:px-12"><AdminNavigation current="translations" /><h1 className="text-3xl font-bold"><T id="translations.title" /></h1><p className="mt-3 text-muted"><T id="translations.help" /></p><TranslationManager entries={entries} ready={!error} /></main></>;
+  return <><SiteHeader /><main className="mx-auto max-w-7xl px-6 py-12 lg:px-12"><AdminNavigation current="translations" /><h1 className="text-3xl font-bold"><T id="translations.title" /></h1><p className="mt-3 text-muted"><T id="translations.help" /></p><Link href="/admin/roadmap#dynamic-translations" className="mt-5 inline-block rounded-full border border-line px-4 py-2 text-sm font-bold text-brand"><T id="dynamic.title" /></Link><TranslationManager entries={entries} ready={!error} /></main></>;
 }

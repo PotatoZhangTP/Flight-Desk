@@ -13,6 +13,7 @@ const airportReferences=require('node:fs').readFileSync(require('node:path').joi
 let items=['planned','completed','on_hold'].map((status,index)=>({id:`33333333-3333-4333-8333-${String(index+1).padStart(12,'0')}`,title:`Test ${status} milestone`,description:'Local browser test content',category:'Platform',status,publication_status:'published',priority:null,target_date:null,completed_date:null,sort_order:index,created_at:timestamp,updated_at:timestamp}));
 let content=Object.entries(landingDefaults).flatMap(([content_key,value])=>['draft','published'].map(publication_status=>({content_key,content:value,publication_status,updated_at:timestamp})));
 let translations=[];
+const dynamicTranslations=require('./content-translation-fixture.cjs')(()=>items);
 const server=http.createServer(async(req,res)=>{
  const origin=req.headers.origin;
  if(origin&&/^http:\/\/(localhost|127\.0\.0\.1):\d+$/.test(origin))res.setHeader('Access-Control-Allow-Origin',origin);
@@ -24,6 +25,7 @@ const server=http.createServer(async(req,res)=>{
  const send=(value,status=200)=>{res.writeHead(status,{'content-type':'application/json'});res.end(JSON.stringify(value));};
  const rows=value=>send((req.headers.accept||'').includes('application/vnd.pgrst.object+json')?(value[0]??null):value);
  const deny=()=>send({message:'Access denied',code:'42501'},403);
+ if(dynamicTranslations.handle(url,req,body,role,send,rows))return;
  if(url.pathname==='/auth/v1/token')return body.password==='test-only-password'?send(session(body.email==='admin@example.test'?'admin':'member')):send({code:'invalid_credentials',message:'Invalid login credentials'},400);
  if(url.pathname==='/auth/v1/signup')return send({user:{...user('member'),email:body.email},session:null});
  if(url.pathname==='/auth/v1/user')return role?send(user(role)):send({message:'Not authenticated'},401);
@@ -71,9 +73,9 @@ const server=http.createServer(async(req,res)=>{
   if(req.method==='GET')return rows(items.filter(item=>(role==='admin'||item.publication_status==='published')&&(!url.searchParams.has('publication_status')||url.searchParams.get('publication_status')===`eq.${item.publication_status}`)));
   if(role!=='admin')return deny();
   const id=url.searchParams.get('id')?.replace('eq.','');
-  if(req.method==='POST'){const item={...body,id:require('node:crypto').randomUUID(),created_at:timestamp,updated_at:timestamp,sort_order:0};items.push(item);return rows([item]);}
+  if(req.method==='POST'){const item={...body,id:require('node:crypto').randomUUID(),created_at:timestamp,updated_at:timestamp,sort_order:0};items.push(item);dynamicTranslations.sync(item);return rows([item]);}
   const item=items.find(item=>item.id===id);if(!item)return send({message:'Not found'},404);
-  if(req.method==='PATCH')Object.assign(item,body);if(req.method==='DELETE')items=items.filter(item=>item.id!==id);return rows([item]);
+  if(req.method==='PATCH'){Object.assign(item,body);dynamicTranslations.sync(item);}if(req.method==='DELETE')items=items.filter(item=>item.id!==id);return rows([item]);
  }
  if(url.pathname==='/rest/v1/site_content'){
   if(req.method==='GET')return rows(content.filter(item=>(role==='admin'||item.publication_status==='published')&&(!url.searchParams.has('publication_status')||url.searchParams.get('publication_status')===`eq.${item.publication_status}`)));

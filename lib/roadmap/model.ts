@@ -1,3 +1,4 @@
+import type { ContentTranslation } from "@/lib/content-translations/model";
 export const statuses = ["planned", "completed", "on_hold"] as const;
 export type RoadmapStatus = (typeof statuses)[number];
 export const statusLabels: Record<RoadmapStatus, string> = {
@@ -12,6 +13,7 @@ export type RoadmapItem = {
   publication_status: "draft" | "published"; priority: "low" | "medium" | "high" | null;
   target_date: string | null; completed_date: string | null; sort_order: number;
   created_at: string; updated_at: string;
+  translations?: ContentTranslation[]; translationsReady?: boolean;
 };
 export function roadmapItemAnchor(id: string) { return `roadmap-item-${id}`; }
 export function roadmapItemHref(id: string) { return `/roadmap?item=${encodeURIComponent(id)}`; }

@@ -433,6 +433,41 @@ roadmap.updatedLabel|Updated|更新于
 admin.priorityLabel|Priority|优先级
 admin.deleteConfirm|Delete “{title}”? This permanently removes it from the roadmap, including the public page if published.|确定删除“{title}”吗？此操作会永久删除该开发项目；已发布的项目也会从公开页面移除。
 common.pilot|Pilot|飞行者
+dynamic.title|Dynamic content translations|动态内容翻译
+dynamic.help|English is saved first. Automatic translations run in a persistent background queue. Manual edits are never overwritten without confirmation.|英文原文先保存，自动翻译由持久化后台任务处理。未经确认，不会覆盖人工译文。
+dynamic.editLanguage|Content editing language|内容编辑语言
+dynamic.original|English (Original)|English（原文）
+dynamic.chinese|简体中文 (Translation)|简体中文（译文）
+dynamic.field_title|Title|标题
+dynamic.field_description|Description|说明
+dynamic.field_category|Category|分类
+dynamic.pending|Translation pending|等待翻译
+dynamic.completed|Translated automatically|已自动翻译
+dynamic.manual|Manually edited|人工译文
+dynamic.outdated|Outdated — review needed|原文已更新，需审核
+dynamic.failed|Translation failed|翻译失败
+dynamic.notQueued|Not queued|尚未入队
+dynamic.saveManual|Save Chinese translation|保存中文译文
+dynamic.regenerate|Regenerate translation|重新生成译文
+dynamic.reload|Reload latest|重新加载最新版本
+dynamic.discard|Discard unsaved Chinese edits and reload the latest translation?|放弃尚未保存的中文修改，并加载最新译文吗？
+dynamic.confirmManual|Replace the manually edited translation with a new automatic translation? The current manual wording will no longer be served.|确定用新的自动翻译替换人工译文吗？确认后，当前人工译文将不再展示。
+dynamic.confirmRegenerate|Queue a new automatic translation? This may incur translation API charges when the worker runs.|确定创建新的自动翻译任务吗？后台执行时可能产生翻译 API 费用。
+dynamic.confirmBackfill|Queue missing or outdated automatic translations for up to 25 Roadmap items? Existing manual/current translations are protected. Configured worker usage may incur charges.|为最多 25 个开发项目补充缺失或过期的自动翻译吗？人工译文和有效译文不会被覆盖。已配置的后台任务执行时可能产生费用。
+dynamic.saved|Chinese translation saved as a manual override.|中文译文已保存，并标记为人工译文。
+dynamic.queued|Translation queued. English remains available while waiting.|翻译任务已入队，等待期间仍可显示英文原文。
+dynamic.failedRequest|The translation operation could not be confirmed. Your edits remain here. Reload and check before retrying.|无法确认翻译操作结果，编辑内容仍在。请重新加载检查后再试。
+dynamic.migration|Dynamic translations are unavailable. Review and run the migration before editing. English content remains available.|动态翻译暂不可用，请先审核并执行迁移再编辑。英文原文不受影响。
+dynamic.manualOutdated|The English source changed. This manual translation is preserved and still displayed until you review it.|英文原文已更新。人工译文已保留，审核前仍继续展示。
+dynamic.autoOutdated|The English source changed. Visitors see English until an updated automatic translation is ready.|英文原文已更新。新的自动译文完成前，访客将看到英文。
+dynamic.preview|Saved-content preview|已保存内容预览
+dynamic.backfill|Backfill missing translations|补充历史内容译文
+dynamic.continueBackfill|Continue next batch|继续处理下一批
+dynamic.backfillHelp|Queue existing Roadmap content in batches of 25. This does not call the translation provider. Failed fields can be explicitly regenerated in the editor.|每批最多为 25 个历史开发项目创建翻译任务，此操作不调用翻译服务。失败的字段可在编辑器中手动重新生成。
+dynamic.backfillMore|Batch queued. Continue to process more items.|本批已处理，可继续下一批。
+dynamic.backfillDone|Backfill scan complete.|历史内容扫描完成。
+dynamic.backfillCounts|Scanned {processed} items; updated {changed} translation fields.|已检查 {processed} 个项目，更新 {changed} 个翻译字段。
+modules.dynamic|Dynamic translations|动态翻译
 auth.aircraftLightAlt|A white passenger jet with a purple tail climbing toward the upper right, surrounded by subtle lavender flight trails and small sparkle stars.|一架紫色尾翼的白色客机向右上方爬升，周围点缀浅紫色航迹与星光。
 auth.aircraftDarkAlt|A passenger jet with a purple tail climbing toward the upper right, with subtle stars and flight trails on a transparent background.|一架紫色尾翼的客机向右上方爬升，透明背景中点缀星光与航迹。
 common.notFoundTitle|Page not found|未找到页面

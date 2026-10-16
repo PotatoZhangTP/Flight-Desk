@@ -1,3 +1,4 @@
+import { RoadmapContentScope, RoadmapContentText } from "./roadmap-content";
 import { T, LocalizedDate, CmsText } from "@/components/i18n";
 import Link from "@/components/navigation-link";
 import { LogbookLink } from "./logbook-link";
@@ -8,15 +9,15 @@ export function RoadmapCard({ item, mode = "detailed" }: { item: RoadmapItem; mo
   const showCompletedDate = item.status === "completed";
   const previewDate = showCompletedDate ? item.completed_date : item.target_date;
   if (mode === "compact") return <article className="interaction-card relative flex h-full min-h-[148px] min-w-0 flex-col rounded-2xl border border-line bg-surface p-4 shadow-sm shadow-ink/5 ">
-    <div className="flex items-start justify-between gap-3"><span className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-bold ${statusStyles[item.status]}`}><T source={statusLabels[item.status]} /></span><span className="max-w-[45%] break-words text-right text-xs font-medium leading-5 text-muted">{item.category}</span></div>
-    <h4 className="mt-2.5 line-clamp-2 break-words text-base font-bold leading-snug tracking-tight text-ink" title={item.title}><Link href={roadmapItemHref(item.id)} className="cursor-pointer outline-none after:absolute after:inset-0 after:rounded-2xl focus-visible:after:outline-2 focus-visible:after:outline-offset-4 focus-visible:after:outline-brand">{item.title}</Link></h4>
+    <div className="flex items-start justify-between gap-3"><span className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-bold ${statusStyles[item.status]}`}><T source={statusLabels[item.status]} /></span><span className="max-w-[45%] break-words text-right text-xs font-medium leading-5 text-muted"><RoadmapContentText item={item} field="category" /></span></div>
+    <h4 className="mt-2.5 line-clamp-2 break-words text-base font-bold leading-snug tracking-tight text-ink" title={item.title}><Link href={roadmapItemHref(item.id)} className="cursor-pointer outline-none after:absolute after:inset-0 after:rounded-2xl focus-visible:after:outline-2 focus-visible:after:outline-offset-4 focus-visible:after:outline-brand"><RoadmapContentText item={item} field="title" /></Link></h4>
     <p className="mt-auto pt-3 text-xs leading-5 text-muted"><T source={showCompletedDate ? "Completed date" : "Target date"} />: {previewDate ? <time className="font-medium text-muted" dateTime={previewDate}><LocalizedDate value={previewDate} /></time> : <T source="TBD" />}</p>
   </article>;
 
   return <article id={roadmapItemAnchor(item.id)} tabIndex={-1} aria-labelledby={`${roadmapItemAnchor(item.id)}-title`} className="min-w-0 scroll-mt-8 rounded-2xl border border-line bg-surface p-6 shadow-sm focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand">
-    <div className="flex items-start justify-between gap-3"><span className={`shrink-0 rounded-full px-3 py-1 text-xs font-bold ${statusStyles[item.status]}`}><T source={statusLabels[item.status]} /></span><span className="max-w-[50%] break-words text-right text-xs font-medium leading-5 text-muted">{item.category}</span></div>
-    <h3 id={`${roadmapItemAnchor(item.id)}-title`} className="mt-5 break-words text-lg font-bold leading-snug tracking-tight text-ink">{item.title}</h3>
-    <p className="mt-3 whitespace-pre-wrap break-words text-sm leading-7 text-muted">{item.description}</p>
+    <div className="flex items-start justify-between gap-3"><span className={`shrink-0 rounded-full px-3 py-1 text-xs font-bold ${statusStyles[item.status]}`}><T source={statusLabels[item.status]} /></span><span className="max-w-[50%] break-words text-right text-xs font-medium leading-5 text-muted"><RoadmapContentText item={item} field="category" /></span></div>
+    <h3 id={`${roadmapItemAnchor(item.id)}-title`} className="mt-5 break-words text-lg font-bold leading-snug tracking-tight text-ink"><RoadmapContentText item={item} field="title" /></h3>
+    <p className="mt-3 whitespace-pre-wrap break-words text-sm leading-7 text-muted"><RoadmapContentText item={item} field="description" /></p>
     <dl className="mt-5 space-y-2 border-t border-surface-muted pt-4 text-xs text-muted">
       {item.target_date && <div className="flex flex-wrap justify-between gap-x-3 gap-y-1"><dt><T id="roadmap.target" /></dt><dd><time dateTime={item.target_date}><LocalizedDate value={item.target_date} /></time></dd></div>}
       {item.completed_date && <div className="flex flex-wrap justify-between gap-x-3 gap-y-1"><dt><T id="roadmap.completedDate" /></dt><dd><time dateTime={item.completed_date}><LocalizedDate value={item.completed_date} /></time></dd></div>}
@@ -27,11 +28,11 @@ export function RoadmapCard({ item, mode = "detailed" }: { item: RoadmapItem; mo
 
 export function RoadmapSummary({ items, failed, copy = landingDefaults }: { items: RoadmapItem[]; failed: boolean; copy?: LandingCopy }) {
   const groups = landingRoadmapGroups(items);
-  return <section id="roadmap" className="border-y border-line bg-page py-12 sm:py-16"><div className="mx-auto max-w-7xl px-6 lg:px-12">
+  return <RoadmapContentScope items={items}><section id="roadmap" className="border-y border-line bg-page py-12 sm:py-16"><div className="mx-auto max-w-7xl px-6 lg:px-12">
     <div className="text-center"><h2 className="whitespace-pre-line text-3xl font-bold tracking-tight sm:text-4xl"><CmsText id="content.roadmapTitle" source={copy["landing.roadmap.title"].replace(/[.。]+\s*$/, "")} /></h2><p className="mx-auto mt-2 max-w-2xl whitespace-pre-line text-base leading-7 text-muted"><CmsText id="content.roadmapDescription" source={copy["landing.roadmap.description"]} /></p><Link href="/roadmap" className="mt-4 inline-block whitespace-pre-line rounded-lg py-1 text-sm font-semibold text-brand hover:underline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand"><CmsText id="content.roadmapLink" source={copy["landing.roadmap.link_label"]} /> <span aria-hidden="true">→</span></Link></div>
     {failed ? <p role="alert" className="mt-6 rounded-xl border border-danger-line bg-surface p-4 text-sm text-danger-fg"><T id="roadmap.homeError" /></p> : <div className="mt-6 space-y-6">{groups.map(group => <section key={group.status} aria-labelledby={`home-roadmap-${group.status}`}><h3 id={`home-roadmap-${group.status}`} className="mb-3 text-lg font-semibold text-muted"><T source={statusLabels[group.status]} /></h3>{group.items.length ? <div className="grid auto-rows-fr gap-4 sm:grid-cols-2 lg:grid-cols-4">{group.items.map(item => <RoadmapCard key={item.id} item={item} mode="compact" />)}</div> : <p className="rounded-xl border border-dashed border-line px-4 py-3 text-sm text-muted"><T id={group.status === "planned" ? "roadmap.noPlanned" : "roadmap.noCompleted"} /></p>}</section>)}</div>}
     <div className="mt-10 flex justify-center"><LogbookLink /></div>
-  </div></section>;
+  </div></section></RoadmapContentScope>;
 }
 
 export function RoadmapEmptyState({ compact = false }: { compact?: boolean }) {
@@ -40,5 +41,5 @@ export function RoadmapEmptyState({ compact = false }: { compact?: boolean }) {
 }
 
 export function RoadmapBoard({ items }: { items: RoadmapItem[] }) {
-  return <div className="mt-8 grid items-start gap-6 md:grid-cols-2 xl:grid-cols-3">{statuses.map(status => <section key={status} aria-labelledby={`status-${status}`} className="min-w-0"><h2 id={`status-${status}`} className="mb-4 flex items-center justify-between text-lg font-bold"><T source={statusLabels[status]} /><span className={`rounded-full px-3 py-1 text-sm ${statusStyles[status]}`}>{items.filter(item => item.status === status).length}</span></h2><div className="space-y-5">{items.filter(item => item.status === status).map(item => <RoadmapCard key={item.id} item={item} />)}{!items.some(item => item.status === status) && <p className="rounded-xl border border-dashed border-line-strong p-4 text-sm text-muted"><T id="roadmap.emptyItems" /></p>}</div></section>)}</div>;
+  return <RoadmapContentScope items={items}><div className="mt-8 grid items-start gap-6 md:grid-cols-2 xl:grid-cols-3">{statuses.map(status => <section key={status} aria-labelledby={`status-${status}`} className="min-w-0"><h2 id={`status-${status}`} className="mb-4 flex items-center justify-between text-lg font-bold"><T source={statusLabels[status]} /><span className={`rounded-full px-3 py-1 text-sm ${statusStyles[status]}`}>{items.filter(item => item.status === status).length}</span></h2><div className="space-y-5">{items.filter(item => item.status === status).map(item => <RoadmapCard key={item.id} item={item} />)}{!items.some(item => item.status === status) && <p className="rounded-xl border border-dashed border-line-strong p-4 text-sm text-muted"><T id="roadmap.emptyItems" /></p>}</div></section>)}</div></RoadmapContentScope>;
 }

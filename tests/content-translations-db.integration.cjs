@@ -1,0 +1,153 @@
+// Real embedded PostgreSQL, entirely local/in-memory. No Supabase connection.
+const {PGlite} = require(process.env.PGLITE_MODULE || '@electric-sql/pglite');
+const fs = require('node:fs');
+const assert = require('node:assert/strict');
+(async () => {
+  const db = new PGlite();
+  const admin = '11111111-1111-4111-8111-111111111111';
+  const id = '33333333-3333-4333-8333-333333333333';
+  const scalar = async (sql, args=[]) => Object.values((await db.query(sql,args)).rows[0] ?? {})[0];
+  try {
+    await db.exec(`create role anon; create role authenticated; create role service_role bypassrls;
+      create schema auth; create table auth.users(id uuid primary key);
+      create function auth.uid() returns uuid language sql stable as $$ select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid; $$;
+      grant usage on schema auth to anon,authenticated,service_role; grant execute on function auth.uid() to anon,authenticated,service_role;
+      insert into auth.users values('${admin}'),('22222222-2222-4222-8222-222222222222');`);
+    await db.exec(fs.readFileSync('supabase/migrations/20261015000100_create_product_roadmap.sql','utf8'));
+    await db.exec('delete from public.roadmap_items'); // Isolate seeded test fixtures, never a remote DB.
+    await db.exec(`create function public.is_site_admin() returns boolean language sql stable security invoker set search_path='' as $$ select public.is_roadmap_admin(); $$;
+      revoke all on function public.is_site_admin() from public,anon; grant execute on function public.is_site_admin() to authenticated;
+      insert into public.roadmap_admins(user_id) values('${admin}');`);
+    // Existing rows are not automatically backfilled by the migration.
+    await db.query(`insert into roadmap_items(id,title,description,category,publication_status) values($1,'Add Flight Statistics','View flight hours.','Platform','published')`,[id]);
+    await db.exec(fs.readFileSync('supabase/migrations/20261016000300_dynamic_content_translations.sql','utf8'));
+    assert.equal(Number(await scalar('select count(*) from content_translations')),0);
+    await db.exec(`set role authenticated; select set_config('request.jwt.claim.sub','${admin}',false);`);
+    await scalar('select regenerate_content_translation($1,$2,$3,$4,$5,$6)',[id,'title','zh-CN','Add Flight Statistics',null,false]);
+    assert.equal(Number(await scalar('select count(*) from content_translations')),1,'field regeneration does not enqueue unrelated missing fields');
+    assert.equal(Number(await scalar('select count(*) from content_translation_jobs')),1);
+    const result=await scalar('select backfill_content_translations(null,25)'); assert(result.changed>=2);
+    const jobs=Number(await scalar('select count(*) from content_translation_jobs'));
+    assert.equal((await scalar('select backfill_content_translations(null,25)')).changed,0);
+    assert.equal(Number(await scalar('select count(*) from content_translation_jobs')),jobs);
+    await db.exec('reset role');
+    assert.equal((await db.query('select * from claim_content_translation_job()')).rows.length,0,'disabled by default');
+    await db.exec('update content_translation_limits set enabled=true,daily_request_limit=1000,daily_char_limit=1000000');
+    const row = async field => (await db.query('select * from content_translations where entity_id=$1 and field_name=$2',[id,field])).rows[0];
+    const claim = async () => { for(let scan=0;scan<100;scan++){ const job=(await db.query('select * from claim_content_translation_job()')).rows[0]; if(!job||job.lease_token)return job; } throw Error('Fixture drain exceeded'); };
+    let job=await claim(); assert(job);
+    assert.equal(await scalar('select reserve_content_translation_call($1,$2,$3)',[job.id,job.lease_token,100]),true);
+    assert.equal(await scalar('select reserve_content_translation_call($1,$2,$3)',[job.id,job.lease_token,100]),true);
+    assert.equal(Number(await scalar('select requests_reserved from content_translation_usage')),1);
+    assert.equal(await scalar('select finish_content_translation_job($1,$2,$3)',[job.id,job.lease_token,'已翻译']),true);
+    assert.equal(await scalar('select finish_content_translation_job($1,$2,$3)',[job.id,job.lease_token,'重复结果']),false);
+    const before=(await row('title')).generation;
+    await db.query('update roadmap_items set sort_order=sort_order+1,status=$2 where id=$1',[id,'completed']);
+    assert.equal((await row('title')).generation,before,'status-only edit does not translate');
+    const title=await row('title');
+    await db.exec(`set role authenticated; select set_config('request.jwt.claim.sub','${admin}',false);`);
+    await scalar('select edit_content_translation($1,$2,$3,$4,$5,$6)',[id,'title','zh-CN','人工标题',title.source_text,title.generation]);
+    await db.exec('reset role');
+    await db.query('update roadmap_items set title=$2 where id=$1',[id,'Updated Flight Statistics']);
+    const manual=await row('title'); assert.equal(manual.translated_text,'人工标题'); assert.equal(manual.translation_status,'outdated');
+    await db.exec(`set role authenticated; select set_config('request.jwt.claim.sub','${admin}',false);`);
+    await assert.rejects(db.query('select regenerate_content_translation($1,$2,$3,$4,$5,$6)',[id,'title','zh-CN',manual.source_text,manual.generation,false]),/Manual confirmation/);
+    await assert.rejects(db.query('select regenerate_content_translation($1,$2,$3,$4,$5,$6)',[id,'title','zh-CN',manual.source_text,manual.generation,null]),/Manual confirmation/);
+    await scalar('select regenerate_content_translation($1,$2,$3,$4,$5,$6)',[id,'title','zh-CN',manual.source_text,manual.generation,true]);
+    await assert.rejects(db.query('select edit_content_translation($1,$2,$3,$4,$5,$6)',[id,'title','zh-CN','过期编辑',manual.source_text,manual.generation]),/version conflict/);
+    await db.exec('reset role');
+    job=await claim(); assert(job);
+    await scalar('select reserve_content_translation_call($1,$2,$3)',[job.id,job.lease_token,100]);
+    const ref=(await db.query('select t.* from content_translations t join content_translation_jobs j on j.translation_id=t.id where j.id=$1',[job.id])).rows[0];
+    await db.query(`update roadmap_items set ${ref.field_name}=$2 where id=$1`,[id,'Changed while translating']);
+    assert.equal(await scalar('select finish_content_translation_job($1,$2,$3)',[job.id,job.lease_token,'旧版本结果']),false);
+    assert.notEqual((await row(ref.field_name)).translated_text,'旧版本结果');
+    job=await claim(); assert(job);
+    await scalar('select reserve_content_translation_call($1,$2,$3)',[job.id,job.lease_token,100]);
+    await scalar('select fail_content_translation_job($1,$2,$3,$4,$5)',[job.id,job.lease_token,'provider_rate_limit',true,30]);
+    assert.equal(await scalar('select status from content_translation_jobs where id=$1',[job.id]),'queued');
+    await db.query("update content_translation_jobs set next_attempt_at=now()-interval '1 minute' where id=$1",[job.id]);
+    const retry=await claim(); assert.equal(retry.id,job.id); assert.notEqual(retry.lease_token,job.lease_token);
+    assert.equal(await scalar('select finish_content_translation_job($1,$2,$3)',[job.id,job.lease_token,'旧租约']),false);
+    await db.exec('update content_translation_limits set daily_char_limit=0');
+    assert.equal(await scalar('select reserve_content_translation_call($1,$2,$3)',[retry.id,retry.lease_token,100]),false);
+    assert.equal(await scalar('select status from content_translation_jobs where id=$1',[retry.id]),'queued');
+    await db.exec('update content_translation_limits set daily_char_limit=1000000');
+    // Crash on the last allowed attempt is recovered without an endless pending row.
+    await db.query("update content_translation_jobs set status='running',attempts=4,lease_until=now()-interval '1 minute',next_attempt_at=now()-interval '2 days' where id=$1",[retry.id]);
+    await claim();
+    assert.equal(await scalar('select status from content_translation_jobs where id=$1',[retry.id]),'failed');
+    const exhaustedId=await scalar('select translation_id from content_translation_jobs where id=$1',[retry.id]);
+    assert.equal(await scalar('select translation_status from content_translations where id=$1',[exhaustedId]),'failed');
+    // Finish remaining fake work, then verify identical auto text is reused without
+    // another provider reservation. These are SQL responses, not an external API.
+    await db.query("update content_translation_jobs set lease_until=now()-interval '1 minute' where status='running'");
+    let pending;
+    while((pending=await claim())) { await scalar('select reserve_content_translation_call($1,$2,$3)',[pending.id,pending.lease_token,100]); await scalar('select finish_content_translation_job($1,$2,$3)',[pending.id,pending.lease_token,'自动译文 '+pending.source_text]); }
+    const duplicate='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
+    const original=(await db.query('select * from roadmap_items where id=$1',[id])).rows[0];
+    const reservedBefore=Number(await scalar('select requests_reserved from content_translation_usage'));
+    await db.query(`insert into roadmap_items(id,title,description,category,publication_status) values($1,$2,$3,$4,'published')`,[duplicate,original.title,original.description,original.category]);
+    while((pending=await claim())) { await scalar('select reserve_content_translation_call($1,$2,$3)',[pending.id,pending.lease_token,100]); await scalar('select finish_content_translation_job($1,$2,$3)',[pending.id,pending.lease_token,'自动译文 '+pending.source_text]); }
+    assert(Number(await scalar("select count(*) from content_translations where entity_id=$1 and translation_status='completed'",[duplicate]))>=2);
+    assert(Number(await scalar('select requests_reserved from content_translation_usage'))-reservedBefore<=1,'matching completed automatic text is reused without duplicate provider reservations');
+    await db.exec(`set role authenticated; select set_config('request.jwt.claim.sub','${admin}',false);`);
+    await assert.rejects(db.query('select edit_content_translation($1,$2,$3,$4,$5,$6)',[duplicate.toUpperCase(),'category','zh-CN','不能绕过版本',original.category,null]),/version conflict/);
+    await db.exec('reset role');
+    // Manual save races an already leased translation: the old result cannot win.
+    await db.query('update roadmap_items set description=$2 where id=$1',[id,'Manual race source']);
+    pending=await claim(); assert(pending);
+    await scalar('select reserve_content_translation_call($1,$2,$3)',[pending.id,pending.lease_token,100]);
+    const raceRow=(await db.query('select t.* from content_translations t join content_translation_jobs j on j.translation_id=t.id where j.id=$1',[pending.id])).rows[0];
+    await db.exec(`set role authenticated; select set_config('request.jwt.claim.sub','${admin}',false);`);
+    await scalar('select edit_content_translation($1,$2,$3,$4,$5,$6)',[raceRow.entity_id,raceRow.field_name,'zh-CN','人工优先',raceRow.source_text,raceRow.generation]);
+    await db.exec('reset role');
+    assert.equal(await scalar('select finish_content_translation_job($1,$2,$3)',[pending.id,pending.lease_token,'过时自动译文']),false);
+    assert.equal(await scalar('select translated_text from content_translations where id=$1',[raceRow.id]),'人工优先');
+    await db.exec(`set role authenticated; select set_config('request.jwt.claim.sub','22222222-2222-4222-8222-222222222222',false);`);
+    await assert.rejects(db.query('select backfill_content_translations(null,25)'),/Administrator/);
+    await assert.rejects(db.query('select * from claim_content_translation_job()'),/permission denied/);
+    await assert.rejects(db.query('delete from content_translations'),/permission denied/);
+    await db.exec('reset role');
+    await db.exec(`set role service_role`);
+    await db.query('select * from claim_content_translation_job()');
+    await db.exec('reset role');
+    await db.query("update roadmap_items set publication_status='draft' where id=$1",[id]);
+    await db.exec('set role anon');
+    assert.equal((await db.query('select * from get_public_content_translations($1)',[[id]])).rows.length,0,'no draft translation leak');
+    await db.exec('reset role');
+    await db.exec(`set role authenticated; select set_config('request.jwt.claim.sub','${admin}',false);`);
+    assert.equal((await db.query('select * from get_public_content_translations($1)',[[id]])).rows.length,0,'even admin public reads exclude drafts');
+    await db.exec('reset role');
+    await db.query('delete from roadmap_items where id=$1',[id]);
+    assert.equal(Number(await scalar('select count(*) from content_translations where entity_id=$1',[id])),0);
+    await db.query('delete from roadmap_items where id=$1',[duplicate]);
+    assert.equal(Number(await scalar('select count(*) from content_translation_jobs')),0);
+    await db.exec(`set role authenticated; select set_config('request.jwt.claim.sub','${admin}',false);`);
+    await db.query("insert into roadmap_items(id,title,description,category) values($1,'New admin original','Saved without waiting for API','Platform')",[id]);
+    await db.exec('reset role');
+    assert.equal(Number(await scalar('select count(*) from content_translation_jobs')),3,'authenticated English insert atomically enqueues work');
+    await db.exec(`set role authenticated; select set_config('request.jwt.claim.sub','22222222-2222-4222-8222-222222222222',false);`);
+    const forbidden=await db.query("update roadmap_items set title='Forbidden edit' where id=$1 returning id",[id]);assert.equal(forbidden.rows.length,0);
+    await db.exec('reset role');
+    await db.query('delete from roadmap_items where id=$1',[id]);
+    assert.equal(Number(await scalar('select count(*) from content_translation_jobs')),0);
+    // Optional scheduler syntax with local stub extensions only; never sends HTTP.
+    await db.exec(`create schema vault; create table vault.decrypted_secrets(name text,decrypted_secret text);
+      insert into vault.decrypted_secrets values('flightdesk_translation_worker_url','https://example.invalid/api/internal/translations/process'),('flightdesk_translation_cron_secret','local-fixture-secret-never-used-outside-tests');
+      create schema net; create function net.http_post(url text,body jsonb default '{}',params jsonb default '{}',headers jsonb default '{}',timeout_milliseconds integer default 5000) returns bigint language plpgsql as $$ begin
+      if headers->>'Authorization'<>'Bearer local-fixture-secret-never-used-outside-tests' or body<>'{}'::jsonb then raise exception 'Invalid scheduler headers'; end if; return 42; end; $$;
+      create schema cron; create table cron.job(jobid bigint generated always as identity,jobname text,schedule text,command text);
+      create function cron.unschedule(id bigint) returns boolean language plpgsql as $$ begin delete from cron.job where jobid=id; return true; end; $$;
+      create function cron.schedule(name text,pattern text,query text) returns bigint language plpgsql as $$ declare id bigint; begin insert into cron.job(jobname,schedule,command) values(name,pattern,query) returning jobid into id; return id; end; $$;`);
+    const cronSql=fs.readFileSync('docs/dynamic-translations-cron.sql','utf8');
+    await db.exec(cronSql);await db.exec(cronSql);
+    assert.equal(Number(await scalar('select count(*) from cron.job')),1);
+    assert.equal(Number(await scalar('select flightdesk_private.invoke_translation_worker()')),42);
+    assert(!String(await scalar('select command from cron.job')).includes('local-fixture-secret'));
+    await db.exec('set role authenticated');
+    await assert.rejects(db.query('select flightdesk_private.invoke_translation_worker()'),/permission denied/);
+    await db.exec('reset role');
+    console.log('PASS PostgreSQL migration, outbox, idempotent backfill, generation/lease fencing, manual protection, retries, budgets, RLS and deletion cleanup');
+  } finally {await db.close();}
+})().catch(error=>{console.error(error);process.exitCode=1;});

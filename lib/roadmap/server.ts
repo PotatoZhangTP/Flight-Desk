@@ -1,6 +1,7 @@
 import "server-only";
 import { createClient } from "@/lib/supabase/server";
 import { readRoadmapItems, type DatabaseRoadmapItem } from "./read-model.server";
+import { attachContentTranslations } from "@/lib/content-translations/read.server";
 
 export async function roadmapAccess() {
   const supabase = await createClient();
@@ -17,5 +18,5 @@ export async function publishedRoadmap() {
     .select("id,title,description,category,status,publication_status,priority,target_date,completed_date,sort_order,created_at,updated_at")
     .eq("publication_status", "published").order("sort_order").order("created_at").order("id")
     .abortSignal(AbortSignal.timeout(8000));
-  return { items: readRoadmapItems((data ?? []) as DatabaseRoadmapItem[]), failed: Boolean(error) };
+  return { items: await attachContentTranslations(supabase, readRoadmapItems((data ?? []) as DatabaseRoadmapItem[])), failed: Boolean(error) };
 }

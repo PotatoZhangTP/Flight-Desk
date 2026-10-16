@@ -7,6 +7,7 @@ const ts=require('typescript');
 const React=require('react');
 const {renderToStaticMarkup}=require('react-dom/server');
 function load(file,deps={}) {
+  deps = { '@/lib/content-translations/read.server': {attachContentTranslations: async (_, items) => items}, ...deps };
   deps = { '@/components/i18n': require('./support/i18n-mock.cjs'), './i18n': require('./support/i18n-mock.cjs'), './language-selector': {LanguageSelector: () => null}, ...deps };
   const code=ts.transpileModule(fs.readFileSync(path.join(__dirname,'..',file),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.ReactJSX}}).outputText;
   const mod={exports:{}};

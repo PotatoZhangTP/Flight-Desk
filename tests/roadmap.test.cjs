@@ -8,6 +8,7 @@ const ts = require('typescript');
 // Test the actual domain functions and Server Actions with isolated dependencies.
 // No network calls, real user credentials or database writes are made.
 function loadModule(file, dependencies = {}) {
+  dependencies = { './roadmap-content': {RoadmapContentScope: ({children}) => children, RoadmapContentText: ({item, field}) => item[field]}, '@/lib/content-translations/read.server': {attachContentTranslations: async (_, items) => items}, ...dependencies };
   dependencies = { '@/components/i18n': require('./support/i18n-mock.cjs'), './i18n': require('./support/i18n-mock.cjs'), './language-selector': {LanguageSelector: () => null}, ...dependencies };
   const source = ts.transpileModule(fs.readFileSync(path.join(__dirname, '..', file), 'utf8'), {
     compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX },
