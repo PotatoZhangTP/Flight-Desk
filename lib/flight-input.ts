@@ -46,11 +46,15 @@ export function normalizeFlightInput(input: Record<string, unknown>): { data: Re
     if (duration.error || duration.minutes == null) throw new Error(duration.error || "Check planned times.");
     const actual = input.actualDurationMinutes;
     if (actual != null && (typeof actual !== "number" || !Number.isSafeInteger(actual) || actual < 0 || actual > 2147483647)) throw new Error("Actual duration must be a non-negative whole number of minutes.");
+    const status = input.status === "planned" ? "planned" : input.status === "completed" || input.status == null || input.status === "" ? "completed" : null;
+    if (!status) throw new Error("Choose a valid flight status.");
+    const source = input.source === "simbrief" ? "simbrief" : "manual";
     Object.assign(data, {
       flight_date: times[0].date, scheduled_duration_minutes: duration.minutes,
       actual_duration_minutes: actual ?? null,
       airline: text("airline"), flight_number: text("flightNumber", 40),
-      aircraft_type: text("aircraftType"), registration: text("registration", 80), notes: text("notes", 10000),
+      aircraft_type: text("aircraftType"), registration: text("registration", 80), notes: text("notes", 10000), status, source,
+      is_user_modified: input.isUserModified === true,
     });
     return { data, error: null };
   } catch (error) {

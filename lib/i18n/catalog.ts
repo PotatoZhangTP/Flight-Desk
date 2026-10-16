@@ -134,7 +134,17 @@ settings.changePassword|Change password|修改密码
 settings.passwordEmail|Check your email for a secure password change link.|请前往邮箱查看安全的密码修改链接。
 settings.passwordError|The email request could not be confirmed. Check your connection and inbox before retrying.|暂时无法确认邮件发送结果，请检查网络和收件箱后再试。
 dashboard.personal|Personal logbook|个人飞行日志
-dashboard.greeting|Good morning,|你好，
+dashboard.greeting|Hello Captain|你好，机长
+dashboard.aircraftCount|Aircraft|飞机
+dashboard.status|Status|状态
+dashboard.completed|Completed|已完成
+dashboard.planned|Planned|计划中
+dashboard.filters|Filters|筛选
+dashboard.clearFilters|Clear filters|清除筛选
+dashboard.importButton|Import|导入
+flight.status|Flight status|航班状态
+flight.planned|Planned|计划中
+flight.completed|Completed|已完成
 dashboard.glance|Here’s your flying at a glance.|你的飞行经历，一目了然。
 dashboard.total|Total flights|航班总数
 dashboard.recorded|Your recorded flights|已记录的航班

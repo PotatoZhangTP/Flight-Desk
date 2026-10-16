@@ -42,6 +42,7 @@ export function FlightForm({ initialData = {} }: { initialData?: FlightInitialDa
   const [aircraftType, setAircraftType] = useState(initialText(initialData, "aircraft_type"));
   const [registration, setRegistration] = useState(initialText(initialData, "registration"));
   const [notes, setNotes] = useState(initialText(initialData, "notes"));
+  const [status, setStatus] = useState(initialText(initialData, "status") === "planned" ? "planned" : "completed");
   const actual = typeof initialData.actual_duration_minutes === "number" ? initialData.actual_duration_minutes : null;
   const [actualHours, setActualHours] = useState(actual == null ? "" : String(Math.floor(actual / 60)));
   const [actualMinutes, setActualMinutes] = useState(actual == null ? "" : String(actual % 60));
@@ -68,7 +69,9 @@ export function FlightForm({ initialData = {} }: { initialData?: FlightInitialDa
       setError("Actual duration minutes must be between 0 and 59."); return;
     }
     const input: Record<string, unknown> = {
-      airline, flightNumber, aircraftType, registration, notes,
+      airline, flightNumber, aircraftType, registration, notes, status,
+      source: initialText(initialData, "source") || "manual",
+      isUserModified: Boolean(initialData.id && initialText(initialData, "source") === "simbrief"),
       actualDurationMinutes: actualHours !== "" || actualMinutes !== "" ? Number(actualHours || 0) * 60 + Number(actualMinutes || 0) : null,
     };
     for (const [side, state] of [["departure", departure], ["arrival", arrival]] as const) {
@@ -113,6 +116,7 @@ export function FlightForm({ initialData = {} }: { initialData?: FlightInitialDa
       <section className="rounded-2xl border border-line bg-surface p-6">
         <h2 className="text-xl font-bold text-ink"><T id="flight.details" /></h2>
         <div className="mt-5 grid gap-5 sm:grid-cols-2">
+          <label className="block text-sm font-semibold text-muted"><T id="flight.status" /><select aria-label={t("Flight status")} value={status} onChange={e => setStatus(e.target.value)} className={inputClass}><option value="planned"><T id="flight.planned" /></option><option value="completed"><T id="flight.completed" /></option></select></label>
           <Field label="Airline" value={airline} onChange={setAirline} placeholder={t("e.g. Air China")} />
           <Field label="Flight number" value={flightNumber} onChange={setFlightNumber} placeholder="e.g. CA1234" />
           <Field label="Aircraft type (optional)" value={aircraftType} onChange={setAircraftType} placeholder={t("e.g. Boeing 737-800")} />
