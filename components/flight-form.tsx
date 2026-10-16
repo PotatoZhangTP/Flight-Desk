@@ -187,8 +187,8 @@ function TicketPreview({ departure, arrival, airline, flightNumber, duration }: 
   departure: FormState; arrival: FormState; airline: string; flightNumber: string; duration: number | null;
 }) {
   return <section className="overflow-hidden rounded-[2rem] border border-line bg-surface shadow-xl shadow-ink/5">
-    <div className="bg-panel p-6 text-on-panel">
-      <p className="text-xs font-bold uppercase tracking-[0.2em] text-panel-accent"><T id="flight.ticket" /></p>
+    <div className="bg-brand-soft p-6 text-ink">
+      <p className="text-xs font-bold uppercase tracking-[0.2em] text-brand"><T id="flight.ticket" /></p>
       <div className="mt-8 grid items-center gap-5 md:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]">
         <AirportBlock airport={departure.airport} fallback="Departure" />
         <div className="text-center"><p className="text-sm font-semibold text-panel-accent">{airline || <T id="flight.airline" />} · {flightNumber || <T id="flight.number" />}</p>

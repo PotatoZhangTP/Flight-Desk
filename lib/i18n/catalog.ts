@@ -35,6 +35,7 @@ common.next|Coming next|后续上线
 common.available|Available|已上线
 common.unavailable|Not available yet|暂无数据
 common.backHome|← Back home|← 返回首页
+common.backLanding|← Back to Landing Page|← 返回 Landing Page
 common.backDashboard|← Back to dashboard|← 返回飞行概览
 common.backMain|← Back to Main Page|← 返回首页
 common.backFlight|← Back to flight|← 返回航班详情
