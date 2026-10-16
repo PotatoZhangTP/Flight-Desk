@@ -230,6 +230,22 @@ dashboard.passport|Aviation Passport|航空护照
 dashboard.passportCover|Your Aviation Story|你的航空故事
 dashboard.passportPage|Passport Page|护照页面
 dashboard.passportEmpty|Your completed journeys will appear here as passport stamps.|完成的旅程将在这里生成护照印章。
+passport.title|Aviation Passport|航空护照
+passport.customize|Customize|自定义
+passport.identity|Aviation Identity|航空身份
+passport.memberSince|Member Since|加入日期
+passport.totalFlights|Total Flights|已完成航班
+passport.countriesVisited|Countries Visited|到访国家
+passport.flightTime|Flight Time|飞行时间
+passport.stamps|Visas & Stamps|国家印章
+passport.empty|Your passport is ready for its first stamp.|你的航空护照已准备好，等待第一枚印章。
+passport.openHint|Click To Open Your Passport|点击打开你的航空护照
+passport.close|Close Passport|合上护照
+passport.totalVisits|Total Visits|到访次数
+passport.firstVisit|First Visit|首次到访
+passport.latestVisit|Latest Visit|最近到访
+passport.relatedFlights|Related Flights|相关航班
+passport.coverColor|Cover Color|封面颜色
 dashboard.previous|Previous|上一页
 dashboard.next|Next|下一页
 dashboard.achievements|Flight Achievements|飞行成就
