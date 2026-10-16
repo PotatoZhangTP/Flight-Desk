@@ -137,6 +137,16 @@ settings.chooseTheme|Choose color theme|选择外观主题
 settings.colorTheme|Color theme|外观主题
 settings.passwordHelp|Your password is protected and can never be viewed here.|你的密码受到安全保护，无法在此查看。
 settings.changePassword|Change password|修改密码
+settings.saveNewPassword|Save New Password|保存新密码
+settings.passwordChanged|Password Changed Successfully.|密码修改成功。
+settings.currentPassword|Current Password|当前密码
+settings.newPassword|New Password|新密码
+settings.showPassword|Show Password|显示密码
+settings.hidePassword|Hide Password|隐藏密码
+settings.passwordTooShort|New Password Must Be At Least 8 Characters.|新密码至少需要 8 个字符。
+settings.currentPasswordIncorrect|Current Password Is Incorrect.|当前密码不正确。
+settings.passwordUpdateError|The Password Could Not Be Updated. Please Try Again.|密码无法更新，请重试。
+settings.passwordResetRequired|Password Reset Is Required For This Account.|此账号需要通过密码重置流程设置密码。
 settings.passwordEmail|Check your email for a secure password change link.|请前往邮箱查看安全的密码修改链接。
 settings.passwordError|The email request could not be confirmed. Check your connection and inbox before retrying.|暂时无法确认邮件发送结果，请检查网络和收件箱后再试。
 dashboard.personal|Personal Logbook|个人飞行日志
