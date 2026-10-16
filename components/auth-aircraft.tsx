@@ -1,4 +1,4 @@
-import Image from "next/image";
+import Image from "./localized-image";
 
 export function AuthAircraft() {
   return <figure className="mx-auto mt-5 w-full max-w-xl sm:mt-8">

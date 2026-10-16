@@ -8,6 +8,7 @@ const ts = require('typescript');
 // Test the actual domain functions and Server Actions with isolated dependencies.
 // No network calls, real user credentials or database writes are made.
 function loadModule(file, dependencies = {}) {
+  dependencies = { '@/components/i18n': require('./support/i18n-mock.cjs'), './i18n': require('./support/i18n-mock.cjs'), './language-selector': {LanguageSelector: () => null}, ...dependencies };
   const source = ts.transpileModule(fs.readFileSync(path.join(__dirname, '..', file), 'utf8'), {
     compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX },
   }).outputText;
@@ -140,7 +141,7 @@ test('landing uses a vertical product narrative with the exact hero copy and pre
   const journey=loadModule('components/journey-demo.tsx',{'react/jsx-runtime':require('react/jsx-runtime')});
   const home=loadModule('app/page.tsx',{
     'react/jsx-runtime':require('react/jsx-runtime'),'@/components/navigation-link':require('next/link'),
-    'next/image':require('next/image'),'@/components/upcoming-button':upcoming,
+    'next/image':require('next/image'),'@/components/localized-image':require('next/image'),'@/components/upcoming-button':upcoming,
     '@/components/site-header':{SiteHeader:()=>React.createElement('header')},
     '@/components/site-footer':{SiteFooter:()=>React.createElement('footer')},
     '@/components/journey-demo':journey,'@/components/roadmap-cards':cards,
@@ -205,7 +206,7 @@ test('unfinished entries show the requested message instead of navigating', () =
   try {
     const button=upcoming.UpcomingButton({children:'Blog'});
     assert.equal(button.type,'button');assert.equal(button.props.type,'button');
-    button.props.onClick();assert.equal(message,'该功能即将上线，敬请期待');
+    button.props.onClick();assert.equal(message,'This feature is coming soon. Stay tuned.');
   } finally {global.window=previous;}
 });
 test('homepage keeps two lightweight empty groups without fake cards or draft data', () => {

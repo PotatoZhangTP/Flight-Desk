@@ -6,6 +6,7 @@ const vm = require('node:vm');
 const React = require('react');
 const {renderToStaticMarkup} = require('react-dom/server');
 function load(file, deps) {
+  deps = { '@/components/i18n': require('./support/i18n-mock.cjs'), './i18n': require('./support/i18n-mock.cjs'), ...deps };
   const code = ts.transpileModule(fs.readFileSync(file, 'utf8'), {compilerOptions:{module:ts.ModuleKind.CommonJS, target:ts.ScriptTarget.ES2022, jsx:ts.JsxEmit.ReactJSX}}).outputText;
   const mod = {exports:{}};
   vm.runInThisContext('(function(require,module,exports){'+code+'\n})')(name => {

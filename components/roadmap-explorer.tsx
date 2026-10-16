@@ -1,4 +1,6 @@
 "use client";
+import { T } from "@/components/i18n";
+
 
 import { useEffect, useState } from "react";
 import { RoadmapBoard } from "./roadmap-cards";
@@ -23,5 +25,5 @@ export function RoadmapExplorer({ items, today, requestedItem }: { items: Roadma
     });
     return () => { cancelAnimationFrame(frame); clearTimeout(timeout); target?.classList.remove("roadmap-item-highlight"); };
   }, [items, requestedItem]);
-  return <div className="mt-8">{unavailable && <p role="status" className="mb-5 rounded-xl bg-page px-4 py-3 text-sm text-muted">This roadmap item is no longer available. You can explore the current published roadmap below.</p>}<div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center"><p className="text-sm text-muted">{published.length} published milestones · grouped by development status</p><RoadmapSortControl id="public-roadmap-sort" value={sort} onChange={setSort} /></div><RoadmapBoard items={sortRoadmapItems(published, sort, today)} /></div>;
+  return <div className="mt-8">{unavailable && <p role="status" className="mb-5 rounded-xl bg-page px-4 py-3 text-sm text-muted"><T id="roadmap.itemHelp" /></p>}<div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center"><p className="text-sm text-muted">{published.length}<T id="roadmap.milestoneCount" /></p><RoadmapSortControl id="public-roadmap-sort" value={sort} onChange={setSort} /></div><RoadmapBoard items={sortRoadmapItems(published, sort, today)} /></div>;
 }

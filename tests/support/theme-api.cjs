@@ -12,6 +12,7 @@ const timestamp='2026-10-15T00:00:00Z';
 const airportReferences=require('node:fs').readFileSync(require('node:path').join(__dirname,'../../scripts/airports/fixtures/sample.jsonl'),'utf8').trim().split('\n').map(line=>{const r=JSON.parse(line);return{...r,id:r.source_id};});
 let items=['planned','completed','on_hold'].map((status,index)=>({id:`33333333-3333-4333-8333-${String(index+1).padStart(12,'0')}`,title:`Test ${status} milestone`,description:'Local browser test content',category:'Platform',status,publication_status:'published',priority:null,target_date:null,completed_date:null,sort_order:index,created_at:timestamp,updated_at:timestamp}));
 let content=Object.entries(landingDefaults).flatMap(([content_key,value])=>['draft','published'].map(publication_status=>({content_key,content:value,publication_status,updated_at:timestamp})));
+let translations=[];
 const server=http.createServer(async(req,res)=>{
  const origin=req.headers.origin;
  if(origin&&/^http:\/\/(localhost|127\.0\.0\.1):\d+$/.test(origin))res.setHeader('Access-Control-Allow-Origin',origin);
@@ -35,7 +36,23 @@ const server=http.createServer(async(req,res)=>{
    .sort((a,b)=>Number([b.iata_code,b.icao_code].some(v=>v?.toLowerCase()===q))-Number([a.iata_code,a.icao_code].some(v=>v?.toLowerCase()===q)));
   return send(found.slice(0,Math.min(Number(body.result_limit)||12,20)));
  }
+ if(url.pathname==='/rest/v1/translation_overrides'){
+  if(process.env.I18N_OVERRIDES_UNAVAILABLE==='1')return send({code:'PGRST205',message:'Local fixture table unavailable'},404);
+  const key=url.searchParams.get('translation_key')?.replace(/^eq\./,'');
+  const version=url.searchParams.get('version')?.replace(/^eq\./,'');
+  const updated=url.searchParams.get('updated_at')?.replace(/^eq\./,'');
+  let found=translations.filter(row=>(!key||row.translation_key===key)&&(!version||row.version===Number(version))&&(!updated||row.updated_at===updated));
+  if(req.method==='GET')return rows(role==='admin'?found:found.filter(row=>row.is_published));
+  if(role!=='admin')return deny();
+  if(req.method==='POST'){
+   if(translations.some(row=>row.translation_key===body.translation_key&&row.locale===body.locale))return send({code:'23505'},409);
+   const row={...body,version:1,updated_at:new Date().toISOString()};translations.push(row);return rows([row]);
+  }
+  if(req.method==='PATCH'){found.forEach(row=>Object.assign(row,body,{version:row.version+1,updated_at:new Date().toISOString()}));return rows(found);}
+  if(req.method==='DELETE'){translations=translations.filter(row=>!found.includes(row));return rows(found);}
+ }
  if(url.pathname==='/rest/v1/profiles'){
+  if(process.env.I18N_PROFILE_UNAVAILABLE==='1'&&url.searchParams.get('select')==='preferred_locale')return send({code:'42703',message:'Local fixture column unavailable'},400);
   if(!role||url.searchParams.get('id')!==`eq.${ids[role]}`)return deny();
   if(req.method==='PATCH')Object.assign(profiles[ids[role]],body);
   return rows([profiles[ids[role]]]);

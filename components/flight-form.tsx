@@ -1,4 +1,6 @@
 "use client";
+import { T, useText, UiError, LocalizedDuration } from "@/components/i18n";
+
 
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { airportCodes, airportFromSnapshot, type Airport } from "@/lib/airports";
@@ -32,6 +34,7 @@ function initialSide(data: Record<string, unknown>, side: Side): FormState {
 }
 
 export function FlightForm({ initialData = {} }: { initialData?: FlightInitialData }) {
+  const t = useText();
   const [departure, setDeparture] = useState(() => initialSide(initialData, "departure"));
   const [arrival, setArrival] = useState(() => initialSide(initialData, "arrival"));
   const [airline, setAirline] = useState(initialText(initialData, "airline"));
@@ -101,44 +104,45 @@ export function FlightForm({ initialData = {} }: { initialData?: FlightInitialDa
             onChange={(airport) => setSide(side, { airport })}
             onSelect={(airport) => setSide(side, { airport, timezone: airport.timezone || "" })} />)}
         </div>
-        <p className="mt-3 text-xs text-subtle">Airports: <a href="https://ourairports.com/data/" target="_blank" rel="noreferrer" className="hover:text-brand">OurAirports</a>. Timezone boundaries: <a href="https://github.com/evansiroky/timezone-boundary-builder" target="_blank" rel="noreferrer" className="hover:text-brand">timezone-boundary-builder / © OpenStreetMap contributors (ODbL)</a>.</p>
+        <p className="mt-3 text-xs text-subtle"><T id="airport.credit" />{" "}<a href="https://ourairports.com/data/" target="_blank" rel="noreferrer" className="hover:text-brand">OurAirports</a><T id="airport.boundaries" />{" "}<a href="https://github.com/evansiroky/timezone-boundary-builder" target="_blank" rel="noreferrer" className="hover:text-brand">timezone-boundary-builder / © OpenStreetMap contributors (ODbL)</a>.</p>
         <div className="mt-6 grid gap-6 md:grid-cols-2">
           <TimeFields label="Departure" state={departure} onChange={(patch) => setSide("departure", patch)} />
           <TimeFields label="Arrival" state={arrival} onChange={(patch) => setSide("arrival", patch)} />
         </div>
       </section>
       <section className="rounded-2xl border border-line bg-surface p-6">
-        <h2 className="text-xl font-bold text-ink">Flight details</h2>
+        <h2 className="text-xl font-bold text-ink"><T id="flight.details" /></h2>
         <div className="mt-5 grid gap-5 sm:grid-cols-2">
-          <Field label="Airline" value={airline} onChange={setAirline} placeholder="e.g. Air China" />
+          <Field label="Airline" value={airline} onChange={setAirline} placeholder={t("e.g. Air China")} />
           <Field label="Flight number" value={flightNumber} onChange={setFlightNumber} placeholder="e.g. CA1234" />
-          <Field label="Aircraft type (optional)" value={aircraftType} onChange={setAircraftType} placeholder="e.g. Boeing 737-800" />
+          <Field label="Aircraft type (optional)" value={aircraftType} onChange={setAircraftType} placeholder={t("e.g. Boeing 737-800")} />
           <Field label="Registration (optional)" value={registration} onChange={setRegistration} placeholder="e.g. B-2087" />
         </div>
         <div className="mt-6 grid gap-5 sm:grid-cols-2">
-          <div><label className="text-sm font-semibold text-muted">Scheduled duration</label>
+          <div><label className="text-sm font-semibold text-muted"><T id="flight.scheduled" /></label>
             <div aria-live="polite" className="mt-1.5 rounded-xl bg-page px-4 py-3 text-ink">
-              {duration.minutes == null ? "Calculated after times are valid" : Math.floor(duration.minutes / 60) + "h " + duration.minutes % 60 + "m"}
+              {duration.minutes == null ? <T id="flight.calculated" /> : <LocalizedDuration minutes={duration.minutes} />}
             </div>
           </div>
-          <div><p className="text-sm font-semibold text-muted">Actual duration <span className="font-normal text-subtle">(optional)</span></p>
+          <div><p className="text-sm font-semibold text-muted"><T id="flight.actual" />{" "}<span className="font-normal text-subtle"><T id="common.optional" /></span></p>
             <div className="mt-1.5 flex gap-2">
-              <input aria-label="Actual duration hours" type="number" min="0" max="99" step="1" value={actualHours} onChange={e => setActualHours(e.target.value)} className={inputClass + " min-w-0"} placeholder="Hours" />
-              <input aria-label="Actual duration minutes" type="number" min="0" max="59" step="1" value={actualMinutes} onChange={e => setActualMinutes(e.target.value)} className={inputClass + " min-w-0"} placeholder="Minutes" />
+              <input aria-label={t("Actual duration hours")} type="number" min="0" max="99" step="1" value={actualHours} onChange={e => setActualHours(e.target.value)} className={inputClass + " min-w-0"} placeholder={t("Hours")} />
+              <input aria-label={t("Actual duration minutes")} type="number" min="0" max="59" step="1" value={actualMinutes} onChange={e => setActualMinutes(e.target.value)} className={inputClass + " min-w-0"} placeholder={t("Minutes")} />
             </div>
           </div>
         </div>
-        <label className="mt-5 block text-sm font-semibold text-muted">Notes<textarea value={notes} onChange={e => setNotes(e.target.value)} rows={4} maxLength={10000} className={inputClass} placeholder="Anything you want to remember…" /></label>
+        <label className="mt-5 block text-sm font-semibold text-muted"><T id="flight.notes" /><textarea value={notes} onChange={e => setNotes(e.target.value)} rows={4} maxLength={10000} className={inputClass} placeholder={t("Anything you want to remember…")} /></label>
       </section>
-      {error && <p role="alert" className="rounded-xl bg-danger-bg p-4 text-sm text-danger-fg">{error}</p>}
-      <div className="flex justify-end"><AsyncButton busy={saving || pending} busyLabel={initialData.id ? "Updating flight…" : "Saving flight…"} className="rounded-full bg-brand px-7 py-3.5 font-bold text-on-brand shadow-lg shadow-brand/10 transition hover:bg-brand-hover focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand disabled:cursor-wait disabled:opacity-60">
-        {initialData.id ? "Save changes →" : "Save flight →"}
+      {error && <p role="alert" className="rounded-xl bg-danger-bg p-4 text-sm text-danger-fg"><UiError message={error} /></p>}
+      <div className="flex justify-end"><AsyncButton busy={saving || pending} busyLabel={t(initialData.id ? "Updating flight…" : "Saving flight…")} className="rounded-full bg-brand px-7 py-3.5 font-bold text-on-brand shadow-lg shadow-brand/10 transition hover:bg-brand-hover focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand disabled:cursor-wait disabled:opacity-60">
+        <T source={initialData.id ? "Save changes →" : "Save flight →"} />
       </AsyncButton></div>
     </fieldset>
   </form>;
 }
 
 function TimeFields({ label, state, onChange }: { label: string; state: FormState; onChange: (patch: Partial<FormState>) => void }) {
+  const t = useText();
   const listId = useId();
   const [zones, setZones] = useState<string[]>([]);
   useEffect(() => {
@@ -146,22 +150,20 @@ function TimeFields({ label, state, onChange }: { label: string; state: FormStat
   }, []);
   const clock = getScheduledFlightTime(state.date, state.time, state.timezone, state.disambiguation);
   return <div>
-    <h3 className="font-bold text-ink">{label} planned time</h3>
+    <h3 className="font-bold text-ink"><T source={label} /><T id="flight.plannedTime" /></h3>
     <div className="mt-3 grid grid-cols-2 gap-3">
       <Field label="Date" ariaLabel={label + " date"} value={state.date} onChange={date => onChange({ date })} type="date" required />
       <Field label="Local time" ariaLabel={label + " local time"} value={state.time} onChange={time => onChange({ time })} type="time" required />
     </div>
-    <label className="mt-3 block text-xs font-bold uppercase tracking-wider text-subtle">Timezone
-      <input required aria-label={label + " timezone"} autoComplete="off" maxLength={100} list={listId} value={state.timezone}
-        onChange={e => onChange({ timezone: e.target.value })} className={inputClass} placeholder="Select or type IANA timezone" />
+    <label className="mt-3 block text-xs font-bold uppercase tracking-wider text-subtle"><T id="flight.timezone" /><input required aria-label={t(label + " timezone")} autoComplete="off" maxLength={100} list={listId} value={state.timezone}
+        onChange={e => onChange({ timezone: e.target.value })} className={inputClass} placeholder={t("Select or type IANA timezone")} />
     </label>
     <datalist id={listId}>{[...new Set([...zones, state.timezone].filter(Boolean))].sort().map(zone => <option key={zone} value={zone} />)}</datalist>
-    {clock.ambiguous && <label className="mt-3 block text-sm text-muted">Clock change — choose occurrence
-      <select required aria-label={label + " clock change"} value={state.disambiguation || ""} onChange={e => onChange({ disambiguation: e.target.value as "earlier" | "later" })} className={inputClass}>
-        <option value="">Choose earlier or later</option>{clock.choices.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
+    {clock.ambiguous && <label className="mt-3 block text-sm text-muted"><T id="flight.clockChange" /><select required aria-label={t(label + " clock change")} value={state.disambiguation || ""} onChange={e => onChange({ disambiguation: e.target.value as "earlier" | "later" })} className={inputClass}>
+        <option value=""><T id="flight.chooseClock" /></option>{clock.choices.map(c => <option key={c.value} value={c.value}>{t(c.value === "earlier" ? "flight.earlierOffset" : "flight.laterOffset", { offset: c.label.match(/UTC([^)]+)/)?.[1] ?? "" })}</option>)}
       </select>
     </label>}
-    {clock.error && state.date && state.time && state.timezone && <p role="status" className="mt-2 text-xs text-danger-fg">{clock.error}</p>}
+    {clock.error && state.date && state.time && state.timezone && <p role="status" className="mt-2 text-xs text-danger-fg"><UiError message={clock.error} /></p>}
     <div className="mt-3 grid grid-cols-2 gap-3">
       <Field label="Terminal (optional)" ariaLabel={label + " terminal"} value={state.terminal} onChange={terminal => onChange({ terminal })} />
       <Field label="Gate (optional)" ariaLabel={label + " gate"} value={state.gate} onChange={gate => onChange({ gate })} />
@@ -173,7 +175,8 @@ function Field({ label, ariaLabel, value, onChange, type = "text", placeholder, 
   label: string; ariaLabel?: string; value: string; onChange: (value: string) => void;
   type?: string; placeholder?: string; required?: boolean;
 }) {
-  return <label className="block text-xs font-bold uppercase tracking-wider text-subtle">{label}<input type={type} aria-label={ariaLabel} required={required} value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder} className={inputClass} /></label>;
+  const t = useText();
+  return <label className="block text-xs font-bold uppercase tracking-wider text-subtle"><T source={label} /><input type={type} aria-label={t(ariaLabel ?? label)} required={required} value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder ? t(placeholder) : undefined} className={inputClass} /></label>;
 }
 
 function TicketPreview({ departure, arrival, airline, flightNumber, duration }: {
@@ -181,25 +184,25 @@ function TicketPreview({ departure, arrival, airline, flightNumber, duration }: 
 }) {
   return <section className="overflow-hidden rounded-[2rem] border border-line bg-surface shadow-xl shadow-ink/5">
     <div className="bg-panel p-6 text-on-panel">
-      <p className="text-xs font-bold uppercase tracking-[0.2em] text-panel-accent">Flight ticket · planned journey</p>
+      <p className="text-xs font-bold uppercase tracking-[0.2em] text-panel-accent"><T id="flight.ticket" /></p>
       <div className="mt-8 grid items-center gap-5 md:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]">
         <AirportBlock airport={departure.airport} fallback="Departure" />
-        <div className="text-center"><p className="text-sm font-semibold text-panel-accent">{airline || "Airline"} · {flightNumber || "Flight number"}</p>
+        <div className="text-center"><p className="text-sm font-semibold text-panel-accent">{airline || <T id="flight.airline" />} · {flightNumber || <T id="flight.number" />}</p>
           <div className="mt-2 flex items-center justify-center gap-2 text-panel-accent"><span className="h-px w-16 bg-panel-accent" /><span>✈</span><span className="h-px w-16 bg-panel-accent" /></div>
-          <p className="mt-2 text-xs text-panel-muted">{duration == null ? "Duration pending" : Math.floor(duration / 60) + "h " + duration % 60 + "m scheduled"}</p>
+          <p className="mt-2 text-xs text-panel-muted"><LocalizedDuration minutes={duration} scheduled /></p>
         </div>
         <AirportBlock airport={arrival.airport} fallback="Arrival" align="right" />
       </div>
     </div>
     <div className="flex flex-wrap justify-between gap-3 bg-surface-muted px-6 py-4 text-xs text-muted">
-      <span>{departure.date || "Departure date"} · {departure.time || "Local time"} {departure.timezone}</span>
-      <span>{arrival.date || "Arrival date"} · {arrival.time || "Local time"} {arrival.timezone}</span>
+      <span>{departure.date || <T source="Departure date" />} · {departure.time || <T source="Local time" />} {departure.timezone}</span>
+      <span>{arrival.date || <T source="Arrival date" />} · {arrival.time || <T source="Local time" />} {arrival.timezone}</span>
     </div>
   </section>;
 }
 function AirportBlock({ airport, fallback, align = "left" }: { airport: Airport | null; fallback: string; align?: "left" | "right" }) {
   return <div className={align === "right" ? "min-w-0 text-right" : "min-w-0 text-left"}>
-    <p className="break-words text-2xl font-bold leading-tight sm:text-3xl">{airport?.name || fallback}</p>
-    <p className="mt-2 text-sm text-panel-muted">{airport ? <><CountryFlag code={airport.countryCode} /> {airportCodes(airport)}</> : "Select an airport"}</p>
+    <p className="break-words text-2xl font-bold leading-tight sm:text-3xl">{airport?.name || <T source={fallback} />}</p>
+    <p className="mt-2 text-sm text-panel-muted">{airport ? <><CountryFlag code={airport.countryCode} /> {airportCodes(airport)}</> : <T source="Select an airport" />}</p>
   </div>;
 }

@@ -1,5 +1,6 @@
+import { T, CmsText } from "@/components/i18n";
 import Link from "@/components/navigation-link";
-import Image from "next/image";
+import Image from "@/components/localized-image";
 import { UpcomingButton } from "@/components/upcoming-button";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
@@ -54,37 +55,37 @@ export default async function HomePage() {
   const [{ items, failed }, copy] = await Promise.all([publishedRoadmap(), publishedLandingCopy()]);
   return <div className="min-h-screen bg-page text-ink"><SiteHeader /><main>
     <section aria-labelledby="hero-title" className="mx-auto max-w-7xl px-6 pb-16 pt-20 text-center sm:pb-24 sm:pt-28 lg:px-12">
-      <p className="eyebrow whitespace-pre-line">{copy["landing.hero.eyebrow"]}</p>
-      <h1 id="hero-title" className="mx-auto mt-6 text-4xl font-bold leading-[1.1] tracking-[-0.04em] sm:whitespace-nowrap sm:text-[clamp(2.5rem,6vw,4.75rem)]">Every Flight Tells a Story</h1>
+      <p className="eyebrow whitespace-pre-line"><CmsText id="content.heroEyebrow" source={copy["landing.hero.eyebrow"]} /></p>
+      <h1 id="hero-title" className="mx-auto mt-6 text-4xl font-bold leading-[1.1] tracking-[-0.04em] sm:whitespace-nowrap sm:text-[clamp(2.5rem,6vw,4.75rem)]"><T id="landing.hero" /></h1>
       <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
         <LogbookLink />
       </div>
       <div className="mt-14 text-left sm:mt-16"><JourneyDemo /></div>
       <div className="mt-8 flex justify-center">
-        <Link href="#features" className="inline-flex h-12 w-52 shrink-0 items-center justify-center gap-2 rounded-full border border-line bg-surface px-4 text-sm font-bold text-ink transition hover:-translate-y-0.5 hover:border-line-strong hover:text-brand focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand">{copy["landing.hero.secondary_label"]} <span aria-hidden="true">↓</span></Link>
+        <Link href="#features" className="inline-flex h-12 w-52 shrink-0 items-center justify-center gap-2 rounded-full border border-line bg-surface px-4 text-sm font-bold text-ink transition hover:-translate-y-0.5 hover:border-line-strong hover:text-brand focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand"><CmsText id="content.heroExplore" source={copy["landing.hero.secondary_label"]} /> <span aria-hidden="true">↓</span></Link>
       </div>
     </section>
 
     <section id="features" aria-labelledby="features-title" className="mx-auto max-w-7xl scroll-mt-8 px-6 py-12 sm:py-16 lg:px-12">
-      <h2 id="features-title" className="text-center text-3xl font-bold tracking-tight sm:text-4xl">Built Around Your Journeys</h2>
-      <p className="mx-auto mt-2 max-w-2xl text-center text-base leading-7 text-muted">From your first entry to your next discovery, make every journey part of your story.</p>
+      <h2 id="features-title" className="text-center text-3xl font-bold tracking-tight sm:text-4xl"><T id="landing.features" /></h2>
+      <p className="mx-auto mt-2 max-w-2xl text-center text-base leading-7 text-muted"><T id="landing.featuresIntro" /></p>
       <div className="mt-6 grid auto-rows-fr gap-4 lg:grid-cols-3">{features.map(feature => <article key={feature.title} className="interaction-card relative rounded-2xl border border-line bg-surface p-6 shadow-sm shadow-ink/5 ">
         <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-brand-soft text-brand"><svg aria-hidden="true" viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">{feature.icon}</svg></span>
-        <h3 className="mt-3 text-base font-bold leading-6">{feature.title}</h3>
-        <p className="mt-2 text-sm leading-6 text-muted">{feature.description}</p>
+        <h3 className="mt-3 text-base font-bold leading-6"><T source={feature.title} /></h3>
+        <p className="mt-2 text-sm leading-6 text-muted"><T source={feature.description} /></p>
         {feature.href ? <Link href={feature.href} aria-label={feature.title} className="absolute inset-0 rounded-2xl focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand" /> : <UpcomingButton label={feature.title} className="absolute inset-0 cursor-pointer rounded-2xl focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand" />}
       </article>)}</div>
     </section>
 
     <section id="product-preview" aria-labelledby="preview-title" className="mx-auto max-w-7xl px-6 py-12 sm:py-16 lg:px-12">
       <div className="mx-auto text-center">
-        <h2 id="preview-title" className="text-3xl font-bold tracking-tight sm:text-4xl">Your Flights. All in One Place</h2>
-        <p className="mx-auto mt-2 text-base leading-7 text-muted lg:whitespace-nowrap">A clearer way to organize your journeys, revisit past flights, and explore your flight history.</p>
+        <h2 id="preview-title" className="text-3xl font-bold tracking-tight sm:text-4xl"><T id="landing.preview" /></h2>
+        <p className="mx-auto mt-2 text-base leading-7 text-muted lg:whitespace-nowrap"><T id="landing.previewHelp" /></p>
       </div>
       {/* Fixed static product image, independent of the live Add Flight form. */}
       <figure data-product-preview className="mx-auto mt-6 w-full max-w-3xl overflow-hidden rounded-2xl border border-line bg-surface shadow-sm shadow-ink/5">
         <Image src="/images/add-flight-preview.webp" alt="Add Flight product preview showing the flight ticket and empty journey detail fields." width={1024} height={800} sizes="(min-width: 816px) 768px, calc(100vw - 48px)" className="h-auto w-full" unoptimized />
-        <figcaption className="border-t border-line px-5 py-3 text-center text-xs leading-5 text-muted">Add Flight · Actual product interface, shown with an empty form</figcaption>
+        <figcaption className="border-t border-line px-5 py-3 text-center text-xs leading-5 text-muted"><T id="landing.previewCaption" /></figcaption>
       </figure>
     </section>
 

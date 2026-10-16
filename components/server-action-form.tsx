@@ -1,4 +1,6 @@
 "use client";
+import { T, UiError } from "@/components/i18n";
+
 
 import { useRef, useState, type ReactNode } from "react";
 import { unstable_rethrow } from "next/navigation";
@@ -23,5 +25,5 @@ export function ServerActionForm({ action, children, className }: { action: (dat
       failed.current = true;
       setError("The request could not be confirmed. Check your connection and try again.");
     } finally { locked.current = false; }
-  }}>{children}{error && <p role="alert" className="mt-3 rounded-xl bg-danger-bg p-3 text-sm text-danger-fg">{error}</p>}</form>;
+  }}>{children}{error && <p role="alert" className="mt-3 rounded-xl bg-danger-bg p-3 text-sm text-danger-fg"><UiError message={error} /></p>}</form>;
 }

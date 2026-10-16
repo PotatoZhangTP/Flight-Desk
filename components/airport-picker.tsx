@@ -1,4 +1,6 @@
 "use client";
+import { T, useText } from "@/components/i18n";
+
 
 import { useEffect, useId, useRef, useState, type KeyboardEvent } from "react";
 import { airportCodes, type Airport } from "@/lib/airports";
@@ -11,6 +13,7 @@ export function AirportPicker({ label, selected, onChange, onSelect }: {
   label: string; selected: Airport | null;
   onChange: (airport: Airport | null) => void; onSelect: (airport: Airport) => void;
 }) {
+  const t = useText();
   const id = useId();
   const [query, setQuery] = useState(selected?.name || "");
   const [open, setOpen] = useState(false);
@@ -70,44 +73,44 @@ export function AirportPicker({ label, selected, onChange, onSelect }: {
     if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setOpen(false);
   }}>
     {manual ? <div className="space-y-3 rounded-xl border border-line bg-surface-muted p-4">
-      <p className="text-sm font-semibold text-ink">{label} · manual entry</p>
-      <label className="block text-sm text-muted">Airport name<input ref={nameRef} required maxLength={500} value={selected?.name || ""} onChange={(e) => onChange({ ...selected!, name: e.target.value })} className={inputClass} /></label>
+      <p className="text-sm font-semibold text-ink"><T source={label} /><T id="airport.manualEntry" /></p>
+      <label className="block text-sm text-muted"><T id="airport.name" /><input ref={nameRef} required maxLength={500} value={selected?.name || ""} onChange={(e) => onChange({ ...selected!, name: e.target.value })} className={inputClass} /></label>
       <div className="grid grid-cols-2 gap-3">
         {([['iata', 'IATA (optional)', 3], ['icao', 'ICAO (optional)', 4], ['countryCode', 'Country code (optional)', 2], ['ident', 'Ident (optional)', 80]] as const).map(([key, title, max]) =>
-          <label key={key} className="block text-xs text-muted">{title}<input value={selected?.[key] || ""} maxLength={max}
+          <label key={key} className="block text-xs text-muted"><T source={title} /><input value={selected?.[key] || ""} maxLength={max}
             pattern={key === 'iata' ? '[A-Za-z]{3}' : key === 'icao' ? '[A-Za-z]{4}' : key === 'countryCode' ? '[A-Za-z]{2}' : undefined}
             onChange={(e) => onChange({ ...selected!, [key]: e.target.value.toUpperCase() || null, ...(key === "countryCode" ? { countryName: null } : {}) })} className={inputClass} /></label>)}
       </div>
-      <p className="text-xs text-muted">Choose the airport&apos;s IANA timezone below. Manual entries do not change the shared airport database.</p>
+      <p className="text-xs text-muted"><T id="airport.manualHelp" /></p>
       <button type="button" className="text-sm font-semibold text-brand hover:underline focus-visible:outline-2 focus-visible:outline-brand" onClick={() => {
         setManual(false); setQuery(""); onChange(null); setStatus("idle"); setTimeout(() => searchRef.current?.focus(), 0);
-      }}>Back to airport search</button>
+      }}><T id="airport.back" /></button>
     </div> : <>
-      <label htmlFor={id} className="text-sm font-semibold text-muted">{label}</label>
+      <label htmlFor={id} className="text-sm font-semibold text-muted"><T source={label} /></label>
       <input ref={searchRef} id={id} role="combobox" aria-autocomplete="list" aria-expanded={expanded} aria-controls={`${id}-results`}
         aria-activedescendant={expanded && active >= 0 && options[active] ? `${id}-option-${active}` : undefined}
         aria-describedby={`${id}-help`} aria-busy={expanded && status === "loading"} autoComplete="off" maxLength={80}
-        value={selected ? selected.name : query} placeholder="Search IATA, ICAO, name, city or country"
+        value={selected ? selected.name : query} placeholder={t("Search IATA, ICAO, name, city or country")}
         onFocus={() => setOpen(true)} onKeyDown={keyDown}
         onChange={(e) => { setQuery(e.target.value); onChange(null); setOptions([]); setActive(-1); setOpen(true); }} className={inputClass} />
       {expanded && <div className="absolute left-0 right-0 z-20 mt-1 max-h-80 overflow-y-auto rounded-xl border border-line bg-surface p-1 shadow-xl">
-        {status === "loading" && <p role="status" className="flex items-center gap-2 px-3 py-3 text-sm text-muted"><Spinner />Searching airports…</p>}
-        {status === "error" && <p role="alert" className="px-3 py-3 text-sm text-danger-fg">Airport search is unavailable. Try again or enter manually.</p>}
-        {status === "ready" && !options.length && <p role="status" className="px-3 py-3 text-sm text-muted">No matching airports. Try another name or enter manually.</p>}
-        <p role="status" className="sr-only">{status === "ready" && options.length ? `${options.length} airport suggestions available. Use arrow keys to choose.` : ""}</p><ul id={`${id}-results`} role="listbox" aria-label={`${label} suggestions`}>
+        {status === "loading" && <p role="status" className="flex items-center gap-2 px-3 py-3 text-sm text-muted"><Spinner /><T id="airport.searching" /></p>}
+        {status === "error" && <p role="alert" className="px-3 py-3 text-sm text-danger-fg"><T id="airport.error" /></p>}
+        {status === "ready" && !options.length && <p role="status" className="px-3 py-3 text-sm text-muted"><T id="airport.empty" /></p>}
+        <p role="status" className="sr-only">{status === "ready" && options.length ? t("airport.suggestions", { count: options.length }) : ""}</p><ul id={`${id}-results`} role="listbox" aria-label={t(label)}>
           {options.map((airport, index) => <li key={airport.id} id={`${id}-option-${index}`} role="option" aria-selected={active === index}
             onMouseDown={(e) => e.preventDefault()} onMouseEnter={() => setActive(index)} onClick={() => select(airport)}
             className={`cursor-pointer rounded-lg px-3 py-3 text-sm ${active === index ? 'bg-brand-soft' : 'hover:bg-brand-soft'}`}>
             <p className="font-semibold text-ink"><CountryFlag code={airport.countryCode} /> {airport.name}</p>
             <p className="mt-1 text-xs text-muted">{airportCodes(airport)}</p>
-            <p className="mt-1 text-xs text-muted">{[airport.municipality, airport.countryName || airport.countryCode].filter(Boolean).join(", ") || "Location unavailable"}</p>
-            {!airport.timezone && <p className="mt-1 text-xs text-muted">Timezone needs manual selection</p>}
+            <p className="mt-1 text-xs text-muted">{[airport.municipality, airport.countryName || airport.countryCode].filter(Boolean).join(", ") || t("Location unavailable")}</p>
+            {!airport.timezone && <p className="mt-1 text-xs text-muted"><T id="airport.zoneNeeded" /></p>}
           </li>)}
         </ul>
-        <button type="button" onClick={startManual} className="block w-full rounded-lg px-3 py-3 text-left text-sm font-semibold text-brand hover:bg-surface-muted focus-visible:outline-2 focus-visible:outline-brand">Enter airport manually</button>
+        <button type="button" onClick={startManual} className="block w-full rounded-lg px-3 py-3 text-left text-sm font-semibold text-brand hover:bg-surface-muted focus-visible:outline-2 focus-visible:outline-brand"><T id="airport.manual" /></button>
       </div>}
-      <p id={`${id}-help`} className="mt-2 text-xs text-muted">{selected ? <><CountryFlag code={selected.countryCode} /> {airportCodes(selected)} · {selected.origin === "snapshot" ? "Saved flight information" : selected.timezone ? "Recommended timezone: " + selected.timezone : "Select timezone below"}</> : "Type at least 2 characters. Arrow keys to browse, Enter to select."}</p>
-      {!expanded && <button type="button" onClick={startManual} className="mt-2 text-xs font-semibold text-brand hover:underline focus-visible:outline-2 focus-visible:outline-brand">{selected ? "Edit airport manually" : "Enter airport manually"}</button>}
+      <p id={`${id}-help`} className="mt-2 text-xs text-muted">{selected ? <><CountryFlag code={selected.countryCode} /> {airportCodes(selected)} · {selected.origin === "snapshot" ? t("Saved flight information") : selected.timezone ? <><T source="Recommended timezone: " />{selected.timezone}</> : t("Select timezone below")}</> : t("Type at least 2 characters. Arrow keys to browse, Enter to select.")}</p>
+      {!expanded && <button type="button" onClick={startManual} className="mt-2 text-xs font-semibold text-brand hover:underline focus-visible:outline-2 focus-visible:outline-brand"><T source={selected ? "Edit airport manually" : "Enter airport manually"} /></button>}
     </>}
   </div>;
 }
