@@ -13,3 +13,5 @@ User-visible dates must use the shared `LocalizedDate` component and `lib/date-f
 ## Button Design Rules
 
 Use the shared `button-primary`, `button-secondary`, and `button-danger` classes for independent actions. Keep their common height, rounded shape, typography, spacing, hover, focus-visible, and disabled behavior consistent across themes and screen sizes. Do not turn ordinary prose links or breadcrumbs into buttons.
+
+Standalone Back, Back To Dashboard, Back To Settings, and Go To Full Settings actions are button links and must use `button-secondary` (or the equivalent shared link treatment) while ordinary prose links and breadcrumbs remain lightweight links.
