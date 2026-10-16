@@ -476,6 +476,7 @@ modules.common|General|通用
 modules.auth|Authentication|登录与账号
 modules.profile|Profile|个人资料
 modules.settings|Settings|设置
+modules.preferences|Display & language settings|外观与语言设置
 modules.dashboard|Logbook|飞行日志
 modules.flight|Flights|航班
 modules.airport|Airports|机场
@@ -546,6 +547,9 @@ landing.roadmapCount|Showing {shown} of {total} items|已显示 {shown} 项，�
 landing.roadmapDetails|Toggle details|展开或收起详情
 landing.roadmapViewItem|View on roadmap|在路线图中查看
 landing.roadmapMore|Show more|查看更多
+preferences.open|Open display and language settings|打开外观与语言设置
+preferences.title|Display & language|外观与语言
+preferences.close|Close settings|关闭设置
 loading.page|Opening page|正在打开页面
 loading.auth|Opening account access|正在打开账号页面
 loading.flights|Loading your flight|正在加载航班

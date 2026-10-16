@@ -1,3 +1,4 @@
+const {openPreferences,chooseLanguage,chooseTheme}=require('./support/preferences-browser.cjs');
 // Run against fixture flags I18N_OVERRIDES_UNAVAILABLE=1 I18N_PROFILE_UNAVAILABLE=1.
 const {chromium} = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
 const assert = require('node:assert/strict');
@@ -19,7 +20,7 @@ assert(['localhost', '127.0.0.1'].includes(new URL(origin).hostname));
     assert.equal(await page.locator('textarea').first().isDisabled(), true);
     let writes = 0;
     page.on('request', request => {if (request.method() === 'POST') writes++;});
-    await page.getByRole('combobox', {name: 'Choose language'}).selectOption('zh-CN');
+    await chooseLanguage(page,'zh-CN');
     await page.getByRole('heading', {name: '语言与翻译'}).waitFor();
     assert.equal(writes, 0, 'no preference write when column is missing');
     await page.reload({waitUntil: 'networkidle'});

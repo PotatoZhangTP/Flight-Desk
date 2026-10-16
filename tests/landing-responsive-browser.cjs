@@ -1,3 +1,4 @@
+const {openPreferences,chooseLanguage,chooseTheme}=require('./support/preferences-browser.cjs');
 // All requests use isolated loopback fixtures. Run with LANDING_RESPONSIVE_FIXTURE=1.
 const {chromium}=require(process.env.PLAYWRIGHT_MODULE||'playwright');
 const assert=require('node:assert/strict');
@@ -53,9 +54,9 @@ assert(['localhost','127.0.0.1'].includes(new URL(origin).hostname));
    const all=mobile.getByRole('button',{name:locale==='en'?'All':'全部',exact:true});await all.click();assert.equal(await mobile.locator('details').count(),4);
    await mobile.locator('summary').first().click();
    // Language switch keeps the accordion open and updates shared dynamic translations.
-   await page.locator('.site-header select').selectOption(locale==='en'?'zh-CN':'en');
+   await chooseLanguage(page,locale==='en'?'zh-CN':'en');
    assert(await mobile.locator('details').first().getAttribute('open')!==null);
-   await page.locator('.site-header select').selectOption(locale);
+   await chooseLanguage(page,locale);
    await page.reload({waitUntil:'networkidle'});assert.equal(await page.locator('html').getAttribute('lang'),locale);
    await mobile.locator('summary').first().click();
    await mobile.locator('details').first().getByRole('link').click();await page.waitForURL('**/roadmap?item=*');
@@ -74,11 +75,11 @@ assert(['localhost','127.0.0.1'].includes(new URL(origin).hostname));
    await page.locator('#auth-email').fill(`${role}@example.test`);await page.locator('#auth-password').fill('test-only-password');
    await page.locator('form button:not([type="button"])').click();await page.waitForURL('**/dashboard');
    for(const locale of ['en','zh-CN']) {
-    await page.goto(origin,{waitUntil:'networkidle'});await page.locator('.site-header select').selectOption(locale);
+    await page.goto(origin,{waitUntil:'networkidle'});await chooseLanguage(page,locale);
     await page.waitForFunction(()=>!document.querySelector('.site-header select').disabled);
     assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
-    await page.locator('.site-header button[aria-controls="theme-choices"]').click();
-    const themeBox=await page.locator('#theme-choices').boundingBox();assert(themeBox.x>=0&&themeBox.x+themeBox.width<=320);
+    await page.locator('.preferences-menu > button').click();
+    const themeBox=await page.locator('.preferences-panel').boundingBox();assert(themeBox.x>=0&&themeBox.x+themeBox.width<=320);
     await page.keyboard.press('Escape');
     const user=page.locator('.site-header button').filter({has:page.locator('span.h-9')});await user.click();
     const menu=await user.locator('..').locator('div.absolute').boundingBox();assert(menu.x>=0&&menu.x+menu.width<=320);

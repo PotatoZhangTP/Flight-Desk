@@ -80,7 +80,10 @@ body { margin: 0; background: var(--cream); color: var(--ink); font-family: Aria
 .site-footer li > :is(a, button) { display: inline-flex; align-items: center; min-height: 44px; text-align: start; overflow-wrap: anywhere; }
 .site-header nav > :is(a, button) { display: inline-flex; align-items: center; min-height: 44px; }
 .site-header select { min-height: 44px; }
-.site-header button[aria-controls="theme-choices"] { min-width: 44px; min-height: 44px; }
+.preferences-panel { position: fixed; inset: auto; margin: 0; width: min(320px, calc(100vw - 24px)); max-height: calc(100dvh - 24px); overflow-y: auto; }
+.preferences-panel select { width: 100%; min-height: 44px; }
+.preferences-panel label:has(> select) { width: 100%; }
+.preferences-panel::backdrop { background: transparent; }
 .landing-roadmap-desktop { display: none; }
 .roadmap-filters { display: flex; gap: 8px; overflow-x: auto; padding: 4px; scroll-padding-inline: 4px; }
 .roadmap-disclosure { overflow-wrap: anywhere; transition: border-color 160ms; }
@@ -115,8 +118,6 @@ body { margin: 0; background: var(--cream); color: var(--ink); font-family: Aria
 @media (max-width: 639px) {
   .site-header-controls { width: 100%; gap: 8px; }
   .site-header-controls > a { width: auto; flex: 1; min-width: 0; padding-inline: 10px; }
-  .site-header-controls > div:has(> label) { flex: 0 1 auto; }
-  .site-header-controls > div:has(> label) select { width: 100%; }
   .site-header-controls > div:has(> a[href="/admin"]) { flex-wrap: wrap; justify-content: flex-end; width: 100%; }
 }
 @media (prefers-reduced-motion: reduce) {

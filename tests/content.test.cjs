@@ -8,7 +8,7 @@ const React=require('react');
 const {renderToStaticMarkup}=require('react-dom/server');
 function load(file,deps={}) {
   deps = { '@/lib/content-translations/read.server': {attachContentTranslations: async (_, items) => items}, ...deps };
-  deps = { '@/components/i18n': require('./support/i18n-mock.cjs'), './i18n': require('./support/i18n-mock.cjs'), './language-selector': {LanguageSelector: () => null}, ...deps };
+  deps = { '@/components/i18n': require('./support/i18n-mock.cjs'), './i18n': require('./support/i18n-mock.cjs'), './preferences-menu': {PreferencesMenu: () => null}, ...deps };
   const code=ts.transpileModule(fs.readFileSync(path.join(__dirname,'..',file),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.ReactJSX}}).outputText;
   const mod={exports:{}};
   vm.runInThisContext('(function(require,module,exports){'+code+'\n})', {filename:file})(name=>{if(!(name in deps))throw Error('Unexpected dependency '+name);return deps[name];},mod,mod.exports);
@@ -86,7 +86,7 @@ test('public loader explicitly filters published even when the caller might be a
   assert.deepEqual(await server.publishedLandingCopy(),defaults);assert.deepEqual(filters,[['publication_status','published']]);
 });
 test('administrator button lives beside the personal menu and is absent for ordinary users',()=>{
-  const controls=load('components/account-controls.tsx',{'react/jsx-runtime':require('react/jsx-runtime'),'@/components/navigation-link':require('next/link'),'./theme-controls':{ThemeMenu:()=>React.createElement('button',null,'Theme menu')},'./user-menu-client':{UserMenuClient:()=>React.createElement('button',null,'Personal menu')}});
+  const controls=load('components/account-controls.tsx',{'react/jsx-runtime':require('react/jsx-runtime'),'@/components/navigation-link':require('next/link'),'./preferences-menu':{PreferencesMenu:()=>React.createElement('button',null,'Theme menu')},'./user-menu-client':{UserMenuClient:()=>React.createElement('button',null,'Personal menu')}});
   const admin=renderToStaticMarkup(React.createElement(controls.AccountControls,{email:'admin@example.test',initials:'AD',isAdmin:true}));
   assert.match(admin,/href="\/admin"/);assert.match(admin,/Admin Panel/);
   assert.equal((admin.match(/Theme menu/g)||[]).length,1);assert.ok(admin.indexOf('Theme menu')<admin.indexOf('Personal menu'));

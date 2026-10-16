@@ -1,3 +1,4 @@
+const {openPreferences,chooseLanguage,chooseTheme}=require('./support/preferences-browser.cjs');
 // Run only against the local production build and tests/support/theme-api.cjs.
 const {chromium}=require(process.env.PLAYWRIGHT_MODULE || 'playwright');
 const assert=require('node:assert/strict');
@@ -6,8 +7,8 @@ assert.ok(['localhost','127.0.0.1'].includes(new URL(origin).hostname),'Browser 
 const flightId='44444444-4444-4444-8444-444444444444';
 function cookie(role){const id=role==='admin'?'11111111-1111-4111-8111-111111111111':'22222222-2222-4222-8222-222222222222',exp=Math.floor(Date.now()/1000)+3600;const token=[Buffer.from(JSON.stringify({alg:'HS256',typ:'JWT'})).toString('base64url'),Buffer.from(JSON.stringify({sub:id,aud:'authenticated',role:'authenticated',exp})).toString('base64url'),'local-test-signature'].join('.');return{name:'sb-127-auth-token',value:'base64-'+Buffer.from(JSON.stringify({access_token:token,refresh_token:'local-test-only',token_type:'bearer',expires_at:exp,user:{id,email:`${role}@example.test`,aud:'authenticated',role:'authenticated'}})).toString('base64url'),domain:new URL(origin).hostname,path:'/'};}
 async function color(page,mode){await page.waitForFunction(expected=>getComputedStyle(document.body).backgroundColor===expected,mode==='dark'?'rgb(16, 17, 20)':'rgb(255, 255, 255)');}
-async function choose(page,mode){await page.getByRole('button',{name:'Choose color theme',exact:true}).click();await page.getByRole('radio',{name:mode,exact:true}).click();}
-async function checkMenuBounds(page){for(const width of [320,390,600,1440]){await page.setViewportSize({width,height:1000});await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));const trigger=page.getByRole('button',{name:'Choose color theme',exact:true});await trigger.click();const box=await page.locator('#theme-choices').boundingBox();assert.ok(box&&box.x>=0&&box.x+box.width<=width,`theme menu ${width}px`);await page.keyboard.press('Escape');assert.equal(await trigger.evaluate(e=>e===document.activeElement),true);}await page.setViewportSize({width:1440,height:1000});}
+async function choose(page,mode){await chooseTheme(page,mode);}
+async function checkMenuBounds(page){for(const width of [320,390,600,1440]){await page.setViewportSize({width,height:1000});await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));const trigger=page.getByRole('button',{name:'Open display and language settings',exact:true});await trigger.click();const box=await page.locator('.preferences-panel').boundingBox();assert.ok(box&&box.x>=0&&box.x+box.width<=width,`theme menu ${width}px`);await page.keyboard.press('Escape');assert.equal(await trigger.evaluate(e=>e===document.activeElement),true);}await page.setViewportSize({width:1440,height:1000});}
 (async()=>{const browser=await chromium.launch({executablePath:process.env.CHROMIUM_PATH||'/usr/bin/chromium',args:['--no-sandbox']});const errors=[];
 const context=await browser.newContext({colorScheme:'dark',viewport:{width:1440,height:1000}});
 context.on('page',p=>{p.on('pageerror',e=>errors.push(e.message));p.on('console',message=>{if(message.type()==='error'&&/hydration|hydrating|did not match|server rendered|Minified React error #4(?:18|23|25)/i.test(message.text()))errors.push(message.text());});});
@@ -30,7 +31,7 @@ try{
  await p.goto(origin+'/auth',{waitUntil:'networkidle'});await p.getByLabel('Email',{exact:true}).fill('member@example.test');await p.getByLabel('Password',{exact:true}).fill('wrong-password');await p.locator('form button:not([type="button"])').click();await p.getByRole('alert').filter({hasText:'Email or password is incorrect.'}).waitFor();
  await p.getByRole('button',{name:'Show password',exact:true}).click();assert.equal(await p.getByLabel('Password',{exact:true}).getAttribute('type'),'text');await p.getByRole('button',{name:'Hide password',exact:true}).click();
  await p.getByLabel('Password',{exact:true}).fill('test-only-password');await p.locator('form button:not([type="button"])').click();await p.waitForURL('**/dashboard');await color(p,'dark');
- assert.equal(await p.getByRole('button',{name:'Choose color theme',exact:true}).count(),1);await choose(p,'Light');await color(p,'light');await choose(p,'Dark');await color(p,'dark');
+ assert.equal(await p.getByRole('button',{name:'Open display and language settings',exact:true}).count(),1);await choose(p,'Light');await color(p,'light');await choose(p,'Dark');await color(p,'dark');
  await p.goto(origin,{waitUntil:'networkidle'});await checkMenuBounds(p);await p.goto(origin+'/dashboard',{waitUntil:'networkidle'});
  await p.getByRole('button',{name:'Open user menu'}).click();await p.getByRole('link',{name:'Settings',exact:true}).click();await p.getByRole('heading',{name:'Appearance',exact:true}).waitFor();
  await p.getByRole('radio',{name:'Light',exact:true}).locator('..').click();await color(p,'light');await p.getByRole('radio',{name:'System',exact:true}).locator('..').click();await color(p,'light');await p.emulateMedia({colorScheme:'dark'});await color(p,'dark');await p.getByRole('radio',{name:'Dark',exact:true}).locator('..').click();
@@ -43,7 +44,7 @@ try{
  for(const mode of ['light','dark']){
   await p.goto(origin,{waitUntil:'networkidle'});await choose(p,mode==='dark'?'Dark':'Light');
   for(const [route,title] of routes){await p.goto(origin+route,{waitUntil:'networkidle'});await p.getByRole('heading').filter({hasText:title}).first().waitFor();await color(p,mode);
-   assert.equal(await p.getByRole('button',{name:'Choose color theme',exact:true}).count(),route.startsWith('/auth')?0:1,route);
+   assert.equal(await p.getByRole('button',{name:'Open display and language settings',exact:true}).count(),1,route);
    if(mode==='dark'){const white=await p.evaluate(()=>[...document.querySelectorAll('main section, main div, input, textarea, select, header, footer')].filter(e=>{const r=e.getBoundingClientRect();return r.width*r.height>3000&&getComputedStyle(e).backgroundColor==='rgb(255, 255, 255)'}).map(e=>e.tagName));assert.deepEqual(white,[],route);}
    for(const width of [1440,390]){await p.setViewportSize({width,height:1000});assert.equal(await p.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false,route+' '+width);}await p.setViewportSize({width:1440,height:1000});
    if(route==='/auth'||route==='/settings'||route==='/flights/new')await p.screenshot({path:`/tmp/theme-${mode}-${route.replaceAll('/','-')}.png`,fullPage:true});

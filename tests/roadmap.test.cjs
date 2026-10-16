@@ -9,7 +9,7 @@ const ts = require('typescript');
 // No network calls, real user credentials or database writes are made.
 function loadModule(file, dependencies = {}) {
   dependencies = { './roadmap-content': {RoadmapContentScope: ({children}) => children, RoadmapContentText: ({item, field}) => item[field]}, '@/lib/content-translations/read.server': {attachContentTranslations: async (_, items) => items}, ...dependencies };
-  dependencies = { '@/components/i18n': require('./support/i18n-mock.cjs'), './i18n': require('./support/i18n-mock.cjs'), './language-selector': {LanguageSelector: () => null}, ...dependencies };
+  dependencies = { '@/components/i18n': require('./support/i18n-mock.cjs'), './i18n': require('./support/i18n-mock.cjs'), './preferences-menu': {PreferencesMenu: () => null}, ...dependencies };
   const source = ts.transpileModule(fs.readFileSync(path.join(__dirname, '..', file), 'utf8'), {
     compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX },
   }).outputText;
@@ -189,7 +189,6 @@ test('public navigation reserves unfinished pages without fake links; footer use
   const deps = {'react/jsx-runtime':require('react/jsx-runtime'),'@/components/navigation-link':require('next/link'),
     './brand':{Brand:()=>React.createElement('span',null,'Flight Desk')},'./logbook-link':logbookLink,'./upcoming-button':upcoming};
   const header=loadModule('components/site-header.tsx', {...deps,
-    './theme-controls':{ThemeMenu:()=>null},
     './account-controls':{AccountControls:()=>null},
     '@/lib/admin/server':{siteAdminAccess:async()=>({user:null,isAdmin:false})}});
   const html=renderToStaticMarkup(await header.SiteHeader());

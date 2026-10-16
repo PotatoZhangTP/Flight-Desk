@@ -1,3 +1,4 @@
+const {openPreferences,chooseLanguage,chooseTheme}=require('./support/preferences-browser.cjs');
 // Local protocol fixture only. No real DeepL/Supabase calls or credentials.
 const {chromium}=require(process.env.PLAYWRIGHT_MODULE||'playwright');
 const assert=require('node:assert/strict');
@@ -14,10 +15,10 @@ const id='33333333-3333-4333-8333-000000000001';
   await publicPage.goto(origin+'/roadmap',{waitUntil:'networkidle'});
   await publicPage.getByRole('heading',{name:'计划中的测试功能',exact:true}).waitFor();
   await publicPage.evaluate(()=>{window.__languageSwitchMarker='retained';});
-  await publicPage.getByRole('combobox',{name:'选择语言'}).selectOption('en');
+  await chooseLanguage(publicPage,'en');
   await publicPage.getByRole('heading',{name:'Test planned milestone',exact:true}).waitFor();
   assert.equal(await publicPage.evaluate(()=>window.__languageSwitchMarker),'retained');
-  await publicPage.getByRole('combobox',{name:'Choose language'}).selectOption('zh-CN');
+  await chooseLanguage(publicPage,'zh-CN');
   const admin=await browser.newContext({viewport:{width:1440,height:1000}}),page=await admin.newPage();
   page.on('pageerror',error=>errors.push(error.message));
   await page.goto(origin+'/auth',{waitUntil:'networkidle'});

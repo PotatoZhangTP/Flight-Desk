@@ -1,3 +1,4 @@
+const {openPreferences,chooseLanguage,chooseTheme}=require('./support/preferences-browser.cjs');
 // Run only against local fixture with DYNAMIC_TRANSLATIONS_UNAVAILABLE=1.
 const {chromium}=require(process.env.PLAYWRIGHT_MODULE||'playwright');
 const assert=require('node:assert/strict');
@@ -13,7 +14,7 @@ assert(['localhost','127.0.0.1'].includes(new URL(origin).hostname));
  await page.getByRole('button',{name:'English (Original)',exact:true}).click();
  await page.locator('input[name=title]').fill('English still saves before migration');await page.getByRole('button',{name:'Save item',exact:true}).click();
  await page.getByRole('heading',{name:'English still saves before migration',exact:true}).waitFor();
- await page.goto(origin+'/roadmap',{waitUntil:'networkidle'});await page.getByRole('combobox',{name:'Choose language'}).selectOption('zh-CN');
+ await page.goto(origin+'/roadmap',{waitUntil:'networkidle'});await chooseLanguage(page,'zh-CN');
  await page.getByRole('heading',{name:'English still saves before migration',exact:true}).waitFor();assert.deepEqual(errors,[]);
  console.log('PASS missing dynamic migration: editor disabled, original English save unaffected, Chinese falls back to English without errors');
 }finally{await browser.close();}})().catch(error=>{console.error(error);process.exitCode=1;});

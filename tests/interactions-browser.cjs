@@ -1,3 +1,4 @@
+const {openPreferences,chooseLanguage,chooseTheme}=require('./support/preferences-browser.cjs');
 // Local production build + tests/support/theme-api.cjs ONLY. No real DB writes.
 const {chromium} = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
 const assert = require('node:assert/strict');
@@ -119,8 +120,8 @@ function cookie(role) {
 
     // Force a slow, non-prefetched internal link; Next owns navigation and history.
     await page.goto(origin+'/dashboard',{waitUntil:'networkidle'});
-    await page.getByRole('button',{name:'Choose color theme',exact:true}).click();
-    await page.getByRole('radio',{name:'Dark',exact:true}).click();
+    await page.getByRole('button',{name:'Open display and language settings',exact:true}).click();
+    await page.getByRole('radio',{name:'Dark',exact:true}).locator('..').click();
     await page.route('**/settings?*',async route=>{if(route.request().headers().rsc==='1')await delay(900);await route.continue();});
     await page.getByRole('button',{name:'Open user menu'}).click();await page.getByRole('link',{name:'Settings',exact:true}).click();
     await page.locator('[data-page-loading]').waitFor();
@@ -142,8 +143,8 @@ function cookie(role) {
     await page.setViewportSize({width:1440,height:1000});
     for (const theme of ['Light','Dark']) {
       await page.goto(origin,{waitUntil:'networkidle'});
-      await page.getByRole('button',{name:'Choose color theme',exact:true}).click();
-      await page.getByRole('radio',{name:theme,exact:true}).click();
+      await page.getByRole('button',{name:'Open display and language settings',exact:true}).click();
+      await page.getByRole('radio',{name:theme,exact:true}).locator('..').click();
       const card=page.locator('.interaction-card').first();
       await page.mouse.move(1,1);
       const normal=await card.evaluate(el=>getComputedStyle(el).borderTopColor);
