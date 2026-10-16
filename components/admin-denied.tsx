@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/components/navigation-link";
 import { SiteHeader } from "./site-header";
 
 export function AdminDenied({ failed = false }: { failed?: boolean }) {

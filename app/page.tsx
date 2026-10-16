@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/components/navigation-link";
 import Image from "next/image";
 import { UpcomingButton } from "@/components/upcoming-button";
 import { SiteHeader } from "@/components/site-header";
@@ -68,7 +68,7 @@ export default async function HomePage() {
     <section id="features" aria-labelledby="features-title" className="mx-auto max-w-7xl scroll-mt-8 px-6 py-12 sm:py-16 lg:px-12">
       <h2 id="features-title" className="text-center text-3xl font-bold tracking-tight sm:text-4xl">Built Around Your Journeys</h2>
       <p className="mx-auto mt-2 max-w-2xl text-center text-base leading-7 text-muted">From your first entry to your next discovery, make every journey part of your story.</p>
-      <div className="mt-6 grid auto-rows-fr gap-4 lg:grid-cols-3">{features.map(feature => <article key={feature.title} className="relative rounded-2xl border border-line bg-surface p-6 shadow-sm shadow-ink/5 transition hover:border-line-strong hover:shadow-md hover:shadow-ink/5">
+      <div className="mt-6 grid auto-rows-fr gap-4 lg:grid-cols-3">{features.map(feature => <article key={feature.title} className="interaction-card relative rounded-2xl border border-line bg-surface p-6 shadow-sm shadow-ink/5 ">
         <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-brand-soft text-brand"><svg aria-hidden="true" viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">{feature.icon}</svg></span>
         <h3 className="mt-3 text-base font-bold leading-6">{feature.title}</h3>
         <p className="mt-2 text-sm leading-6 text-muted">{feature.description}</p>

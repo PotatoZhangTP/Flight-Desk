@@ -95,12 +95,12 @@ const React = require('react');
 const { renderToStaticMarkup } = require('react-dom/server');
 const upcoming = loadModule('components/upcoming-button.tsx', {'react/jsx-runtime':require('react/jsx-runtime')});
 const logbookLink = loadModule('components/logbook-link.tsx', {
-  'react/jsx-runtime': require('react/jsx-runtime'), 'next/link': require('next/link'),
+  'react/jsx-runtime': require('react/jsx-runtime'), '@/components/navigation-link': require('next/link'),
 });
 const cards = loadModule('components/roadmap-cards.tsx', {
   './logbook-link': logbookLink,
   'react/jsx-runtime': require('react/jsx-runtime'),
-  'next/link': require('next/link'),
+  '@/components/navigation-link': require('next/link'),
   '@/lib/roadmap/model': model,
   '@/lib/content/model': contentModel,
 });
@@ -139,7 +139,7 @@ test('frontend roadmap model and components contain no retired status or compati
 test('landing uses a vertical product narrative with the exact hero copy and preserved navigation', async () => {
   const journey=loadModule('components/journey-demo.tsx',{'react/jsx-runtime':require('react/jsx-runtime')});
   const home=loadModule('app/page.tsx',{
-    'react/jsx-runtime':require('react/jsx-runtime'),'next/link':require('next/link'),
+    'react/jsx-runtime':require('react/jsx-runtime'),'@/components/navigation-link':require('next/link'),
     'next/image':require('next/image'),'@/components/upcoming-button':upcoming,
     '@/components/site-header':{SiteHeader:()=>React.createElement('header')},
     '@/components/site-footer':{SiteFooter:()=>React.createElement('footer')},
@@ -180,7 +180,7 @@ test('landing uses a vertical product narrative with the exact hero copy and pre
   assert.match(html,/href="\/dashboard"/);assert.match(html,/href="\/roadmap\?item=/);
 });
 test('public navigation reserves unfinished pages without fake links; footer uses the new brand copy', async () => {
-  const deps = {'react/jsx-runtime':require('react/jsx-runtime'),'next/link':require('next/link'),
+  const deps = {'react/jsx-runtime':require('react/jsx-runtime'),'@/components/navigation-link':require('next/link'),
     './brand':{Brand:()=>React.createElement('span',null,'Flight Desk')},'./logbook-link':logbookLink,'./upcoming-button':upcoming};
   const header=loadModule('components/site-header.tsx', {...deps,
     './theme-controls':{ThemeMenu:()=>null},

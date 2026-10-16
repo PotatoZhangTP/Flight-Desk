@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/components/navigation-link";
 import { UserMenuClient } from "./user-menu-client";
 import { ThemeMenu } from "./theme-controls";
 

@@ -74,6 +74,24 @@ body { margin: 0; background: var(--cream); color: var(--ink); font-family: Aria
   input::placeholder, textarea::placeholder { color: var(--subtle); opacity: 1; }
   input:focus-visible, textarea:focus-visible, select:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
   input[type="radio"], input[type="checkbox"] { accent-color: var(--brand); }
+  :where(a[href], button, summary, [role="option"], label:has(input[type="radio"])) {
+    transition-property: color, background-color, border-color, box-shadow, opacity;
+    transition-duration: 160ms;
+    transition-timing-function: ease-out;
+    -webkit-tap-highlight-color: color-mix(in srgb, var(--brand) 15%, transparent);
+  }
+  :where(a[href], button, summary, [tabindex]):focus-visible {
+    outline: 2px solid var(--brand);
+    outline-offset: 3px;
+  }
+  button:disabled, button[aria-disabled="true"] { cursor: not-allowed; opacity: .6; }
+  button[aria-busy="true"] { cursor: wait; }
+  @media (hover: hover) and (pointer: fine) {
+    a[href]:hover { color: var(--brand); }
+    :where(button:not(:disabled):not(.absolute), summary):hover { background-color: var(--brand-soft); }
+    :where(button, a)[class~="bg-brand"]:not(:disabled):hover { background-color: var(--brand-hover); color: var(--on-brand); }
+    a[class~="text-on-brand"]:hover { color: var(--on-brand); }
+  }
   input:-webkit-autofill { -webkit-text-fill-color: var(--ink); box-shadow: 0 0 0 1000px var(--surface) inset; }
 }
 .theme-dark-only { display: none; }
@@ -93,6 +111,17 @@ body { margin: 0; background: var(--cream); color: var(--ink); font-family: Aria
   100% { background-color: var(--surface); box-shadow: 0 0 0 0 transparent; }
 }
 button:not(:disabled), summary { cursor: pointer; }
+.interaction-card { transition: border-color 160ms, box-shadow 160ms, transform 160ms; }
+.interaction-card:focus-within { border-color: var(--brand); }
+@media (hover: hover) and (pointer: fine) {
+  .interaction-card:hover { border-color: var(--brand); box-shadow: 0 4px 16px color-mix(in srgb, var(--brand) 10%, transparent); transform: translateY(-2px); }
+}
+.interaction-spinner { animation: interaction-spin .8s linear infinite; }
+@keyframes interaction-spin { to { transform: rotate(360deg); } }
+.route-enter > main, .route-enter > div > main { animation: route-enter 180ms ease-out; }
+@keyframes route-enter { from { opacity: .65; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+.navigation-track { animation: navigation-pulse 1.2s ease-in-out infinite alternate; }
+@keyframes navigation-pulse { from { opacity: .45; } to { opacity: 1; } }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
 }

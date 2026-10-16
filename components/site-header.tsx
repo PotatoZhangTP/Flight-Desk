@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/components/navigation-link";
 import { Brand } from "./brand";
 import { ThemeMenu } from "./theme-controls";
 import { LogbookLink } from "./logbook-link";

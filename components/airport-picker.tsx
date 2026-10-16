@@ -2,6 +2,7 @@
 
 import { useEffect, useId, useRef, useState, type KeyboardEvent } from "react";
 import { airportCodes, type Airport } from "@/lib/airports";
+import { Spinner } from "./async-button";
 import { CountryFlag } from "@/components/country-flag";
 
 const inputClass = "mt-1.5 w-full rounded-xl border border-line-strong bg-surface px-4 py-3 text-ink outline-none focus:border-brand focus:ring-2 focus:ring-brand/15";
@@ -85,18 +86,18 @@ export function AirportPicker({ label, selected, onChange, onSelect }: {
       <label htmlFor={id} className="text-sm font-semibold text-muted">{label}</label>
       <input ref={searchRef} id={id} role="combobox" aria-autocomplete="list" aria-expanded={expanded} aria-controls={`${id}-results`}
         aria-activedescendant={expanded && active >= 0 && options[active] ? `${id}-option-${active}` : undefined}
-        aria-describedby={`${id}-help`} autoComplete="off" maxLength={80}
+        aria-describedby={`${id}-help`} aria-busy={expanded && status === "loading"} autoComplete="off" maxLength={80}
         value={selected ? selected.name : query} placeholder="Search IATA, ICAO, name, city or country"
         onFocus={() => setOpen(true)} onKeyDown={keyDown}
         onChange={(e) => { setQuery(e.target.value); onChange(null); setOptions([]); setActive(-1); setOpen(true); }} className={inputClass} />
       {expanded && <div className="absolute left-0 right-0 z-20 mt-1 max-h-80 overflow-y-auto rounded-xl border border-line bg-surface p-1 shadow-xl">
-        {status === "loading" && <p role="status" className="px-3 py-3 text-sm text-muted">Searching airports…</p>}
+        {status === "loading" && <p role="status" className="flex items-center gap-2 px-3 py-3 text-sm text-muted"><Spinner />Searching airports…</p>}
         {status === "error" && <p role="alert" className="px-3 py-3 text-sm text-danger-fg">Airport search is unavailable. Try again or enter manually.</p>}
         {status === "ready" && !options.length && <p role="status" className="px-3 py-3 text-sm text-muted">No matching airports. Try another name or enter manually.</p>}
-        <ul id={`${id}-results`} role="listbox" aria-label={`${label} suggestions`}>
+        <p role="status" className="sr-only">{status === "ready" && options.length ? `${options.length} airport suggestions available. Use arrow keys to choose.` : ""}</p><ul id={`${id}-results`} role="listbox" aria-label={`${label} suggestions`}>
           {options.map((airport, index) => <li key={airport.id} id={`${id}-option-${index}`} role="option" aria-selected={active === index}
             onMouseDown={(e) => e.preventDefault()} onMouseEnter={() => setActive(index)} onClick={() => select(airport)}
-            className={`cursor-pointer rounded-lg px-3 py-3 text-sm ${active === index ? 'bg-brand-soft' : 'hover:bg-surface-muted'}`}>
+            className={`cursor-pointer rounded-lg px-3 py-3 text-sm ${active === index ? 'bg-brand-soft' : 'hover:bg-brand-soft'}`}>
             <p className="font-semibold text-ink"><CountryFlag code={airport.countryCode} /> {airport.name}</p>
             <p className="mt-1 text-xs text-muted">{airportCodes(airport)}</p>
             <p className="mt-1 text-xs text-muted">{[airport.municipality, airport.countryName || airport.countryCode].filter(Boolean).join(", ") || "Location unavailable"}</p>

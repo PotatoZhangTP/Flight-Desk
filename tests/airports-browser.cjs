@@ -42,7 +42,7 @@ function cookie(){const exp=Math.floor(Date.now()/1000)+3600;const token=[Buffer
   await page.goto(origin+'/flights/'+id+'/edit',{waitUntil:'networkidle'});
   assert.equal(await dep.inputValue(),'Beijing Capital');
   await page.getByPlaceholder('Anything you want to remember…').fill('Airport browser legacy edit');
-  await page.getByRole('button',{name:'Save changes →',exact:true}).click();await page.waitForURL(origin+'/flights/'+id);
+  await page.getByRole('button',{name:'Save changes →',exact:true}).click();await page.waitForURL(origin+'/flights/'+id+'?updated=1');
   await page.getByText('Airport browser legacy edit',{exact:true}).waitFor();
   await page.goto(origin+'/flights/new',{waitUntil:'networkidle'});
   await dep.fill('failure');await page.getByRole('alert').filter({hasText:'Airport search is unavailable'}).waitFor();

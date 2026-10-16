@@ -4,6 +4,7 @@ import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { deleteRoadmap, saveRoadmap } from "@/app/admin/roadmap/actions";
 import { filterRoadmapItems, formatRoadmapDate, sortRoadmapItems, statuses, statusLabels, statusStyles, type RoadmapFilter, type RoadmapItem, type RoadmapSort } from "@/lib/roadmap/model";
+import { AsyncButton } from "./async-button";
 import { RoadmapSortControl } from "./roadmap-controls";
 
 const inputClass = "mt-2 w-full rounded-xl border border-line-strong bg-surface px-3 py-3 text-sm font-normal text-ink outline-none focus:border-brand focus:ring-2 focus:ring-line-strong";
@@ -13,6 +14,8 @@ export function RoadmapManager({ items, today }: { items: RoadmapItem[]; today: 
   const router = useRouter();
   const [editing, setEditing] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
+  const locked = useRef(false);
+  const [operation, setOperation] = useState("");
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [filter, setFilter] = useState<RoadmapFilter>("all");
@@ -24,25 +27,29 @@ export function RoadmapManager({ items, today }: { items: RoadmapItem[]; today: 
     requestAnimationFrame(() => { editor.current?.scrollIntoView({ block: "start", behavior: "instant" }); editor.current?.querySelector<HTMLInputElement>('input[name="title"]')?.focus({ preventScroll: true }); });
   }
   function submit(form: FormData) {
-    if (pending) return;
+    if (pending || locked.current) return;
+    locked.current = true; setOperation("save");
     setError(""); setMessage("");
     startTransition(async () => {
       try {
         const result = await saveRoadmap(form);
         if (result.error) { setError(result.error); return; }
         setMessage(result.success ?? "Saved."); setEditing(null); router.refresh();
-      } catch { setError("The save request failed. Check your connection and try again."); }
+      } catch { setError("The save could not be confirmed. Check the item before retrying."); }
+      finally { locked.current = false; }
     });
   }
   function remove(item: RoadmapItem) {
-    if (pending || !window.confirm(`Delete “${item.title}”? This permanently removes it from the roadmap, including the public page if published.`)) return;
+    if (pending || locked.current || !window.confirm(`Delete “${item.title}”? This permanently removes it from the roadmap, including the public page if published.`)) return;
     setError(""); setMessage("");
+    locked.current = true; setOperation(item.id);
     startTransition(async () => {
       try {
         const result = await deleteRoadmap(item.id);
         if (result.error) { setError(result.error); return; }
         setMessage(result.success ?? "Deleted."); if (editing === item.id) setEditing(null); router.refresh();
-      } catch { setError("The delete request failed. Check your connection and try again."); }
+      } catch { setError("The delete could not be confirmed. Refresh to check the item before retrying."); }
+      finally { locked.current = false; }
     });
   }
   const selected = items.find(item => item.id === editing);
@@ -51,7 +58,7 @@ export function RoadmapManager({ items, today }: { items: RoadmapItem[]; today: 
     <div className="flex flex-wrap items-center justify-between gap-4"><p className="text-sm text-muted">{items.length} items · {items.filter(item => item.publication_status === "draft").length} drafts · {items.filter(item => item.publication_status === "published").length} published</p><button type="button" disabled={pending} onClick={() => openEditor("new")} className={buttonClass}>＋ New roadmap item</button></div>
     <div aria-live="polite" aria-atomic="true">{message && <p role="status" className="mt-5 rounded-xl bg-brand-soft p-4 text-sm text-completed-fg">{message}</p>}{error && <p role="alert" className="mt-5 rounded-xl bg-danger-bg p-4 text-sm text-danger-fg">{error}</p>}</div>
     {editing && <div ref={editor} className="mt-6 scroll-mt-6 rounded-2xl border border-line-strong bg-surface p-6 shadow-sm sm:p-8"><h2 className="text-2xl font-bold">{editing === "new" ? "New roadmap item" : "Edit roadmap item"}</h2><p className="mt-2 text-sm leading-6 text-muted">Drafts are visible only to administrators. Publishing makes this item public immediately. Returning a published item to Draft hides it.</p>
-      <form key={editing} action={submit} className="mt-6">
+      <form key={editing} onSubmit={event => { event.preventDefault(); submit(new FormData(event.currentTarget)); }} className="mt-6">
         <fieldset disabled={pending} className="space-y-5 disabled:opacity-70">
           <input type="hidden" name="id" value={selected?.id ?? ""} />
           <label className="block text-sm font-semibold">Feature name<input required name="title" maxLength={160} defaultValue={selected?.title ?? ""} className={inputClass} /></label>
@@ -64,7 +71,7 @@ export function RoadmapManager({ items, today }: { items: RoadmapItem[]; today: 
             <label className="block text-sm font-semibold">Target date (optional)<input type="date" name="target_date" defaultValue={selected?.target_date ?? ""} className={inputClass} /><span className="mt-1 block text-xs font-normal text-muted">Clear the field to remove the target date.</span></label>
             <label className="block text-sm font-semibold">Completion date (optional)<input type="date" name="completed_date" defaultValue={selected?.completed_date ?? ""} className={inputClass} /></label>
           </div>
-          <div className="flex flex-wrap gap-3 pt-2"><button type="submit" className={buttonClass}>{pending ? "Saving…" : "Save item"}</button><button type="button" onClick={() => { setEditing(null); setError(""); }} className="rounded-full border border-line-strong px-5 py-3 text-sm font-bold hover:bg-surface-muted">Cancel</button></div>
+          <div className="flex flex-wrap gap-3 pt-2"><AsyncButton type="submit" busy={pending && operation === "save"} busyLabel="Saving…" className={buttonClass}>Save item</AsyncButton><button type="button" onClick={() => { setEditing(null); setError(""); }} className="rounded-full border border-line-strong px-5 py-3 text-sm font-bold hover:bg-surface-muted">Cancel</button></div>
         </fieldset>
       </form>
     </div>}
@@ -72,7 +79,7 @@ export function RoadmapManager({ items, today }: { items: RoadmapItem[]; today: 
     <ul className="mt-5 space-y-4">{visible.map(item => <li key={item.id} className="rounded-2xl border border-line bg-surface p-5">
       <div className="flex items-start justify-between gap-3"><div className="flex flex-wrap items-center gap-2"><span className={`rounded-full px-3 py-1 text-xs font-bold ${statusStyles[item.status]}`}>{statusLabels[item.status]}</span><span className={`rounded-full px-3 py-1 text-xs font-bold ${item.publication_status === "draft" ? "bg-surface-muted text-muted" : "bg-brand-soft text-completed-fg"}`}>{item.publication_status === "draft" ? "Draft" : "Published"}</span></div><span className="max-w-[45%] break-words text-right text-xs leading-5 text-muted">{item.category}</span></div>
       <div className="mt-3 flex flex-col justify-between gap-4 sm:flex-row"><div className="min-w-0"><h2 className="break-words text-lg font-bold">{item.title}</h2><p className="mt-1.5 line-clamp-2 break-words text-sm leading-6 text-muted">{item.description}</p><p className="mt-2 text-xs text-muted">Updated {formatRoadmapDate(item.updated_at)}{item.priority ? ` · ${item.priority} priority` : ""}{item.target_date ? ` · Target ${formatRoadmapDate(item.target_date)}` : ""}</p></div>
-      <div className="flex shrink-0 items-start gap-2"><button type="button" aria-label={`Edit ${item.title}`} disabled={pending} onClick={() => openEditor(item.id)} className="rounded-full border border-line-strong px-4 py-2 text-sm font-bold hover:bg-surface-muted disabled:opacity-50">Edit</button><button type="button" aria-label={`Delete ${item.title}`} disabled={pending} onClick={() => remove(item)} className="rounded-full px-4 py-2 text-sm font-bold text-danger-fg hover:bg-danger-bg disabled:opacity-50">Delete</button></div>
+      <div className="flex shrink-0 items-start gap-2"><button type="button" aria-label={`Edit ${item.title}`} disabled={pending} onClick={() => openEditor(item.id)} className="rounded-full border border-line-strong px-4 py-2 text-sm font-bold hover:bg-surface-muted disabled:opacity-50">Edit</button><AsyncButton type="button" aria-label={`Delete ${item.title}`} busy={pending && operation === item.id} busyLabel="Deleting…" disabled={pending} onClick={() => remove(item)} className="rounded-full px-4 py-2 text-sm font-bold text-danger-fg hover:bg-danger-bg disabled:opacity-50">Delete</AsyncButton></div>
       </div></li>)}</ul>
     {!visible.length && <p className="mt-6 rounded-xl border border-dashed border-line-strong p-8 text-center text-muted">No items in this view.</p>}
   </div>;

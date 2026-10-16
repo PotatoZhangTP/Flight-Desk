@@ -84,7 +84,7 @@ test('public loader explicitly filters published even when the caller might be a
   assert.deepEqual(await server.publishedLandingCopy(),defaults);assert.deepEqual(filters,[['publication_status','published']]);
 });
 test('administrator button lives beside the personal menu and is absent for ordinary users',()=>{
-  const controls=load('components/account-controls.tsx',{'react/jsx-runtime':require('react/jsx-runtime'),'next/link':require('next/link'),'./theme-controls':{ThemeMenu:()=>React.createElement('button',null,'Theme menu')},'./user-menu-client':{UserMenuClient:()=>React.createElement('button',null,'Personal menu')}});
+  const controls=load('components/account-controls.tsx',{'react/jsx-runtime':require('react/jsx-runtime'),'@/components/navigation-link':require('next/link'),'./theme-controls':{ThemeMenu:()=>React.createElement('button',null,'Theme menu')},'./user-menu-client':{UserMenuClient:()=>React.createElement('button',null,'Personal menu')}});
   const admin=renderToStaticMarkup(React.createElement(controls.AccountControls,{email:'admin@example.test',initials:'AD',isAdmin:true}));
   assert.match(admin,/href="\/admin"/);assert.match(admin,/Admin Panel/);
   assert.equal((admin.match(/Theme menu/g)||[]).length,1);assert.ok(admin.indexOf('Theme menu')<admin.indexOf('Personal menu'));
@@ -100,7 +100,7 @@ test('new admin routes reject ordinary users and redirect signed-out users befor
   for(const file of ['app/admin/page.tsx','app/admin/landing-page/page.tsx']) {
     for(const user of [null,{id:'ordinary'}]) {
       const page=load(file,{
-        'react/jsx-runtime':require('react/jsx-runtime'),'next/link':require('next/link'),
+        'react/jsx-runtime':require('react/jsx-runtime'),'@/components/navigation-link':require('next/link'),
         'next/navigation':{redirect:()=>{throw Error('redirect-login');}},
         '@/components/site-header':{},'@/components/admin-navigation':{},
         '@/components/admin-denied':{AdminDenied:()=>React.createElement('p',null,'Access denied')},

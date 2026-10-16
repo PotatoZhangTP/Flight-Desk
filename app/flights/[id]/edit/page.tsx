@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/components/navigation-link";
 import { notFound, redirect } from "next/navigation";
 import { Brand } from "@/components/brand";
 import { FlightForm } from "@/components/flight-form";

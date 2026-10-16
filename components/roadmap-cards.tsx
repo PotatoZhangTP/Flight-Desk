@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/components/navigation-link";
 import { LogbookLink } from "./logbook-link";
 import { formatRoadmapDate, landingRoadmapGroups, roadmapItemAnchor, roadmapItemHref, statuses, statusLabels, statusStyles, type RoadmapItem } from "@/lib/roadmap/model";
 import { landingDefaults, type LandingCopy } from "@/lib/content/model";
@@ -6,13 +6,13 @@ import { landingDefaults, type LandingCopy } from "@/lib/content/model";
 export function RoadmapCard({ item, mode = "detailed" }: { item: RoadmapItem; mode?: "compact" | "detailed" }) {
   const showCompletedDate = item.status === "completed";
   const previewDate = showCompletedDate ? item.completed_date : item.target_date;
-  if (mode === "compact") return <article className="relative flex h-full min-h-[148px] min-w-0 flex-col rounded-2xl border border-line bg-surface p-4 shadow-sm shadow-ink/5 transition duration-200 hover:-translate-y-0.5 hover:border-line-strong hover:shadow-md hover:shadow-ink/10">
+  if (mode === "compact") return <article className="interaction-card relative flex h-full min-h-[148px] min-w-0 flex-col rounded-2xl border border-line bg-surface p-4 shadow-sm shadow-ink/5 ">
     <div className="flex items-start justify-between gap-3"><span className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-bold ${statusStyles[item.status]}`}>{statusLabels[item.status]}</span><span className="max-w-[45%] break-words text-right text-xs font-medium leading-5 text-muted">{item.category}</span></div>
     <h4 className="mt-2.5 line-clamp-2 break-words text-base font-bold leading-snug tracking-tight text-ink" title={item.title}><Link href={roadmapItemHref(item.id)} className="cursor-pointer outline-none after:absolute after:inset-0 after:rounded-2xl focus-visible:after:outline-2 focus-visible:after:outline-offset-4 focus-visible:after:outline-brand">{item.title}</Link></h4>
     <p className="mt-auto pt-3 text-xs leading-5 text-muted">{showCompletedDate ? "Completed date" : "Target date"}: {previewDate ? <time className="font-medium text-muted" dateTime={previewDate}>{formatRoadmapDate(previewDate)}</time> : "TBD"}</p>
   </article>;
 
-  return <article id={roadmapItemAnchor(item.id)} tabIndex={-1} aria-labelledby={`${roadmapItemAnchor(item.id)}-title`} className="min-w-0 scroll-mt-8 rounded-2xl border border-line bg-surface p-6 shadow-sm transition hover:border-line-strong hover:shadow-md focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand">
+  return <article id={roadmapItemAnchor(item.id)} tabIndex={-1} aria-labelledby={`${roadmapItemAnchor(item.id)}-title`} className="min-w-0 scroll-mt-8 rounded-2xl border border-line bg-surface p-6 shadow-sm focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand">
     <div className="flex items-start justify-between gap-3"><span className={`shrink-0 rounded-full px-3 py-1 text-xs font-bold ${statusStyles[item.status]}`}>{statusLabels[item.status]}</span><span className="max-w-[50%] break-words text-right text-xs font-medium leading-5 text-muted">{item.category}</span></div>
     <h3 id={`${roadmapItemAnchor(item.id)}-title`} className="mt-5 break-words text-lg font-bold leading-snug tracking-tight text-ink">{item.title}</h3>
     <p className="mt-3 whitespace-pre-wrap break-words text-sm leading-7 text-muted">{item.description}</p>

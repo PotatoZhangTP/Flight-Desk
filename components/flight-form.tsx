@@ -7,6 +7,9 @@ import { normalizeFlightInput } from "@/lib/flight-input";
 import { createFlight, updateFlight } from "@/app/flights/actions";
 import { CountryFlag } from "@/components/country-flag";
 import { AirportPicker } from "@/components/airport-picker";
+import { AsyncButton } from "./async-button";
+import { useTransition } from "react";
+import { unstable_rethrow } from "next/navigation";
 
 type Side = "departure" | "arrival";
 type FormState = PlannedTime & { airport: Airport | null; terminal: string; gate: string };
@@ -41,6 +44,7 @@ export function FlightForm({ initialData = {} }: { initialData?: FlightInitialDa
   const [actualMinutes, setActualMinutes] = useState(actual == null ? "" : String(actual % 60));
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
+  const [pending, startTransition] = useTransition();
   const submitting = useRef(false);
   const duration = useMemo(() => getScheduledDuration(departure, arrival), [departure, arrival]);
 
@@ -51,7 +55,7 @@ export function FlightForm({ initialData = {} }: { initialData?: FlightInitialDa
   }
   async function submit(event: React.FormEvent) {
     event.preventDefault();
-    if (submitting.current) return;
+    if (submitting.current || pending) return;
     setError("");
     if (!departure.airport || !arrival.airport) {
       setError("Select both airports or enter their information manually.");
@@ -78,16 +82,17 @@ export function FlightForm({ initialData = {} }: { initialData?: FlightInitialDa
     const validated = normalizeFlightInput(input);
     if (validated.error) { setError(validated.error); return; }
     submitting.current = true; setSaving(true);
-    try {
+    startTransition(async () => { try {
       const result = initialData.id ? await updateFlight(initialData.id, input) : await createFlight(input);
       if (result?.error) setError(result.error);
-    } catch {
-      setError("The flight could not be saved. Check your connection and try again.");
-    } finally { submitting.current = false; setSaving(false); }
+    } catch (error) {
+      unstable_rethrow(error);
+      setError("The save could not be confirmed. Your entries are still here. Check your logbook before retrying to avoid a duplicate.");
+    } finally { submitting.current = false; setSaving(false); } });
   }
 
   return <form onSubmit={submit}>
-    <fieldset disabled={saving} className="min-w-0 space-y-6">
+    <fieldset disabled={saving || pending} className="min-w-0 space-y-6">
       <TicketPreview departure={departure} arrival={arrival} airline={airline} flightNumber={flightNumber} duration={duration.minutes} />
       <section className="rounded-2xl border border-line bg-surface p-6">
         <div className="grid gap-6 md:grid-cols-2">
@@ -126,9 +131,9 @@ export function FlightForm({ initialData = {} }: { initialData?: FlightInitialDa
         <label className="mt-5 block text-sm font-semibold text-muted">Notes<textarea value={notes} onChange={e => setNotes(e.target.value)} rows={4} maxLength={10000} className={inputClass} placeholder="Anything you want to remember…" /></label>
       </section>
       {error && <p role="alert" className="rounded-xl bg-danger-bg p-4 text-sm text-danger-fg">{error}</p>}
-      <div className="flex justify-end"><button disabled={saving} className="rounded-full bg-brand px-7 py-3.5 font-bold text-on-brand shadow-lg shadow-brand/10 transition hover:bg-brand-hover focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand disabled:cursor-wait disabled:opacity-60">
-        {saving ? "Saving flight…" : initialData.id ? "Save changes →" : "Save flight →"}
-      </button></div>
+      <div className="flex justify-end"><AsyncButton busy={saving || pending} busyLabel={initialData.id ? "Updating flight…" : "Saving flight…"} className="rounded-full bg-brand px-7 py-3.5 font-bold text-on-brand shadow-lg shadow-brand/10 transition hover:bg-brand-hover focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand disabled:cursor-wait disabled:opacity-60">
+        {initialData.id ? "Save changes →" : "Save flight →"}
+      </AsyncButton></div>
     </fieldset>
   </form>;
 }

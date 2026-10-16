@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/components/navigation-link";
 import { Brand } from "./brand";
 import { UpcomingButton } from "./upcoming-button";
 import { landingDefaults, type LandingCopy } from "@/lib/content/model";

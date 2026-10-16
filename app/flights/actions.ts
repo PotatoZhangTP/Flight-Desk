@@ -29,5 +29,5 @@ export async function updateFlight(id: string, input: Record<string, unknown>) {
   if (error) return { error: "Database request failed. Your changes were not saved. Please try again." };
   if (!data) return { error: "This flight is unavailable or you do not have permission to edit it." };
   revalidatePath("/dashboard"); revalidatePath("/profile"); revalidatePath("/flights/" + id);
-  redirect("/flights/" + id);
+  redirect("/flights/" + id + "?updated=1");
 }

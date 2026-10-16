@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/components/navigation-link";
 import { Brand } from "@/components/brand";
 import { AuthForm } from "@/components/auth-form";
 import { AuthAircraft } from "@/components/auth-aircraft";

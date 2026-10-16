@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/components/navigation-link";
 
 export function AdminNavigation({ current }: { current: "overview" | "roadmap" | "landing" }) {
   return <nav aria-label="Administration" className="mb-8 flex flex-wrap gap-2 border-b border-line pb-4">{[
