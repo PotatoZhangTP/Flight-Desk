@@ -24,9 +24,18 @@
   redirects retain their submitting button until the transition completes.
   The account menu stays mounted while its link is pending and closes when the
   pathname changes, so its navigation status is not lost prematurely.
-- Root/section `loading.tsx` files share a theme-aware, labelled skeleton. The
-  template adds a 180ms opacity/4px entrance animation. Reduced-motion disables
-  animations, including spinner rotation, without hiding busy text or status.
+- Root/section `loading.tsx` files and navigation share a full-screen airplane
+  loader: translucent theme background, static 10px backdrop blur, a gently flying
+  SVG aircraft/trail, and 20–24px Loading text. No blur filters are applied to page
+  contents or artwork. During navigation, background content is inert; the menu
+  does not dismiss its pending link when inert blurs focus or the overlay is clicked.
+  Cold loads have a neutral theme background rather than fake prior-page content.
+  A context check prevents duplicate navigation/fallback overlays.
+  `lib/ui-messages.ts` centralizes English/Chinese labels and per-route descriptions,
+  with explicit locale fallback and screen language. English remains the default;
+  no language selector, automatic browser-locale detection or locale routing was added.
+  The template adds a 180ms opacity/4px entrance animation. Reduced-motion disables
+  animations, including aircraft motion/spinner rotation, without hiding text/status.
   A recoverable page error boundary is also provided.
 
 ## Files changed
@@ -39,7 +48,8 @@ Shared system:
 - `components/async-button.tsx`, `components/use-async-operation.ts`,
   `components/server-action-form.tsx`, `components/navigation-link.tsx`,
   `components/navigation-feedback.tsx`, `components/route-loading.tsx`,
-  `components/mutation-feedback.tsx`
+  `components/mutation-feedback.tsx`, `components/page-loading-screen.tsx`,
+  `lib/ui-messages.ts`
 
 Async interactions and cards:
 
@@ -65,7 +75,8 @@ Existing links now use the shared Next Link wrapper (destinations unchanged):
 
 Tests:
 
-- `tests/interactions.test.cjs`, `tests/interactions-browser.cjs`
+- `tests/interactions.test.cjs`, `tests/interactions-browser.cjs`,
+  `tests/loading-browser.cjs`
 - Existing `tests/content.test.cjs`, `tests/roadmap.test.cjs` adapt the Link mock
   boundary; assertions about content/permissions are retained.
 - `tests/airports-browser.cjs`, `tests/theme-browser.cjs` follow success-feedback
@@ -74,7 +85,7 @@ Tests:
 ## Verification
 
 Run `npm run build` and `node --test tests/*.test.cjs`.
-The build and all 66 automated tests passed. Local Chromium theme, airport and
+The build and all 67 automated tests passed. Local Chromium theme, airport and
 slow-network interaction suites also passed, covering sign-in/out, reset/update
 password, profile/bio, flight create/edit, keyboard airport search, DST gaps and
 overlaps, Roadmap/CMS mutations, admin denial, history, theme persistence,
@@ -101,7 +112,7 @@ by `tests/interactions-browser.cjs` (which intentionally edits mock profile data
   were introduced. An interrupted response may follow a committed write; error
   copy tells users to check the record before retrying.
 - Instant/cached navigation requires no manufactured spinner delay. History and
-  same-page anchor navigation remain native; pending skeletons appear only when
+  same-page anchor navigation remain native; pending overlays appear only when
   React/Next is actually waiting.
 - No SQL, RLS, airport import/configuration, environment files or dependencies
   were changed. Local mock tests do not certify live email delivery or production

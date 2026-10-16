@@ -120,8 +120,25 @@ button:not(:disabled), summary { cursor: pointer; }
 @keyframes interaction-spin { to { transform: rotate(360deg); } }
 .route-enter > main, .route-enter > div > main { animation: route-enter 180ms ease-out; }
 @keyframes route-enter { from { opacity: .65; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
-.navigation-track { animation: navigation-pulse 1.2s ease-in-out infinite alternate; }
-@keyframes navigation-pulse { from { opacity: .45; } to { opacity: 1; } }
+.page-loading-screen {
+  position: fixed; inset: 0; z-index: 100;
+  display: grid; place-items: center;
+  min-height: 100svh;
+  background: color-mix(in srgb, var(--page) 72%, transparent);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  cursor: progress;
+}
+@supports not (backdrop-filter: blur(10px)) {
+  .page-loading-screen { background: var(--page); }
+}
+.loading-aircraft { animation: loading-flight 2.6s ease-in-out infinite; }
+@keyframes loading-flight {
+  0%, 100% { transform: translate(-8px, 6px); }
+  50% { transform: translate(8px, -6px); }
+}
+.loading-flight-trail { animation: loading-flight-trail 2.6s linear infinite; }
+@keyframes loading-flight-trail { to { stroke-dashoffset: -22; } }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
 }

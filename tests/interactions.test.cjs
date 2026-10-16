@@ -62,3 +62,18 @@ test('navigation stays Next-native and loading UI is available for every page fa
   const cards=fs.readFileSync('components/roadmap-cards.tsx','utf8');
   assert.doesNotMatch(cards.split('return <article id=')[1].split('</article>')[0],/hover:/);
 });
+
+test('page loader has central English/Chinese copy and falls back safely for unknown locales',()=>{
+  const copy=load('lib/ui-messages.ts',{});
+  assert.equal(copy.getLoadingMessages().label,'Loading…');
+  assert.equal(copy.getLoadingMessages('zh-CN').label,'加载中…');
+  assert.equal(copy.getLoadingMessages('zh-Hans').details.settings,'正在加载设置');
+  assert.equal(copy.getLoadingMessages('fr').label,'Loading…');
+  assert.deepEqual(Object.keys(copy.loadingMessages.en.details),Object.keys(copy.loadingMessages['zh-CN'].details));
+  const {PageLoadingScreen}=load('components/page-loading-screen.tsx',{'react/jsx-runtime':require('react/jsx-runtime'),'@/lib/ui-messages':copy});
+  for(const locale of ['en','zh-CN']) {
+    const html=renderToStaticMarkup(React.createElement(PageLoadingScreen,{context:'flights',locale}));
+    assert.match(html,/role="status"/);assert.match(html,/aria-atomic="true"/);assert.match(html,/loading-aircraft/);
+    assert(html.includes(copy.getLoadingMessages(locale).label));
+  }
+});

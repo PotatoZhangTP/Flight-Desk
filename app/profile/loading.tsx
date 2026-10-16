@@ -1,2 +1,2 @@
 import { RouteLoading } from "@/components/route-loading";
-export default function Loading() { return <RouteLoading label="Loading your profile…" />; }
+export default function Loading() { return <RouteLoading context="profile" />; }

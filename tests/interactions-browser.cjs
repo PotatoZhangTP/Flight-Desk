@@ -123,9 +123,15 @@ function cookie(role) {
     await page.getByRole('radio',{name:'Dark',exact:true}).click();
     await page.route('**/settings?*',async route=>{if(route.request().headers().rsc==='1')await delay(900);await route.continue();});
     await page.getByRole('button',{name:'Open user menu'}).click();await page.getByRole('link',{name:'Settings',exact:true}).click();
-    await page.getByRole('status').filter({hasText:/Opening page|Loading settings/}).first().waitFor();
+    await page.locator('[data-page-loading]').waitFor();
+    assert.equal(await page.locator('[data-page-loading]').count(),1);
+    const overlay=await page.locator('[data-page-loading]').evaluate(el=>({blur:getComputedStyle(el).backdropFilter,width:el.getBoundingClientRect().width,height:el.getBoundingClientRect().height}));
+    assert.match(overlay.blur,/blur\(10px\)/);assert.equal(overlay.width,1440);assert.equal(overlay.height,1000);
+    assert(await page.locator('[inert]').count());
     await page.waitForURL(origin+'/settings');
     await page.getByRole('heading',{name:'Appearance',exact:true}).waitFor();
+    assert.equal(await page.locator('[data-page-loading]').count(),0);
+    assert.equal(await page.locator('[inert]').count(),0);
     await page.goBack();await page.getByRole('heading').filter({hasText:'Good morning'}).waitFor();
     await page.goForward();await page.getByRole('heading',{name:'Appearance',exact:true}).waitFor();
     assert.equal(await page.evaluate(()=>localStorage.getItem('flightdesk-theme')),'dark');
