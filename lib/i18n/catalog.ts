@@ -3,6 +3,7 @@ const rows = `
 common.save|Save|保存
 common.cancel|Cancel|取消
 common.edit|Edit|编辑
+common.view|View|查看
 common.delete|Delete|删除
 common.saved|Saved|已保存
 common.saving|Saving…|正在保存…
@@ -56,6 +57,7 @@ common.requestError|The request could not be confirmed. Check your connection an
 common.saveError|Save could not be confirmed. Your edits are still here; check before retrying.|暂时无法确认保存结果。编辑内容已保留，请确认后再重试。
 common.loginRequired|You must be signed in.|请先登录。
 common.genericError|Something went wrong. Check your entries and try again.|操作未完成，请检查填写内容后重试。
+common.deleteFlightConfirm|Delete This Flight? This Action Cannot Be Undone.|确定删除这趟航班吗？此操作无法撤销。
 auth.welcome|Welcome to Flight Desk|欢迎使用 Flight Desk
 auth.ready|Ready for your next chapter?|准备好开启下一段旅程了吗？
 auth.start|Start your flying story.|开启你的飞行故事。
@@ -170,13 +172,14 @@ dashboard.import|Import Your History|导入历史记录
 dashboard.importHelp|Already have a spreadsheet? Bring your flights into Flight Desk in a few clicks.|已有航班表格？未来可通过导入功能，轻松整理到 Flight Desk。
 dashboard.importSoon|Excel Import Coming Soon|Excel 导入即将上线
 dashboard.importFormats|.xlsx or .csv · Preview before saving|.xlsx 或 .csv · 保存前可预览
-dashboard.map|Your flying map|你的飞行地图
+dashboard.map|Flight Map|飞行地图
 dashboard.mapHelp|Route visualisation will appear here as your logbook grows.|随着飞行日志不断丰富，你的航线将在这里呈现。
 dashboard.mapEmpty|✦ Map view reserved for your routes|✦ 为你的航线预留的地图空间
 dashboard.error|We couldn’t load your flight data. Please refresh and try again.|暂时无法加载航班数据，请刷新后重试。
 flight.add|Add a Flight|添加航班
 flight.addLink|＋ Add Flight|＋ 添加航班
 flight.edit|Edit Flight|编辑航班
+flight.delete|Delete Flight|删除航班
 flight.editEntry|Edit Logbook Entry|编辑飞行记录
 flight.editHelp|Update Your Journey Details Below.|在下方更新这段旅程的详细信息。
 flight.record|Flight Record|飞行记录

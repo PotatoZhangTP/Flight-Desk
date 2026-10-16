@@ -31,3 +31,15 @@ export async function updateFlight(id: string, input: Record<string, unknown>) {
   revalidatePath("/dashboard"); revalidatePath("/profile"); revalidatePath("/flights/" + id);
   redirect("/flights/" + id + "?updated=1");
 }
+
+export async function deleteFlight(id: string, _formData?: FormData) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: "You must be signed in." };
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) return { error: "Invalid flight record." };
+  const { data, error } = await supabase.from("flights").delete().eq("id", id).eq("user_id", user.id).select("id").maybeSingle();
+  if (error) return { error: "The flight could not be deleted. Please try again." };
+  if (!data) return { error: "This flight is unavailable or you do not have permission to delete it." };
+  revalidatePath("/dashboard"); revalidatePath("/profile");
+  redirect("/dashboard?deleted=1");
+}
