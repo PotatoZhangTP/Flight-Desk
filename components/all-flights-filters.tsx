@@ -73,7 +73,11 @@ export function AllFlightsFilters({ values, countries = [] }: AllFlightsFiltersP
 
   return (
     <section className="mt-6">
-      <div className="flex justify-end">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <Link href="/flights/new" className="button-primary px-4 py-2 text-sm">
+          <span aria-hidden="true" className="mr-1 text-lg leading-none">+</span>
+          <T id="flight.add" />
+        </Link>
         <button
           type="button"
           onClick={() => setOpen((current) => !current)}

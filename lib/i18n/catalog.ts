@@ -287,7 +287,7 @@ map.loadError|The Flight Map Could Not Be Loaded. Please Check The Map Configura
 map.styleMissing|A Production Map Style Is Not Configured Yet. Add NEXT_PUBLIC_MAP_STYLE_URL To Enable The Map.|尚未配置生产地图样式，请添加 NEXT_PUBLIC_MAP_STYLE_URL 以启用地图。
 dashboard.pageComingSoon|This Flight Desk feature is coming soon.|该 Flight Desk 功能即将上线。
 flight.add|Add a Flight|添加航班
-flight.addLink|＋ Add Flight|＋ 添加航班
+flight.addLink|＋ Add a Flight|＋ 添加航班
 flight.edit|Edit Flight|编辑航班
 flight.delete|Delete Flight|删除航班
 flight.editEntry|Edit Logbook Entry|编辑飞行记录
