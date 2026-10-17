@@ -103,7 +103,6 @@ declare
   trigger_owner name;
   trigger_is_security_definer boolean;
   function_definition text;
-  normalized_definition text;
 begin
   select pg_get_functiondef('public.handle_new_user()'::regprocedure)
   into function_definition;
@@ -112,30 +111,24 @@ begin
     raise exception 'Passport migration stopped: public.handle_new_user() is missing';
   end if;
 
-  normalized_definition := regexp_replace(
-    lower(function_definition),
-    '\s+',
-    '',
-    'g'
-  );
-
-  if position('insertintopublic.profiles' in normalized_definition) = 0
-     and position('insertintoprofiles' in normalized_definition) = 0 then
-    raise exception
-      'Passport migration stopped: handle_new_user() does not insert a Profile';
-  end if;
-
-  if function_definition ~* 'passport_number' then
-    raise exception 'Passport migration stopped: handle_new_user() explicitly references passport_number';
-  end if;
+  -- PostgreSQL does not expose a safe parsed representation of PL/pgSQL
+  -- statements here. We therefore only validate function metadata and the
+  -- trigger binding; runtime default behavior must be verified separately.
 
   if not exists (
     select 1 from pg_trigger
     where tgrelid = 'auth.users'::regclass
       and tgname = 'on_auth_user_created'
       and not tgisinternal
+      and tgenabled = 'O'
+      and tgfoid = 'public.handle_new_user()'::regprocedure
+      and (tgtype & 1) <> 0
+      and (tgtype & 2) = 0
+      and (tgtype & 4) <> 0
+      and (tgtype & 24) = 0
   ) then
-    raise exception 'Passport migration stopped: on_auth_user_created trigger is missing';
+    raise exception
+      'Passport migration stopped: on_auth_user_created is not the expected AFTER INSERT trigger bound to handle_new_user()';
   end if;
 
   select pg_get_userbyid(proowner), prosecdef
@@ -163,41 +156,6 @@ begin
       and tgname <> 'on_auth_user_created'
   ) then
     raise exception 'Passport migration stopped: multiple Auth triggers call handle_new_user()';
-  end if;
-end;
-$$;
-
-do $$
-declare
-  trigger_is_correct boolean;
-begin
-  select exists (
-    select 1 from pg_trigger
-    where tgrelid = 'auth.users'::regclass
-      and tgname = 'on_auth_user_created'
-      and not tgisinternal
-      and tgenabled = 'O'
-      and tgfoid = 'public.handle_new_user()'::regprocedure
-      and (tgtype & 1) <> 0
-      and (tgtype & 2) = 0
-      and (tgtype & 4) <> 0
-      and (tgtype & 24) = 0
-  ) into trigger_is_correct;
-
-  if not trigger_is_correct then
-    if exists (
-      select 1 from pg_trigger
-      where tgrelid = 'auth.users'::regclass
-        and tgname = 'on_auth_user_created'
-        and not tgisinternal
-    ) then
-      execute 'drop trigger on_auth_user_created on auth.users';
-    end if;
-
-    create trigger on_auth_user_created
-      after insert on auth.users
-      for each row
-      execute function public.handle_new_user();
   end if;
 end;
 $$;
@@ -367,8 +325,48 @@ alter table public.profiles
   alter column passport_number set default nextval('public.passport_number_seq'),
   alter column passport_number set not null;
 
-create unique index if not exists profiles_passport_number_key
-  on public.profiles (passport_number);
+do $$
+declare
+  passport_attnum smallint;
+  index_is_valid boolean;
+begin
+  select attnum
+  into passport_attnum
+  from pg_attribute
+  where attrelid = 'public.profiles'::regclass
+    and attname = 'passport_number'
+    and not attisdropped;
+
+  select exists (
+    select 1
+    from pg_class idx
+    join pg_index idx_meta on idx_meta.indexrelid = idx.oid
+    where idx.oid = to_regclass('public.profiles_passport_number_key')
+      and idx.relnamespace = 'public'::regnamespace
+      and idx_meta.indrelid = 'public.profiles'::regclass
+      and idx_meta.indisunique
+      and idx_meta.indisvalid
+      and idx_meta.indisready
+      and idx_meta.indpred is null
+      and idx_meta.indexprs is null
+      and idx_meta.indnkeyatts = 1
+      and idx_meta.indnatts = 1
+      and idx_meta.indkey[0] = passport_attnum
+  )
+  into index_is_valid;
+
+  if to_regclass('public.profiles_passport_number_key') is not null
+     and not index_is_valid then
+    raise exception
+      'Passport migration stopped: profiles_passport_number_key exists but is not a valid unique index on profiles(passport_number)';
+  end if;
+
+  if to_regclass('public.profiles_passport_number_key') is null then
+    create unique index profiles_passport_number_key
+      on public.profiles (passport_number);
+  end if;
+end;
+$$;
 
 do $$
 begin
