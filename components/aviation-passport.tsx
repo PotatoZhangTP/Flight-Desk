@@ -3,6 +3,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "@/components/navigation-link";
 import { LocalizedDate, T } from "@/components/i18n";
+import { CountryFlag } from "@/components/country-flag";
+import { normalizeCountryCode } from "@/lib/country-codes";
 
 type Flight = { id: string; flight_date: string; departure_country_code?: string | null; arrival_country_code?: string | null };
 type Stamp = { code: string; first: string; latest: string; visits: number; flights: number; rotation: number; tone: string; shape: string; size: string; line: string; label: string; motif: string };
@@ -13,9 +15,6 @@ const themes = { navy: ["#171427", "#d5b36a"], purple: ["#26163d", "#c8b6e9"], g
 const hash = (value: string) => [...value].reduce((sum, character) => (sum * 31 + character.charCodeAt(0)) % 997, 0);
 const stampLabels = ["ARRIVED", "ENTRY", "IMMIGRATION", "VISA", "TRANSIT"];
 const stampMotifs = ["✈", "★", "⌁", "△", "≋"];
-const countryCodeAliases: Record<string, string> = { USA: "US", GBR: "GB", CHN: "CN", TUR: "TR", MEX: "MX", CHL: "CL", MYS: "MY", VNM: "VN", ZAF: "ZA", THA: "TH" };
-const normalizeCountryCode = (value: string) => countryCodeAliases[value.toUpperCase()] ?? value.toUpperCase();
-const flagFromCountryCode = (value: string) => /^[A-Z]{2}$/.test(value) ? String.fromCodePoint(...[...value].map((character) => 127397 + character.charCodeAt(0))) : value;
 
 const stampSlots: Record<number, Array<[number, number]>> = {
   1: [[50, 48]],
@@ -124,7 +123,7 @@ export function AviationPassport({ displayName, memberSince, userId, flights, to
       const y = stamp.shape === "stamp-triangle"
         ? Math.max(21, Math.min(79, slot[1] + Math.floor(positionSeed / 5) % 5 - 2))
         : Math.max(16, Math.min(84, slot[1] + Math.floor(positionSeed / 5) % 5 - 2));
-      return <button key={stamp.code} type="button" className={`passport-stamp ${stamp.tone} ${stamp.shape} ${stamp.size} ${stamp.line}`} style={{ "--stamp-x": `${x}%`, "--stamp-y": `${y}%`, "--stamp-rotation": `${stamp.rotation}deg` } as React.CSSProperties} onClick={(event) => { event.stopPropagation(); setSelected(stamp); }}><span className="passport-stamp-label">{stamp.label}</span><span className="passport-stamp-flag" aria-label={stamp.code}>{flagFromCountryCode(stamp.code)}</span><b>{stamp.code}</b><span className="passport-stamp-motif" aria-hidden="true">{stamp.motif}</span><span className="passport-stamp-date"><LocalizedDate value={stamp.first} /></span></button>;
+      return <button key={stamp.code} type="button" className={`passport-stamp ${stamp.tone} ${stamp.shape} ${stamp.size} ${stamp.line}`} style={{ "--stamp-x": `${x}%`, "--stamp-y": `${y}%`, "--stamp-rotation": `${stamp.rotation}deg` } as React.CSSProperties} onClick={(event) => { event.stopPropagation(); setSelected(stamp); }}><span className="passport-stamp-label">{stamp.label}</span><span className="passport-stamp-flag"><CountryFlag code={stamp.code} /></span><b>{stamp.code}</b><span className="passport-stamp-motif" aria-hidden="true">{stamp.motif}</span><span className="passport-stamp-date"><LocalizedDate value={stamp.first} /></span></button>;
     })}</div>{!stamps.length && index === 0 && <div className="passport-empty"><T id="passport.empty" /><Link href="/flights/new" className="button-primary mt-4"><T id="map.addFirstFlight" /></Link></div>}</div>;
   };
   const identityPage = <div className="passport-page passport-identity"><p className="passport-eyebrow"><T id="passport.identity" /></p><h3>Captain {displayName}</h3><dl><div><dt><T id="passport.memberSince" /></dt><dd><LocalizedDate value={memberSince} /></dd></div><div><dt><T id="passport.totalFlights" /></dt><dd>{totalFlights}</dd></div><div><dt><T id="passport.countriesVisited" /></dt><dd>{countries}</dd></div><div><dt><T id="passport.flightTime" /></dt><dd>{Math.floor(minutes / 60)}h {minutes % 60}m</dd></div><div><dt>Passport No.</dt><dd>{passportNo}</dd></div></dl></div>;

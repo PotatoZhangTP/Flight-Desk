@@ -229,7 +229,10 @@ button:not(:disabled), summary { cursor: pointer; }
 .passport-stamp:hover { z-index: 2; filter: brightness(.9); transform: translate(-50%, calc(-50% - 2px)) rotate(var(--stamp-rotation)); }
 .passport-stamp b { grid-column: 1 / -1; font-size: clamp(.78rem, 1.5vw, 1rem); letter-spacing: .11em; }
 .passport-stamp-label { grid-column: 1 / -1; align-self: start; font-size: .42rem; font-weight: 800; letter-spacing: .12em; }
-.passport-stamp-flag { align-self: center; font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif; font-size: .8rem; filter: grayscale(.2) saturate(.78); }
+.country-flag { display: inline-flex; align-items: center; line-height: 1; }
+.country-flag-fallback { display: inline-block; min-width: 1em; text-align: center; color: currentColor; }
+.passport-stamp-flag { align-self: center; font-size: .8rem; filter: saturate(.78); }
+.passport-stamp-flag .country-flag .fi { display: inline-block; width: 1.15em; height: .8em; border-radius: 1px; background-size: cover; }
 .passport-stamp-motif { align-self: center; font-size: .68rem; }
 .passport-stamp-date { grid-column: 1 / -1; align-self: end; font-size: .44rem; letter-spacing: .02em; }
 .stamp-small { width: 56px; }
