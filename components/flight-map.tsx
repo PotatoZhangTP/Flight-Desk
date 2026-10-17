@@ -29,7 +29,7 @@ export function FlightMap({ data, compact = false, defaultMode, persistMode = tr
     };
 
     try {
-      instance = new maplibregl.Map({ container: target, style: styleUrl, center: [0, 20], zoom: 1.3, renderWorldCopies: false, attributionControl: false });
+      instance = new maplibregl.Map({ container: target, style: styleUrl, center: data.initialCenter ?? [0, 20], zoom: 1.3, renderWorldCopies: false, attributionControl: false });
       map.current = instance;
       resizeObserver = typeof ResizeObserver !== "undefined" ? new ResizeObserver(() => instance?.resize()) : null;
       resizeObserver?.observe(target);

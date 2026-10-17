@@ -2,8 +2,8 @@ import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { airportCoordinateMap, airportLookupKey, type FlightStatRow } from "@/lib/flight-stats";
 
-type MapFlight = FlightStatRow & { id: string; flight_number?: string | null; flight_date?: string | null };
-export type FlightMapData = { routes: GeoJSON.FeatureCollection; airports: GeoJSON.FeatureCollection; skipped: number; completedFlights: number };
+type MapFlight = FlightStatRow & { id: string; flight_number?: string | null; flight_date?: string | null; created_at?: string | null };
+export type FlightMapData = { routes: GeoJSON.FeatureCollection; airports: GeoJSON.FeatureCollection; skipped: number; completedFlights: number; initialCenter?: [number, number] };
 
 function greatCircle(from: [number, number], to: [number, number]): [number, number][][] {
   const rad = Math.PI / 180;
@@ -15,7 +15,7 @@ function greatCircle(from: [number, number], to: [number, number]): [number, num
 }
 
 export async function getFlightMapData(supabase: SupabaseClient, userId: string): Promise<FlightMapData> {
-  const { data: flights, error } = await supabase.from("flights").select("id,flight_number,flight_date,status,departure_airport_icao,arrival_airport_icao,departure_airport_iata,arrival_airport_iata,departure_airport,arrival_airport").eq("user_id", userId).eq("status", "completed");
+  const { data: flights, error } = await supabase.from("flights").select("id,flight_number,flight_date,created_at,status,departure_airport_icao,arrival_airport_icao,departure_airport_iata,arrival_airport_iata,departure_airport,arrival_airport").eq("user_id", userId).eq("status", "completed").order("flight_date", { ascending: false }).order("created_at", { ascending: false });
   if (error) throw error;
   const rows = (flights ?? []) as MapFlight[];
   const codes = [...new Set(rows.flatMap(row => [row.departure_airport_icao, row.arrival_airport_icao, row.departure_airport_iata, row.arrival_airport_iata, row.departure_airport, row.arrival_airport]).filter((code): code is string => Boolean(code)).map(code => code.trim().toUpperCase()))];
@@ -26,5 +26,11 @@ export async function getFlightMapData(supabase: SupabaseClient, userId: string)
   for (const row of rows) { const from = airportLookupKey(row, "departure"); const to = airportLookupKey(row, "arrival"); if (!from || !to || !coordinates.has(from) || !coordinates.has(to)) { skipped++; continue; } airportCounts.set(from, (airportCounts.get(from) ?? 0) + 1); airportCounts.set(to, (airportCounts.get(to) ?? 0) + 1); const key = [from, to].sort().join("|"); const route = routeMap.get(key) ?? { from, to, count: 0, ids: [] }; route.count++; route.ids.push(row.id); routeMap.set(key, route); }
   const airportFeatures: GeoJSON.Feature[] = [...airportCounts].map(([code, count]) => { const d = details.get(code); const c = coordinates.get(code)!; return { type: "Feature", geometry: { type: "Point", coordinates: [c.longitude, c.latitude] }, properties: { code, name: d?.name ?? code, icao: d?.icao ?? code, iata: d?.iata ?? "", count } }; });
   const routeFeatures: GeoJSON.Feature[] = []; for (const route of routeMap.values()) { const from = coordinates.get(route.from)!; const to = coordinates.get(route.to)!; for (const segment of greatCircle([from.longitude, from.latitude], [to.longitude, to.latitude])) routeFeatures.push({ type: "Feature", geometry: { type: "LineString", coordinates: segment }, properties: { from: route.from, to: route.to, count: route.count, flightIds: route.ids.join(",") } }); }
-  return { routes: { type: "FeatureCollection", features: routeFeatures }, airports: { type: "FeatureCollection", features: airportFeatures }, skipped, completedFlights: rows.length };
+  const latestArrival = rows.find(row => {
+    const key = airportLookupKey(row, "arrival");
+    return Boolean(key && coordinates.has(key));
+  });
+  const latestArrivalKey = latestArrival ? airportLookupKey(latestArrival, "arrival") : null;
+  const latestArrivalCoordinate = latestArrivalKey ? coordinates.get(latestArrivalKey) : undefined;
+  return { routes: { type: "FeatureCollection", features: routeFeatures }, airports: { type: "FeatureCollection", features: airportFeatures }, skipped, completedFlights: rows.length, initialCenter: latestArrivalCoordinate ? [latestArrivalCoordinate.longitude, latestArrivalCoordinate.latitude] : undefined };
 }
