@@ -2,7 +2,8 @@ alter table public.profiles
   add column if not exists passport_cover_background text not null default '#171427',
   add column if not exists passport_title_color text not null default '#d5b36a',
   add column if not exists passport_brand_color text not null default '#d5b36a',
-  add column if not exists passport_title_font text not null default 'Georgia';
+  add column if not exists passport_title_font text not null default 'Georgia',
+  add column if not exists passport_cover_texture text not null default 'plain';
 
 do $$
 begin
