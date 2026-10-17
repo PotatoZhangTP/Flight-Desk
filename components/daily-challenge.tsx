@@ -5,7 +5,7 @@ import { T, useLanguage, useText } from "@/components/i18n";
 import { formatDistance } from "@/lib/preferences";
 
 export type Challenge = { challenge_date:string; category:string; departure_iata:string; departure_icao:string; arrival_iata:string; arrival_icao:string; departure_name:string; arrival_name:string; estimated_minutes:number; distance_km:number; suggested_aircraft:string|null; about:string };
-export type Memorial = { id:string; title_en:string; title_zh:string; description_en:string; description_zh:string; event_year:number; event_month:number; event_day:number; departure_iata:string; departure_icao:string; arrival_iata:string; arrival_icao:string; suggested_aircraft:string|null };
+export type Memorial = { id:string; title_en:string; title_zh:string; description_en:string; description_zh:string; event_year:number; event_month:number; event_day:number; recurring:boolean; departure_iata:string; departure_icao:string; arrival_iata:string; arrival_icao:string; suggested_aircraft:string|null };
 const labels:Record<string,string>={quick:"Quick Flight",regional:"Regional Flight",medium:"Medium Haul",long:"Long Haul"};
 const utcDate=()=>new Date().toISOString().slice(0,10);
 

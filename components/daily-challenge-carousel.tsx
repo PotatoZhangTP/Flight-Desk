@@ -1,0 +1,26 @@
+"use client";
+
+import { useEffect, useMemo, useState } from "react";
+import Link from "@/components/navigation-link";
+import { T, useLanguage, useText } from "@/components/i18n";
+import { formatDistance } from "@/lib/preferences";
+import type { Challenge, Memorial } from "@/components/daily-challenge";
+
+type ApiMemorial = Memorial & { event_key?: string; event_date?: string; publish_start_date?: string; publish_end_date?: string; publish_year?: number; publish_month?: number; publish_day?: number };
+const utcToday = () => new Date().toISOString().slice(0, 10);
+const dateFor = (event: ApiMemorial, field: "event" | "publish_start" | "publish_end") => event[`${field}_date`] || (event[`${field}_year` as keyof ApiMemorial] ? `${event[`${field}_year` as keyof ApiMemorial]}-${String(event[`${field}_month` as keyof ApiMemorial]).padStart(2, "0")}-${String(event[`${field}_day` as keyof ApiMemorial]).padStart(2, "0")}` : "");
+const isPublished = (event: ApiMemorial, today: string) => { const start = dateFor(event, "publish_start") || today; const end = dateFor(event, "publish_end") || start; if (!event.recurring) return today >= start && today <= end; const monthDay = today.slice(5); const startDay = start.slice(5); const endDay = end.slice(5); return startDay <= endDay ? monthDay >= startDay && monthDay <= endDay : monthDay >= startDay || monthDay <= endDay; };
+const isMemorialDay = (event: ApiMemorial, today: string) => { const eventDate = dateFor(event, "event"); return Boolean(eventDate) && (event.recurring ? today.slice(5) === eventDate.slice(5) : today === eventDate); };
+
+function ChallengeRow({ challenge, distanceUnit }: { challenge: Challenge; distanceUnit: "km" | "mi" | "nm" }) { const t = useText(); return <Link href={`/challenges?route=${challenge.category}`} className="flex items-center justify-between gap-3 rounded-xl border border-line px-3 py-2.5 transition hover:border-brand/50 hover:bg-brand-soft/30"><span className="min-w-0"><span className="block text-[10px] font-bold uppercase tracking-wider text-brand">{challenge.category}</span><span className="mt-0.5 block truncate font-bold">{challenge.departure_iata} <span className="text-brand">→</span> {challenge.arrival_iata}</span></span><span className="shrink-0 text-right text-xs text-muted">{t("flight.durationValue", { hours: Math.floor(challenge.estimated_minutes / 60), minutes: challenge.estimated_minutes % 60 })}<br />{formatDistance(challenge.distance_km, distanceUnit)}</span></Link>; }
+
+export function DailyChallengeCarousel() {
+  const { preferences } = useLanguage();
+  const [data, setData] = useState<{ challenges: Challenge[]; memorials: ApiMemorial[] } | null>(null);
+  const [page, setPage] = useState<"daily" | "memorial">("daily");
+  const today = utcToday();
+  useEffect(() => { let live = true; fetch("/api/challenges", { cache: "no-store" }).then(response => response.ok ? response.json() : null).then(next => { if (!live || !next) return; const memorials = (next.memorials || []) as ApiMemorial[]; setData({ challenges: next.challenges || [], memorials }); if (memorials.some(event => isPublished(event, today) && isMemorialDay(event, today))) setPage("memorial"); }).catch(() => {}); return () => { live = false; }; }, [today]);
+  const memorials = useMemo(() => (data?.memorials || []).filter(event => isPublished(event, today)), [data, today]);
+  if (!data) return <div className="rounded-xl border border-dashed border-brand/30 bg-brand-soft/30 p-5 text-sm text-muted"><T source="Loading today’s flight assignments…" /></div>;
+  return <div className="relative min-h-[178px]">{page === "daily" ? <div className="space-y-2">{data.challenges.map(challenge => <ChallengeRow key={challenge.category} challenge={challenge} distanceUnit={preferences.distanceUnit} />)}{!data.challenges.length && <p className="rounded-xl border border-dashed border-line p-5 text-sm text-muted"><T source="No Recommendations Available" /></p>}</div> : <div className="space-y-2">{memorials.length ? memorials.map(event => <Link key={event.id} href={`/challenges?memorial=${event.event_key || event.id}`} className="block rounded-xl border border-[#d5b36a]/50 bg-[#2b263d] p-3 text-white transition hover:border-[#d5b36a]"><p className="text-xs font-bold uppercase tracking-wider text-[#d5b36a]"><T source="Memorial Flight" /></p><p className="mt-1 font-bold">{event.title_en}</p><p className="mt-1 text-sm text-white/75">{event.departure_iata} → {event.arrival_iata}{event.suggested_aircraft ? ` · ${event.suggested_aircraft}` : ""}</p></Link>) : <p className="rounded-xl border border-dashed border-line p-5 text-sm text-muted"><T source="No Memorial Flights available at the moment." /></p>}</div>}<div className="absolute -bottom-1 left-0 right-0 flex justify-center gap-2"><button type="button" aria-label="Show Daily Challenges" aria-pressed={page === "daily"} onClick={() => setPage("daily")} className={`h-2.5 w-2.5 rounded-full border transition ${page === "daily" ? "border-brand bg-brand" : "border-line-strong bg-transparent"}`} /><button type="button" aria-label="Show Memorial Flights" aria-pressed={page === "memorial"} onClick={() => setPage("memorial")} className={`h-2.5 w-2.5 rounded-full border transition ${page === "memorial" ? "border-brand bg-brand" : "border-line-strong bg-transparent"}`} /></div></div>;
+}
