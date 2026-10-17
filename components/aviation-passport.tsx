@@ -5,7 +5,7 @@ import Link from "@/components/navigation-link";
 import { LocalizedDate, T } from "@/components/i18n";
 
 type Flight = { id: string; flight_date: string; departure_country_code?: string | null; arrival_country_code?: string | null };
-type Stamp = { code: string; first: string; latest: string; visits: number; flights: number; rotation: number; tone: string; shape: string };
+type Stamp = { code: string; first: string; latest: string; visits: number; flights: number; rotation: number; tone: string; shape: string; size: string; line: string };
 type Props = { displayName: string; memberSince: string; userId: string; flights: Flight[]; totalFlights: number; countries: number; minutes: number };
 type Phase = "closed" | "opening" | "open" | "turning-forward" | "turning-backward" | "closing" | "back-cover" | "book-flipping-front";
 
@@ -17,7 +17,7 @@ function makeStamps(flights: Flight[]) {
   for (const flight of [...flights].sort((a, b) => a.flight_date.localeCompare(b.flight_date))) for (const countryCode of [flight.departure_country_code, flight.arrival_country_code]) {
     if (!countryCode) continue;
     const code = countryCode.toUpperCase(), existing = stamps.get(code), seed = hash(code);
-    if (!existing) stamps.set(code, { code, first: flight.flight_date, latest: flight.flight_date, visits: 1, flights: 1, rotation: seed % 17 - 8, tone: ["stamp-red", "stamp-blue", "stamp-green", "stamp-purple"][seed % 4], shape: ["stamp-circle", "stamp-square", "stamp-triangle", "stamp-hex"][seed % 4] });
+    if (!existing) stamps.set(code, { code, first: flight.flight_date, latest: flight.flight_date, visits: 1, flights: 1, rotation: seed % 21 - 10, tone: ["stamp-red", "stamp-blue", "stamp-green", "stamp-purple", "stamp-slate", "stamp-brown", "stamp-brass", "stamp-teal", "stamp-mauve"][seed % 9], shape: ["stamp-circle", "stamp-square", "stamp-rounded", "stamp-hex", "stamp-octagon", "stamp-ellipse"][seed % 6], size: ["stamp-small", "stamp-medium", "stamp-large"][seed % 3], line: ["stamp-single", "stamp-double", "stamp-dashed", "stamp-heavy"][seed % 4] });
     else { existing.latest = flight.flight_date; existing.flights += 1; if (existing.latest !== existing.first) existing.visits += 1; }
   }
   return [...stamps.values()];
@@ -34,7 +34,19 @@ export function AviationPassport({ displayName, memberSince, userId, flights, to
   const [theme, setTheme] = useState<keyof typeof themes>("navy");
   const stamps = useMemo(() => makeStamps(flights), [flights]);
   const [cover, metal] = themes[theme];
-  const requiredVisaPageCount = Math.max(1, Math.ceil(stamps.length / 5));
+  const stampPages = useMemo(() => {
+    const pages: Stamp[][] = [];
+    let page: Stamp[] = [];
+    let weight = 0;
+    for (const stamp of stamps) {
+      const stampWeight = stamp.size === "stamp-large" ? 1.65 : stamp.size === "stamp-small" ? .85 : 1.15;
+      if (page.length >= 3 && (page.length >= 6 || weight + stampWeight > 5.2)) { pages.push(page); page = []; weight = 0; }
+      page.push(stamp); weight += stampWeight;
+    }
+    if (page.length) pages.push(page);
+    return pages;
+  }, [stamps]);
+  const requiredVisaPageCount = Math.max(1, stampPages.length);
   const visaPageCount = Math.max(4, requiredVisaPageCount + (requiredVisaPageCount % 2));
   const visaSheetCount = visaPageCount / 2;
   const physicalSheetCount = visaSheetCount + 1;
@@ -87,11 +99,11 @@ export function AviationPassport({ displayName, memberSince, userId, flights, to
     document.addEventListener("pointerdown", outside); return () => document.removeEventListener("pointerdown", outside);
   }, [phase, selected, turnedSheetCount]);
 
-  const stampPage = (index: number) => <div className="passport-page passport-stamps"><p className="passport-eyebrow"><T id="passport.stamps" /> · {index + 1}</p><div className="passport-stamp-field">{stamps.slice(index * 5, index * 5 + 5).map((stamp) => <button key={stamp.code} type="button" className={`passport-stamp ${stamp.tone} ${stamp.shape}`} style={{ transform: `rotate(${stamp.rotation}deg)` }} onClick={(event) => { event.stopPropagation(); setSelected(stamp); }}><b>{stamp.code}</b><span><LocalizedDate value={stamp.first} /></span></button>)}</div>{!stamps.length && index === 0 && <div className="passport-empty"><T id="passport.empty" /><Link href="/flights/new" className="button-primary mt-4"><T id="map.addFirstFlight" /></Link></div>}</div>;
+  const stampPage = (index: number) => <div className="passport-page passport-stamps"><p className="passport-eyebrow"><T id="passport.stamps" /> · {index + 1}</p><div className="passport-stamp-field">{(stampPages[index] ?? []).map((stamp, stampIndex) => <button key={stamp.code} type="button" className={`passport-stamp ${stamp.tone} ${stamp.shape} ${stamp.size} ${stamp.line}`} style={{ "--stamp-index": stampIndex, "--stamp-count": (stampPages[index] ?? []).length, "--stamp-rotation": `${stamp.rotation}deg` } as React.CSSProperties} onClick={(event) => { event.stopPropagation(); setSelected(stamp); }}><b>{stamp.code}</b><span><LocalizedDate value={stamp.first} /></span></button>)}</div>{!stamps.length && index === 0 && <div className="passport-empty"><T id="passport.empty" /><Link href="/flights/new" className="button-primary mt-4"><T id="map.addFirstFlight" /></Link></div>}</div>;
   const identityPage = <div className="passport-page passport-identity"><p className="passport-eyebrow"><T id="passport.identity" /></p><h3>Captain {displayName}</h3><dl><div><dt><T id="passport.memberSince" /></dt><dd><LocalizedDate value={memberSince} /></dd></div><div><dt><T id="passport.totalFlights" /></dt><dd>{totalFlights}</dd></div><div><dt><T id="passport.countriesVisited" /></dt><dd>{countries}</dd></div><div><dt><T id="passport.flightTime" /></dt><dd>{Math.floor(minutes / 60)}h {minutes % 60}m</dd></div><div><dt>Passport No.</dt><dd>{passportNo}</dd></div></dl></div>;
   const endingPage = <div className="passport-page passport-ending"><div className="passport-ending-rule" /><p className="passport-ending-primary"><T id="passport.endingPrimary" /></p><p className="passport-ending-secondary"><T id="passport.endingSecondary" /></p></div>;
   const blankPage = <div className="passport-page passport-blank" aria-hidden="true" />;
-  const coverFace = <><span className="passport-brand"><img src="/images/flight-desk-logo-dark.svg" alt="Flight Desk" /><span>Flight Desk</span></span><span className="passport-kicker">AVIATION<br />PASSPORT</span></>;
+  const coverFace = <><img className="passport-cover-art" src="/images/flight-desk-logo.svg" alt="" /><span className="passport-kicker">AVIATION<br />PASSPORT</span></>;
 
   const handleBookClick = (event: React.MouseEvent<HTMLDivElement>) => {
     if (phase === "closed") { setPhase("opening"); return; }
@@ -106,7 +118,7 @@ export function AviationPassport({ displayName, memberSince, userId, flights, to
     else turnForward();
   };
 
-  return <section ref={root} className="dashboard-module relative min-w-0 bg-surface" style={{ "--passport-cover": cover, "--passport-metal": metal } as React.CSSProperties}>
+  return <section ref={root} data-spine-style="thread" className="dashboard-module relative min-w-0 bg-surface" style={{ "--passport-cover": cover, "--passport-metal": metal } as React.CSSProperties}>
     <div className="flex items-center justify-between gap-3"><h2 className="text-xl font-bold"><T id="passport.title" /></h2><button type="button" className="button-secondary" onClick={() => setCustomize((value) => !value)}>◈ <T id="passport.customize" /></button></div>
     {customize && <div className="passport-customizer" role="dialog"><h3><T id="passport.customize" /></h3><p><T id="passport.coverColor" /></p><div className="flex flex-wrap gap-2">{Object.keys(themes).map((key) => <button key={key} type="button" className="passport-swatch" style={{ background: themes[key as keyof typeof themes][0] }} aria-label={key} onClick={() => saveTheme(key as keyof typeof themes)} />)}</div><button type="button" className="button-secondary mt-4" onClick={() => setCustomize(false)}><T id="common.close" /></button></div>}
     <div className="mt-4 flex min-h-[390px] items-center justify-center"><div className={`passport-stage-v3 passport-phase-${phase}`}><div className="passport-book-v3" onClick={handleBookClick}>
