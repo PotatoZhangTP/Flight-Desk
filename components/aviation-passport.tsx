@@ -52,7 +52,7 @@ export function AviationPassport({ displayName, memberSince, userId, flights, to
     let weight = 0;
     for (const stamp of stamps) {
       const stampWeight = stamp.size === "stamp-large" ? 1.65 : stamp.size === "stamp-small" ? .85 : 1.15;
-      if (page.length >= 3 && (page.length >= 6 || weight + stampWeight > 5.2)) { pages.push(page); page = []; weight = 0; }
+      if (page.length >= 3 && (page.length >= 4 || weight + stampWeight > 4.1)) { pages.push(page); page = []; weight = 0; }
       page.push(stamp); weight += stampWeight;
     }
     if (page.length) pages.push(page);
@@ -117,7 +117,7 @@ export function AviationPassport({ displayName, memberSince, userId, flights, to
     return <div className="passport-page passport-stamps"><p className="passport-eyebrow"><T id="passport.stamps" /> · {index + 1}</p><div className="passport-stamp-field">{pageStamps.map((stamp, stampIndex) => {
       const slot = slots[stampIndex];
       const positionSeed = hash(`${userId}:${index}:${stamp.code}:${stampIndex}`);
-      const shapeMargin = stamp.shape === "stamp-triangle" ? 27 : stamp.shape === "stamp-oblong" || stamp.shape === "stamp-ellipse" ? 24 : 19;
+      const shapeMargin = stamp.shape === "stamp-triangle" ? 31 : stamp.shape === "stamp-oblong" || stamp.shape === "stamp-ellipse" ? 28 : stamp.shape === "stamp-octagon" || stamp.shape === "stamp-hex" ? 25 : 22;
       const sizeMargin = stamp.size === "stamp-large" ? 3 : stamp.size === "stamp-small" ? -2 : 0;
       const stampMargin = Math.max(18, shapeMargin + sizeMargin);
       const x = Math.max(stampMargin, Math.min(100 - stampMargin, slot[0] + positionSeed % 5 - 2));
