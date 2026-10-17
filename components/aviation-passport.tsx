@@ -43,13 +43,12 @@ function StampMotif({ code, fallback }: { code: string; fallback: string }) {
   return <svg {...common}><circle cx="16" cy="16" r="10" /><path d="M16 3v5M16 24v5M3 16h5M24 16h5M16 16l6-5M16 16l-3 7" /><text x="16" y="19" textAnchor="middle">{fallback}</text></svg>;
 }
 
-const stampSlots: Record<number, Array<[number, number]>> = {
-  1: [[50, 48]],
-  2: [[31, 34], [68, 65]],
-  3: [[28, 28], [70, 39], [45, 73]],
-  4: [[28, 25], [70, 31], [35, 69], [72, 75]],
-  5: [[25, 23], [67, 25], [48, 49], [27, 75], [73, 73]],
-  6: [[23, 22], [51, 29], [78, 23], [28, 70], [55, 75], [79, 66]],
+const stampSlotLayouts: Record<number, Array<Array<[number, number]>>> = {
+  1: [[[50, 48]], [[38, 43]], [[62, 54]]],
+  2: [[[31, 34], [68, 65]], [[68, 32], [32, 68]], [[30, 50], [70, 50]], [[50, 29], [50, 70]]],
+  3: [[[27, 31], [71, 35], [48, 72]], [[50, 27], [29, 68], [72, 66]], [[28, 30], [31, 72], [70, 51]]],
+  4: [[[27, 27], [71, 31], [29, 72], [72, 70]], [[50, 24], [27, 50], [73, 49], [50, 75]], [[28, 34], [64, 27], [72, 68], [36, 74]]],
+  5: [[[25, 24], [70, 27], [49, 49], [27, 75], [73, 72]], [[50, 22], [25, 43], [74, 41], [34, 75], [68, 74]], [[27, 27], [66, 24], [73, 57], [51, 76], [25, 67]]],
 };
 
 function makeStamps(flights: Flight[]) {
@@ -81,16 +80,15 @@ export function AviationPassport({ displayName, memberSince, userId, flights, to
   const [cover, metal] = themes[theme];
   const stampPages = useMemo(() => {
     const pages: Stamp[][] = [];
-    let page: Stamp[] = [];
-    let weight = 0;
-    for (const stamp of stamps) {
-      const stampWeight = stamp.size === "stamp-large" ? 1.65 : stamp.size === "stamp-small" ? .85 : 1.15;
-      if (page.length >= 2 && (page.length >= 3 || weight + stampWeight > 3.35)) { pages.push(page); page = []; weight = 0; }
-      page.push(stamp); weight += stampWeight;
+    let cursor = 0;
+    while (cursor < stamps.length) {
+      const pageIndex = pages.length;
+      const targetCount = 1 + hash(`${userId}:stamp-page:${pageIndex}`) % 5;
+      pages.push(stamps.slice(cursor, cursor + targetCount));
+      cursor += targetCount;
     }
-    if (page.length) pages.push(page);
     return pages;
-  }, [stamps]);
+  }, [stamps, userId]);
   const requiredVisaPageCount = Math.max(1, stampPages.length);
   const visaPageCount = Math.max(4, requiredVisaPageCount + (requiredVisaPageCount % 2));
   const visaSheetCount = visaPageCount / 2;
@@ -147,15 +145,18 @@ export function AviationPassport({ displayName, memberSince, userId, flights, to
 
   const stampPage = (index: number) => {
     const pageStamps = stampPages[index] ?? [];
-    const slots = stampSlots[Math.max(1, pageStamps.length)] ?? stampSlots[6];
+    const layouts = stampSlotLayouts[Math.max(1, pageStamps.length)] ?? stampSlotLayouts[5];
+    const slots = layouts[hash(`${userId}:stamp-layout:${index}`) % layouts.length];
     return <div className="passport-page passport-stamps"><p className="passport-eyebrow"><T id="passport.stamps" /> · {index + 1}</p><div className="passport-stamp-field">{pageStamps.map((stamp, stampIndex) => {
       const slot = slots[stampIndex];
       const positionSeed = hash(`${userId}:${index}:${stamp.code}:${stampIndex}`);
-      const shapeMargin = stamp.shape === "stamp-triangle" ? 31 : stamp.shape === "stamp-oblong" || stamp.shape === "stamp-ellipse" ? 28 : stamp.shape === "stamp-octagon" || stamp.shape === "stamp-hex" ? 25 : 22;
+      const shapeXMargin = stamp.shape === "stamp-triangle" ? 27 : stamp.shape === "stamp-oblong" || stamp.shape === "stamp-ellipse" ? 25 : stamp.shape === "stamp-octagon" || stamp.shape === "stamp-hex" ? 23 : 21;
+      const shapeYMargin = stamp.shape === "stamp-triangle" ? 19 : stamp.shape === "stamp-oblong" || stamp.shape === "stamp-ellipse" ? 14 : 17;
       const sizeMargin = stamp.size === "stamp-large" ? 3 : stamp.size === "stamp-small" ? -2 : 0;
-      const stampMargin = Math.max(18, shapeMargin + sizeMargin);
-      const x = Math.max(stampMargin, Math.min(100 - stampMargin, slot[0] + positionSeed % 5 - 2));
-      const y = Math.max(stampMargin, Math.min(100 - stampMargin, slot[1] + Math.floor(positionSeed / 5) % 5 - 2));
+      const xMargin = Math.max(19, shapeXMargin + sizeMargin);
+      const yMargin = Math.max(14, shapeYMargin + sizeMargin);
+      const x = Math.max(xMargin, Math.min(100 - xMargin, slot[0] + positionSeed % 5 - 2));
+      const y = Math.max(yMargin, Math.min(100 - yMargin, slot[1] + Math.floor(positionSeed / 5) % 5 - 2));
       return <button key={stamp.code} type="button" className={`passport-stamp ${stamp.tone} ${stamp.shape} ${stamp.size} ${stamp.line} ${stamp.layout}`} style={{ "--stamp-x": `${x}%`, "--stamp-y": `${y}%`, "--stamp-rotation": `${stamp.rotation}deg` } as React.CSSProperties} onClick={(event) => { event.stopPropagation(); setSelected(stamp); }}><span className="passport-stamp-label"><span>ENTRY</span><span>STAMP</span></span><span className="passport-stamp-flag"><CountryFlag code={stamp.code} /></span><span className="passport-stamp-motif"><StampMotif code={stamp.code} fallback={stamp.motif} /></span><span className="passport-stamp-date"><LocalizedDate value={stamp.first} /></span></button>;
     })}</div>{!stamps.length && index === 0 && <div className="passport-empty"><T id="passport.empty" /><Link href="/flights/new" className="button-primary mt-4"><T id="map.addFirstFlight" /></Link></div>}</div>;
   };
