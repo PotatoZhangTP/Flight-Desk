@@ -249,7 +249,6 @@ passport.relatedFlights|Related Flights|相关航班
 passport.coverColor|Cover Color|封面颜色
 passport.goToPage|Go To Page|跳转至页面
 passport.selectPage|Select Page|选择页面
-passport.pageNumber|Page Number|页码
 passport.go|Go|跳转
 passport.endingPrimary|The sky is not the limit.|天空并非极限。
 passport.endingPrimaryLine1|The sky is|天空并非

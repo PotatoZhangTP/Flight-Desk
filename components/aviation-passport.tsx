@@ -78,9 +78,10 @@ function makeStamps(flights: Flight[]) {
 export function AviationPassport({ displayName, memberSince, userId, flights, totalFlights, countries, minutes }: Props) {
   const root = useRef<HTMLElement>(null);
   const closeRequested = useRef(false);
-  const pendingPage = useRef<number | null>(null);
+  const jumpTargetSheet = useRef<number | null>(null);
   const [phase, setPhase] = useState<Phase>("closed");
   const [quickClosing, setQuickClosing] = useState(false);
+  const [quickJumping, setQuickJumping] = useState(false);
   const [turnedSheetCount, setTurnedSheetCount] = useState(0);
   const [turningSheetIndex, setTurningSheetIndex] = useState<number | null>(null);
   const [selected, setSelected] = useState<Stamp | null>(null);
@@ -123,16 +124,23 @@ export function AviationPassport({ displayName, memberSince, userId, flights, to
     setSelected(null);
     setCustomize(false);
     setPagePicker(false);
-    setTurningSheetIndex(null);
     closeRequested.current = false;
     setQuickClosing(false);
+    jumpTargetSheet.current = targetSheetCount;
+    setQuickJumping(true);
     if (phase === "closed") {
-      pendingPage.current = targetSheetCount;
       setPhase("opening");
       return;
     }
-    setTurnedSheetCount(targetSheetCount);
-    setPhase("open");
+    const currentSheetCount = phase === "back-cover" ? physicalSheetCount + 1 : turnedSheetCount;
+    if (currentSheetCount === targetSheetCount) {
+      jumpTargetSheet.current = null;
+      setQuickJumping(false);
+      setPhase("open");
+      return;
+    }
+    setTurningSheetIndex(currentSheetCount < targetSheetCount ? currentSheetCount - 1 : currentSheetCount - 2);
+    setPhase(currentSheetCount < targetSheetCount ? "turning-forward" : "turning-backward");
   };
 
   const turnForward = () => {
@@ -157,6 +165,21 @@ export function AviationPassport({ displayName, memberSince, userId, flights, to
     const nextCount = phase === "turning-forward" ? turnedSheetCount + 1 : turnedSheetCount - 1;
     setTurnedSheetCount(nextCount);
     setTurningSheetIndex(null);
+    if (jumpTargetSheet.current !== null) {
+      const targetCount = jumpTargetSheet.current;
+      if (nextCount === targetCount) {
+        jumpTargetSheet.current = null;
+        setQuickJumping(false);
+        setPhase("open");
+        return;
+      }
+      setPhase("open");
+      requestAnimationFrame(() => {
+        setTurningSheetIndex(nextCount < targetCount ? nextCount - 1 : nextCount - 2);
+        setPhase(nextCount < targetCount ? "turning-forward" : "turning-backward");
+      });
+      return;
+    }
     if (!closeRequested.current) {
       setPhase(nextCount === physicalSheetCount + 1 ? "back-cover" : "open");
       return;
@@ -170,7 +193,7 @@ export function AviationPassport({ displayName, memberSince, userId, flights, to
   useEffect(() => {
     function outside(event: PointerEvent) {
       const target = event.target as Node, book = root.current?.querySelector(".passport-book-v3");
-      if (target instanceof Element && target.closest(".passport-customizer, .passport-popover, button, a")) return;
+      if (target instanceof Element && target.closest(".passport-customizer, .passport-popover, .passport-page-jump, button, a")) return;
       if (root.current?.contains(target) && book && !book.contains(target)) {
         if (selected) setSelected(null);
         else if (phase === "open") requestClose();
@@ -216,10 +239,10 @@ export function AviationPassport({ displayName, memberSince, userId, flights, to
   };
 
   return <section ref={root} data-spine-style="crease" className="dashboard-module relative min-w-0 bg-surface" style={{ "--passport-cover": cover, "--passport-metal": metal } as React.CSSProperties}>
-    <div className="flex flex-wrap items-center justify-between gap-3"><h2 className="text-xl font-bold"><T id="passport.title" /></h2><div className="flex flex-wrap justify-end gap-2"><div className="relative"><button type="button" disabled={!['closed', 'open', 'back-cover'].includes(phase)} className="button-secondary" onClick={() => { setCustomize(false); setPagePicker((value) => !value); }}>↗ <T id="passport.goToPage" /></button>{pagePicker && <div className="passport-page-jump" role="dialog" aria-labelledby="passport-page-jump-title"><h3 id="passport-page-jump-title"><T id="passport.goToPage" /></h3><label><T id="passport.selectPage" /><select value={pageInput} onChange={(event) => setPageInput(event.target.value)}>{Array.from({ length: visaPageCount }, (_, index) => <option key={index + 1} value={index + 1}>{index + 1}</option>)}</select></label><label><T id="passport.pageNumber" /><input type="number" min="1" max={visaPageCount} inputMode="numeric" value={pageInput} onChange={(event) => setPageInput(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") jumpToPage(); }} /></label><button type="button" className="button-primary mt-3 w-full" onClick={jumpToPage}><T id="passport.go" /></button></div>}</div><button type="button" className="button-secondary" onClick={() => { setPagePicker(false); setCustomize((value) => !value); }}>◈ <T id="passport.customize" /></button></div></div>
+    <div className="flex flex-wrap items-center justify-between gap-3"><h2 className="text-xl font-bold"><T id="passport.title" /></h2><div className="flex flex-wrap justify-end gap-2"><div className="relative"><button type="button" disabled={!['closed', 'open', 'back-cover'].includes(phase)} className="button-secondary" onClick={() => { setCustomize(false); setPagePicker((value) => !value); }}>↗ <T id="passport.goToPage" /></button>{pagePicker && <div className="passport-page-jump" role="dialog" aria-labelledby="passport-page-jump-title"><div className="passport-page-jump-header"><h3 id="passport-page-jump-title"><T id="passport.goToPage" /></h3><button type="button" aria-label="Close" onClick={() => setPagePicker(false)}>×</button></div><label><T id="passport.selectPage" /><select value={pageInput} onChange={(event) => setPageInput(event.target.value)}>{Array.from({ length: visaPageCount }, (_, index) => <option key={index + 1} value={index + 1}>{index + 1}</option>)}</select></label><button type="button" className="button-primary mt-3 w-full" onClick={jumpToPage}><T id="passport.go" /></button></div>}</div><button type="button" className="button-secondary" onClick={() => { setPagePicker(false); setCustomize((value) => !value); }}>◈ <T id="passport.customize" /></button></div></div>
     {customize && <div className="passport-customizer" role="dialog"><h3><T id="passport.customize" /></h3><p><T id="passport.coverColor" /></p><div className="flex flex-wrap gap-2">{Object.keys(themes).map((key) => <button key={key} type="button" className="passport-swatch" style={{ background: themes[key as keyof typeof themes][0] }} aria-label={key} onClick={() => saveTheme(key as keyof typeof themes)} />)}</div><button type="button" className="button-secondary mt-4" onClick={() => setCustomize(false)}><T id="common.close" /></button></div>}
-    <div className="mt-4 flex min-h-[390px] items-center justify-center"><div className={`passport-stage-v3 passport-phase-${phase} ${quickClosing ? "passport-quick-closing" : ""}`}><div className="passport-book-v3" onClick={handleBookClick}>
-      <div className={`passport-front-cover-v3 ${phase} ${turnedSheetCount >= 1 ? "is-open" : ""} ${turnedSheetCount > 1 ? "is-behind" : ""}`} onAnimationEnd={(event) => { if (event.currentTarget !== event.target) return; if (phase === "opening") { setTurnedSheetCount(pendingPage.current ?? 1); pendingPage.current = null; setPhase("open"); } if (phase === "closing") { setTurnedSheetCount(0); setQuickClosing(false); setPhase("closed"); } }}>
+    <div className="mt-4 flex min-h-[390px] items-center justify-center"><div className={`passport-stage-v3 passport-phase-${phase} ${quickClosing ? "passport-quick-closing" : ""} ${quickJumping ? "passport-quick-jumping" : ""}`}><div className="passport-book-v3" onClick={handleBookClick}>
+      <div className={`passport-front-cover-v3 ${phase} ${turnedSheetCount >= 1 ? "is-open" : ""} ${turnedSheetCount > 1 ? "is-behind" : ""}`} onAnimationEnd={(event) => { if (event.currentTarget !== event.target) return; if (phase === "opening") { const targetCount = jumpTargetSheet.current; setTurnedSheetCount(1); if (targetCount !== null && targetCount > 1) requestAnimationFrame(() => { setTurningSheetIndex(0); setPhase("turning-forward"); }); else { jumpTargetSheet.current = null; setQuickJumping(false); setPhase("open"); } } if (phase === "closing") { setTurnedSheetCount(0); setQuickClosing(false); setPhase("closed"); } }}>
         <div className="passport-cover-side passport-cover-outer">{coverFace}</div><div className="passport-cover-side passport-cover-inner">{identityPage}</div>
       </div>
       {Array.from({ length: visaSheetCount }, (_, index) => {
