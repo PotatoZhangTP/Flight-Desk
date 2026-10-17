@@ -6,6 +6,13 @@
 
 begin;
 
+-- Serialize this backfill with Auth registration/profile creation. Auth uses
+-- auth.users first and then the SECURITY DEFINER profile trigger, so acquire
+-- the locks in that same order to avoid assigning against a moving snapshot.
+select pg_advisory_xact_lock(hashtextextended('flightdesk.passport-number-migration', 0));
+lock table auth.users in share mode;
+lock table public.profiles in share row exclusive mode;
+
 create sequence if not exists public.passport_number_seq
   as bigint
   minvalue 2
@@ -54,6 +61,7 @@ $$;
 do $$
 declare
   trigger_owner name;
+  trigger_is_security_definer boolean;
 begin
   if not exists (
     select 1 from pg_trigger
@@ -64,13 +72,17 @@ begin
     raise exception 'Passport migration stopped: on_auth_user_created trigger is missing';
   end if;
 
-  select pg_get_userbyid(proowner)
-  into trigger_owner
+  select pg_get_userbyid(proowner), prosecdef
+  into trigger_owner, trigger_is_security_definer
   from pg_proc
   where oid = 'public.handle_new_user()'::regprocedure;
 
   if trigger_owner is null then
     raise exception 'Passport migration stopped: public.handle_new_user() is missing';
+  end if;
+
+  if not trigger_is_security_definer then
+    raise exception 'Passport migration stopped: public.handle_new_user() is not SECURITY DEFINER';
   end if;
 
   if not has_sequence_privilege(trigger_owner, 'public.passport_number_seq', 'USAGE') then
@@ -222,18 +234,38 @@ $$;
 
 revoke all on sequence public.passport_number_seq from public, anon, authenticated;
 
--- Keep the next generated value above every existing value and above the
--- sequence's current position. This is intentionally the last mutating step;
--- sequence increments can survive a transaction rollback in PostgreSQL, so a
--- failed migration must not advance it before all validations complete.
-select setval(
-  'public.passport_number_seq',
-  greatest(
-    coalesce((select max(passport_number) from public.profiles), 1) + 1,
-    coalesce((select last_value from public.passport_number_seq), 1) + 1,
-    2
-  ),
-  false
-);
+-- Advance the sequence only when its next value could collide. In particular,
+-- a repeated migration must not call setval() unnecessarily. is_called=false
+-- means last_value itself is returned by the next nextval(); is_called=true
+-- means nextval() returns last_value + 1.
+do $$
+declare
+  sequence_last bigint;
+  sequence_called boolean;
+  next_available bigint;
+  required_next bigint;
+begin
+  select last_value, is_called
+  into sequence_last, sequence_called
+  from public.passport_number_seq;
+
+  select coalesce(max(passport_number), 1) + 1
+  into required_next
+  from public.profiles;
+
+  next_available := case
+    when sequence_called then sequence_last + 1
+    else sequence_last
+  end;
+
+  if next_available < greatest(required_next, 2) then
+    perform setval(
+      'public.passport_number_seq',
+      greatest(required_next, 2),
+      false
+    );
+  end if;
+end;
+$$;
 
 commit;
