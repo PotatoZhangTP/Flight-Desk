@@ -217,6 +217,11 @@ button:not(:disabled), summary { cursor: pointer; }
 .stamp-blue { color: #3d648b; border-radius: 45%; }.stamp-green { color: #4b775f; border-radius: 40%; }.stamp-purple { color: #704d79; border-radius: 46%; }
 .passport-empty { display: grid; place-items: center; min-height: 180px; text-align: center; font-size: .85rem; color: #806d4d; }
 .passport-popover, .passport-customizer { position: absolute; z-index: 20; right: 12px; top: 4.25rem; max-width: min(280px, calc(100% - 24px)); border: 1px solid var(--line); border-radius: 14px; background: var(--surface); padding: 16px; color: var(--ink); box-shadow: 0 14px 35px color-mix(in srgb, #000 20%, transparent); animation: passport-popover-in 180ms ease-out both; }
+.passport-page-jump { position: absolute; z-index: 30; top: calc(100% + 8px); right: 0; width: min(260px, calc(100vw - 48px)); border: 1px solid var(--line); border-radius: 14px; background: var(--surface); padding: 16px; color: var(--ink); box-shadow: 0 14px 35px color-mix(in srgb, #000 20%, transparent); animation: passport-popover-in 180ms ease-out both; }
+.passport-page-jump h3 { margin: 0 0 12px; color: var(--brand); font-size: .95rem; }
+.passport-page-jump label { display: block; margin-top: 10px; font-size: .72rem; font-weight: 700; color: var(--muted); }
+.passport-page-jump select, .passport-page-jump input { display: block; width: 100%; margin-top: 5px; border: 1px solid var(--line-strong); border-radius: 10px; background: var(--surface); padding: 9px 10px; color: var(--ink); font-size: .82rem; outline: none; }
+.passport-page-jump select:focus, .passport-page-jump input:focus { border-color: var(--brand); box-shadow: 0 0 0 2px color-mix(in srgb, var(--brand) 15%, transparent); }
 .passport-popover button:first-child { float: right; font-size: 1.25rem; }.passport-popover h3, .passport-customizer h3 { margin: 0 0 10px; color: var(--brand); }.passport-popover p { margin: 5px 0; font-size: .8rem; }
 .passport-swatch { width: 34px; height: 34px; border: 2px solid var(--surface); border-radius: 50%; box-shadow: 0 0 0 1px var(--line-strong); }
 .passport-cover-brand { position: absolute; top: 18px; left: 18px; width: min(39%, 112px); height: auto; object-fit: contain; filter: sepia(1) saturate(.38) brightness(1.55); opacity: .8; }

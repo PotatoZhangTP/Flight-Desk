@@ -247,6 +247,10 @@ passport.firstVisit|First Visit|首次到访
 passport.latestVisit|Latest Visit|最近到访
 passport.relatedFlights|Related Flights|相关航班
 passport.coverColor|Cover Color|封面颜色
+passport.goToPage|Go To Page|跳转至页面
+passport.selectPage|Select Page|选择页面
+passport.pageNumber|Page Number|页码
+passport.go|Go|跳转
 passport.endingPrimary|The sky is not the limit.|天空并非极限。
 passport.endingPrimaryLine1|The sky is|天空并非
 passport.endingPrimaryLine2|not the limit.|极限。
