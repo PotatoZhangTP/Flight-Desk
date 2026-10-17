@@ -180,6 +180,11 @@ body { margin: 0; background: var(--cream); color: var(--ink); font-family: Aria
     a[class~="text-on-brand"]:hover { color: var(--on-brand); }
   }
   input:-webkit-autofill { -webkit-text-fill-color: var(--ink); box-shadow: 0 0 0 1000px var(--surface) inset; }
+  input[type="date"] { accent-color: var(--brand); color-scheme: light; }
+  input[type="date"]:hover { border-color: var(--brand); }
+  input[type="date"]:focus { border-color: var(--brand); outline: none; box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand) 14%, transparent); }
+  input[type="date"]::-webkit-calendar-picker-indicator { cursor: pointer; opacity: .58; transition: opacity 160ms ease-out; }
+  input[type="date"]:hover::-webkit-calendar-picker-indicator, input[type="date"]:focus::-webkit-calendar-picker-indicator { opacity: .9; }
 }
 .theme-dark-only { display: none; }
 :root[data-theme="dark"] .theme-light-only { display: none; }
