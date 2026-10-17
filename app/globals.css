@@ -207,6 +207,8 @@ button:not(:disabled), summary { cursor: pointer; }
 .spotlight-card { --spotlight-x: 50%; --spotlight-y: 50%; position: relative; }
 .spotlight-card::after { content: ""; position: absolute; inset: 0; z-index: 3; padding: 1px; border-radius: inherit; background: radial-gradient(110px circle at var(--spotlight-x) var(--spotlight-y), color-mix(in srgb, var(--brand) 72%, white), transparent 68%); opacity: 0; pointer-events: none; transition: opacity 180ms ease-out; -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude; }
 .spotlight-card[data-spotlight-active="true"]::after { opacity: 1; }
+.spotlight-card-selected { position: relative; border-radius: 1rem; }
+.spotlight-card-selected::after { content: ""; position: absolute; inset: 0; z-index: 3; padding: 1px; border-radius: inherit; background: radial-gradient(110px circle at 50% 50%, color-mix(in srgb, var(--brand) 72%, white), transparent 68%); opacity: 1; pointer-events: none; -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude; }
 @media (prefers-reduced-motion: reduce) { .spotlight-card::after { transition: none; } }
 .interaction-card:focus-within { border-color: var(--brand); }
 .button-primary, .button-secondary, .button-danger { display: inline-flex; min-height: 2.75rem; align-items: center; justify-content: center; border-radius: 9999px; padding: .625rem 1.25rem; font-size: .875rem; font-weight: 700; transition: color 160ms ease-out, background-color 160ms ease-out, border-color 160ms ease-out, box-shadow 160ms ease-out, opacity 160ms ease-out; }
