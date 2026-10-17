@@ -15,6 +15,15 @@ const themes = { navy: ["#171427", "#d5b36a"], purple: ["#26163d", "#c8b6e9"], g
 const hash = (value: string) => [...value].reduce((sum, character) => (sum * 31 + character.charCodeAt(0)) % 997, 0);
 const stampMotifs = ["✈", "☾", "≋", "•••", "◌", "⌁", "✦", "⌇"];
 
+function StampMotif({ code, fallback }: { code: string; fallback: string }) {
+  const common = { viewBox: "0 0 32 32", "aria-hidden": true, focusable: false } as const;
+  if (code === "US") return <svg {...common}><path d="M13 27h9M15 24h5M16 21h3V10l2-2-2-1-1-4-1 4-3 2 2 2v10M12 15l4-2M20 13l4 2" /><path d="M10 28h15" /></svg>;
+  if (code === "CN") return <svg {...common}><path d="M3 24c5-1 6-5 10-5s5 3 9 2 4-4 7-5M6 22v-6h5v4M20 20v-7h5v5M8 16l1-4 2 4M21 13l2-4 2 4" /><path d="M4 27h24" /></svg>;
+  if (code === "JP") return <svg {...common}><path d="M6 10h20M9 10v15M23 10v15M4 7h24M12 13l4 4 4-4" /><circle cx="16" cy="5" r="2" /></svg>;
+  if (code === "FR") return <svg {...common}><path d="M16 3l-3 10-5 15M16 3l3 10 5 15M10 20h12M7 28h18M13 13h6" /></svg>;
+  return <svg {...common}><path d="M4 19c7-8 17-9 24-3" /><path d="M18 9l7 6-8 2-4 7-2-1 2-7-6-3 1-2 7 1z" /><circle cx="6" cy="21" r="1" /><circle cx="27" cy="11" r="1" /><text x="16" y="30" textAnchor="middle">{fallback}</text></svg>;
+}
+
 const stampSlots: Record<number, Array<[number, number]>> = {
   1: [[50, 48]],
   2: [[31, 34], [68, 65]],
@@ -126,7 +135,7 @@ export function AviationPassport({ displayName, memberSince, userId, flights, to
       const stampMargin = Math.max(18, shapeMargin + sizeMargin);
       const x = Math.max(stampMargin, Math.min(100 - stampMargin, slot[0] + positionSeed % 5 - 2));
       const y = Math.max(stampMargin, Math.min(100 - stampMargin, slot[1] + Math.floor(positionSeed / 5) % 5 - 2));
-      return <button key={stamp.code} type="button" className={`passport-stamp ${stamp.tone} ${stamp.shape} ${stamp.size} ${stamp.line} ${stamp.layout}`} style={{ "--stamp-x": `${x}%`, "--stamp-y": `${y}%`, "--stamp-rotation": `${stamp.rotation}deg` } as React.CSSProperties} onClick={(event) => { event.stopPropagation(); setSelected(stamp); }}><span className="passport-stamp-label"><span>ENTRY</span><span>STAMP</span></span><span className="passport-stamp-flag"><CountryFlag code={stamp.code} /></span><span className="passport-stamp-motif" aria-hidden="true">{stamp.motif}</span><span className="passport-stamp-date"><LocalizedDate value={stamp.first} /></span></button>;
+      return <button key={stamp.code} type="button" className={`passport-stamp ${stamp.tone} ${stamp.shape} ${stamp.size} ${stamp.line} ${stamp.layout}`} style={{ "--stamp-x": `${x}%`, "--stamp-y": `${y}%`, "--stamp-rotation": `${stamp.rotation}deg` } as React.CSSProperties} onClick={(event) => { event.stopPropagation(); setSelected(stamp); }}><span className="passport-stamp-label"><span>ENTRY</span><span>STAMP</span></span><span className="passport-stamp-flag"><CountryFlag code={stamp.code} /></span><span className="passport-stamp-motif"><StampMotif code={stamp.code} fallback={stamp.motif} /></span><span className="passport-stamp-date"><LocalizedDate value={stamp.first} /></span></button>;
     })}</div>{!stamps.length && index === 0 && <div className="passport-empty"><T id="passport.empty" /><Link href="/flights/new" className="button-primary mt-4"><T id="map.addFirstFlight" /></Link></div>}</div>;
   };
   const identityPage = <div className="passport-page passport-identity"><p className="passport-eyebrow"><T id="passport.identity" /></p><h3>Captain {displayName}</h3><dl><div><dt><T id="passport.memberSince" /></dt><dd><LocalizedDate value={memberSince} /></dd></div><div><dt><T id="passport.totalFlights" /></dt><dd>{totalFlights}</dd></div><div><dt><T id="passport.countriesVisited" /></dt><dd>{countries}</dd></div><div><dt><T id="passport.flightTime" /></dt><dd>{Math.floor(minutes / 60)}h {minutes % 60}m</dd></div><div><dt>Passport No.</dt><dd>{passportNo}</dd></div></dl></div>;
