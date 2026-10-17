@@ -29,7 +29,11 @@ function makeStamps(flights: Flight[]) {
   for (const flight of [...flights].sort((a, b) => a.flight_date.localeCompare(b.flight_date))) for (const countryCode of [flight.departure_country_code, flight.arrival_country_code]) {
     if (!countryCode) continue;
     const code = normalizeCountryCode(countryCode), existing = stamps.get(code), seed = hash(code);
-    if (!existing) stamps.set(code, { code, first: flight.flight_date, latest: flight.flight_date, visits: 1, flights: 1, rotation: seed % 25 - 12, tone: ["stamp-red", "stamp-blue", "stamp-green", "stamp-purple", "stamp-slate", "stamp-brown", "stamp-brass", "stamp-teal", "stamp-mauve"][seed % 9], shape: ["stamp-circle", "stamp-square", "stamp-rounded", "stamp-hex", "stamp-octagon", "stamp-ellipse", "stamp-oblong", "stamp-triangle"][seed % 8], size: ["stamp-small", "stamp-medium", "stamp-large"][seed % 3], line: ["stamp-single", "stamp-double", "stamp-dashed", "stamp-heavy", "stamp-notched"][seed % 5], motif: stampMotifs[(seed * 7) % stampMotifs.length], layout: `stamp-layout-${seed % 4}` });
+    if (!existing) {
+      const shape = ["stamp-circle", "stamp-square", "stamp-rounded", "stamp-hex", "stamp-octagon", "stamp-ellipse", "stamp-oblong", "stamp-triangle"][seed % 8];
+      const constrainedShape = ["stamp-triangle", "stamp-hex", "stamp-octagon", "stamp-ellipse", "stamp-oblong"].includes(shape);
+      stamps.set(code, { code, first: flight.flight_date, latest: flight.flight_date, visits: 1, flights: 1, rotation: seed % 17 - 8, tone: ["stamp-red", "stamp-blue", "stamp-green", "stamp-purple", "stamp-slate", "stamp-brown", "stamp-brass", "stamp-teal", "stamp-mauve"][seed % 9], shape, size: constrainedShape || seed % 3 === 2 ? "stamp-large" : "stamp-medium", line: ["stamp-single", "stamp-double", "stamp-dashed", "stamp-heavy", "stamp-notched"][seed % 5], motif: stampMotifs[(seed * 7) % stampMotifs.length], layout: `stamp-layout-${seed % 4}` });
+    }
     else { existing.latest = flight.flight_date; existing.flights += 1; if (existing.latest !== existing.first) existing.visits += 1; }
   }
   return [...stamps.values()];
@@ -52,7 +56,7 @@ export function AviationPassport({ displayName, memberSince, userId, flights, to
     let weight = 0;
     for (const stamp of stamps) {
       const stampWeight = stamp.size === "stamp-large" ? 1.65 : stamp.size === "stamp-small" ? .85 : 1.15;
-      if (page.length >= 3 && (page.length >= 4 || weight + stampWeight > 4.1)) { pages.push(page); page = []; weight = 0; }
+      if (page.length >= 2 && (page.length >= 3 || weight + stampWeight > 3.35)) { pages.push(page); page = []; weight = 0; }
       page.push(stamp); weight += stampWeight;
     }
     if (page.length) pages.push(page);
