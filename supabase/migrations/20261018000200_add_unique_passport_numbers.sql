@@ -4,6 +4,8 @@
 -- passport_number. If either reserved account is missing, or existing data
 -- conflicts with the reserved values, the migration aborts for review.
 
+begin;
+
 create sequence if not exists public.passport_number_seq
   as bigint
   minvalue 2
@@ -11,6 +13,71 @@ create sequence if not exists public.passport_number_seq
 
 alter table public.profiles
   add column if not exists passport_number bigint;
+
+-- Install the guard before backfilling so a repeated run can safely fill only
+-- NULL values. The only permitted transition is NULL -> initial assignment.
+create or replace function public.prevent_passport_number_change()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  if old.passport_number is not null
+     and new.passport_number is distinct from old.passport_number then
+    raise exception 'Passport numbers are immutable';
+  end if;
+  return new;
+end;
+$$;
+
+revoke execute on function public.prevent_passport_number_change() from public, anon, authenticated;
+
+do $$
+begin
+  if not exists (
+    select 1 from pg_trigger
+    where tgrelid = 'public.profiles'::regclass
+      and tgname = 'protect_passport_number'
+      and not tgisinternal
+  ) then
+    create trigger protect_passport_number
+      before update of passport_number on public.profiles
+      for each row
+      execute function public.prevent_passport_number_change();
+  end if;
+end;
+$$;
+
+-- The existing auth trigger must remain present. Its SECURITY DEFINER owner
+-- must be able to call nextval() after the default is attached.
+do $$
+declare
+  trigger_owner name;
+begin
+  if not exists (
+    select 1 from pg_trigger
+    where tgrelid = 'auth.users'::regclass
+      and tgname = 'on_auth_user_created'
+      and not tgisinternal
+  ) then
+    raise exception 'Passport migration stopped: on_auth_user_created trigger is missing';
+  end if;
+
+  select pg_get_userbyid(proowner)
+  into trigger_owner
+  from pg_proc
+  where oid = 'public.handle_new_user()'::regprocedure;
+
+  if trigger_owner is null then
+    raise exception 'Passport migration stopped: public.handle_new_user() is missing';
+  end if;
+
+  if not has_sequence_privilege(trigger_owner, 'public.passport_number_seq', 'USAGE') then
+    raise exception 'Passport migration stopped: auth trigger owner lacks sequence USAGE privilege';
+  end if;
+end;
+$$;
 
 do $$
 declare
@@ -132,18 +199,6 @@ from null_profiles
 join available_numbers on available_numbers.ordinal = null_profiles.ordinal
 where profile.id = null_profiles.id;
 
--- Keep the next generated value above every existing value and above the
--- sequence's current position. Gaps are acceptable for concurrency safety.
-select setval(
-  'public.passport_number_seq',
-  greatest(
-    coalesce((select max(passport_number) from public.profiles), 1) + 1,
-    coalesce((select last_value from public.passport_number_seq), 1) + 1,
-    2
-  ),
-  false
-);
-
 alter table public.profiles
   alter column passport_number set default nextval('public.passport_number_seq'),
   alter column passport_number set not null;
@@ -165,30 +220,20 @@ begin
 end;
 $$;
 
--- The auth trigger is SECURITY DEFINER, so nextval() executes with the
--- trigger function owner's sequence privileges. End users receive no
--- sequence privilege and have no INSERT policy on profiles.
-drop trigger if exists protect_passport_number on public.profiles;
-
-create or replace function public.prevent_passport_number_change()
-returns trigger
-language plpgsql
-security definer
-set search_path = ''
-as $$
-begin
-  if new.passport_number is distinct from old.passport_number then
-    raise exception 'Passport numbers are immutable';
-  end if;
-  return new;
-end;
-$$;
-
-revoke execute on function public.prevent_passport_number_change() from public, anon, authenticated;
-
-create trigger protect_passport_number
-  before update of passport_number on public.profiles
-  for each row
-  execute function public.prevent_passport_number_change();
-
 revoke all on sequence public.passport_number_seq from public, anon, authenticated;
+
+-- Keep the next generated value above every existing value and above the
+-- sequence's current position. This is intentionally the last mutating step;
+-- sequence increments can survive a transaction rollback in PostgreSQL, so a
+-- failed migration must not advance it before all validations complete.
+select setval(
+  'public.passport_number_seq',
+  greatest(
+    coalesce((select max(passport_number) from public.profiles), 1) + 1,
+    coalesce((select last_value from public.passport_number_seq), 1) + 1,
+    2
+  ),
+  false
+);
+
+commit;
