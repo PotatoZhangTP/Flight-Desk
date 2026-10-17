@@ -89,7 +89,7 @@
 .passport-country-popover__heading { display: flex; align-items: center; gap: 12px; padding: 18px 52px 14px 16px; }
 .passport-country-popover__heading .country-flag { font-size: 1.6rem; }
 .passport-country-popover__heading h3 { margin: 0; color: var(--heading); font-size: 1rem; font-weight: 700; }
-.passport-country-popover__stat { display: flex; align-items: center; justify-content: space-between; gap: 12px; border-top: 1px solid var(--line); padding: 13px 16px; color: var(--brand); }
+.passport-country-popover__stat { display: flex; align-items: center; justify-content: space-between; gap: 12px; border-top: 1px solid var(--line); padding: 13px 16px; color: var(--brand); font-weight: 600; }
 .passport-country-popover__stat strong { font-size: 1.25rem; }
 .passport-country-popover dl { margin: 0; padding: 0 16px 12px; }
 .passport-country-popover dl div { display: flex; justify-content: space-between; gap: 12px; padding: 5px 0; font-size: .8rem; }

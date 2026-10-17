@@ -1,7 +1,7 @@
 "use client";
 
 import { createPortal } from "react-dom";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import Link from "@/components/navigation-link";
 import { LocalizedDate, T } from "@/components/i18n";
 import { CountryFlag } from "@/components/country-flag";
@@ -297,12 +297,15 @@ export function AviationPassport({ displayName, avatarUrl, passportNumber, membe
       </div>
       <div className="passport-spine-v2" />
     </div></div></div>
-    {selected && typeof document !== "undefined" && createPortal(<CountryPopup stamp={selected} stats={countryVisits.get(selected.code)} onClose={() => setSelected(null)} />, document.body)}
+    {selected && typeof document !== "undefined" && createPortal(<CountryPopup boundaryRef={root} stamp={selected} stats={countryVisits.get(selected.code)} onClose={() => setSelected(null)} />, document.body)}
   </section>;
 }
 
-function CountryPopup({ stamp, stats, onClose }: { stamp: Stamp; stats?: { count: number; first: string | null; latest: string | null }; onClose: () => void }) {
+function CountryPopup({ boundaryRef, stamp, stats, onClose }: { boundaryRef: React.RefObject<HTMLElement | null>; stamp: Stamp; stats?: { count: number; first: string | null; latest: string | null }; onClose: () => void }) {
+  const popupRef = useRef<HTMLDivElement>(null);
+  const [position, setPosition] = useState<React.CSSProperties>({ visibility: "hidden" });
+  useLayoutEffect(() => { const reposition = () => { const boundary = boundaryRef.current?.getBoundingClientRect(); const popup = popupRef.current?.getBoundingClientRect(); if (!boundary || !popup) return; const width = Math.max(180, Math.min(320, boundary.width - 24)); const left = Math.max(boundary.left + 12, Math.min(boundary.right - width - 12, boundary.left + (boundary.width - width) / 2)); const minTop = Math.max(12, boundary.top + 12); const maxTop = Math.min(boundary.bottom - popup.height - 12, window.innerHeight - popup.height - 12); const top = maxTop >= minTop ? Math.min(Math.max((boundary.top + boundary.bottom - popup.height) / 2, minTop), maxTop) : minTop; setPosition({ position: "fixed", left, top, width, transform: "none", visibility: "visible" }); }; reposition(); window.addEventListener("resize", reposition); window.addEventListener("scroll", reposition, true); return () => { window.removeEventListener("resize", reposition); window.removeEventListener("scroll", reposition, true); }; }, [boundaryRef]);
   useEffect(() => { const close = (event: KeyboardEvent) => { if (event.key === "Escape") onClose(); }; document.addEventListener("keydown", close); return () => document.removeEventListener("keydown", close); }, [onClose]);
   const code = normalizeCountryCode(stamp.code);
-  return <div className="passport-country-popover" role="dialog" aria-modal="false" onPointerDown={(event) => event.stopPropagation()}><button type="button" aria-label="Close" onClick={onClose}>×</button><div className="passport-country-popover__heading"><CountryFlag code={code} /><h3>{countryName(code)}</h3></div><div className="passport-country-popover__stat"><span><T id="passport.totalVisits" /></span><strong>{stats?.count ?? 0}</strong></div><dl><div><dt><T id="passport.firstVisit" /></dt><dd>{stats?.first ? <LocalizedDate value={stats.first} /> : "—"}</dd></div><div><dt><T id="passport.latestVisit" /></dt><dd>{stats?.latest ? <LocalizedDate value={stats.latest} /> : "—"}</dd></div></dl><Link className="passport-country-popover__link" href={`/flights?destinationCountry=${encodeURIComponent(code)}&status=completed`} onClick={onClose}><T id="passport.relatedFlights" /> <span aria-hidden="true">→</span></Link></div>;
+  return <div ref={popupRef} style={position} className="passport-country-popover" role="dialog" aria-modal="false" onPointerDown={(event) => event.stopPropagation()}><button type="button" aria-label="Close" onClick={onClose}>×</button><div className="passport-country-popover__heading"><CountryFlag code={code} /><h3>{countryName(code)}</h3></div><div className="passport-country-popover__stat"><span><T id="passport.totalVisits" /></span><strong>{stats?.count ?? 0}</strong></div><dl><div><dt><T id="passport.firstVisit" /></dt><dd>{stats?.first ? <LocalizedDate value={stats.first} /> : "—"}</dd></div><div><dt><T id="passport.latestVisit" /></dt><dd>{stats?.latest ? <LocalizedDate value={stats.latest} /> : "—"}</dd></div></dl><Link className="passport-country-popover__link" href={`/flights?destinationCountry=${encodeURIComponent(code)}&status=completed`} onClick={onClose}><T id="passport.relatedFlights" /> <span aria-hidden="true">→</span></Link></div>;
 }

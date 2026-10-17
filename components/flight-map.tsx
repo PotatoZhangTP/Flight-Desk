@@ -3,13 +3,15 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import maplibregl, { Map as MapLibreMap } from "maplibre-gl";
-import { T } from "@/components/i18n";
+import { T, useLanguage } from "@/components/i18n";
 import type { FlightMapData } from "@/lib/flight-map-data";
 
 const styleUrl = process.env.NEXT_PUBLIC_MAP_STYLE_URL;
 const escapeHtml = (value: unknown) => String(value ?? "").replace(/[&<>'"]/g, character => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" }[character] ?? character));
 
 export function FlightMap({ data, compact = false, defaultMode, persistMode = true }: { data: FlightMapData; compact?: boolean; defaultMode?: "2d" | "3d"; persistMode?: boolean }) {
+  const { locale } = useLanguage();
+  const relatedFlightsLabel = locale === "zh-CN" ? "相关航班" : "Related Flights";
   const container = useRef<HTMLDivElement>(null);
   const map = useRef<MapLibreMap | null>(null);
   const [mode, setMode] = useState<"2d" | "3d">(() => defaultMode ?? (typeof window !== "undefined" && localStorage.getItem("flightdesk-map-mode") === "3d" ? "3d" : "2d"));
@@ -45,7 +47,7 @@ export function FlightMap({ data, compact = false, defaultMode, persistMode = tr
           instance.addLayer({ id: "flight-airports", type: "circle", source: "flight-airports", paint: { "circle-color": "#7554C8", "circle-radius": compact ? 4 : 6, "circle-stroke-color": "#fff", "circle-stroke-width": 1.5 } });
           instance.resize();
           loaded = true;
-          instance.on("click", "flight-airports", event => { const feature = event.features?.[0]; if (!feature || feature.geometry.type !== "Point") return; const props = feature.properties ?? {}; const code = String(props.code || props.icao || props.iata || "").trim().toUpperCase(); const countryCode = String(props.countryCode || "").trim().toLowerCase(); const location = [props.municipality, props.countryName].filter(Boolean).join(", "); const flag = /^[a-z]{2}$/.test(countryCode) ? `<span class="fi fi-${escapeHtml(countryCode)}" aria-hidden="true"></span>` : `<span class="flight-airport-popup__flag-fallback" aria-hidden="true">—</span>`; const popupContent = `<div class="flight-airport-popup__header"><span class="flight-airport-popup__flag">${flag}</span><div class="min-w-0"><h3 class="flight-airport-popup__name">${escapeHtml(props.name || "Airport")}</h3><p class="flight-airport-popup__meta">${escapeHtml(props.icao || code || "Airport code unavailable")}${location ? ` · ${escapeHtml(location)}` : ""}</p></div></div><a class="flight-airport-popup__flights" href="/flights?airport=${encodeURIComponent(code)}"><span>Completed Flights</span><strong>${escapeHtml(props.count ?? 0)} <span aria-hidden="true">→</span></strong></a>`; airportPopup?.remove(); airportPopup = new maplibregl.Popup({ closeButton: true, closeOnClick: false, maxWidth: "min(320px, calc(100vw - 32px))", className: "flight-airport-popup" }).setLngLat((feature.geometry as GeoJSON.Point).coordinates as [number, number]).setHTML(popupContent).addTo(instance!); });
+          instance.on("click", "flight-airports", event => { const feature = event.features?.[0]; if (!feature || feature.geometry.type !== "Point") return; const props = feature.properties ?? {}; const code = String(props.code || props.icao || props.iata || "").trim().toUpperCase(); const countryCode = String(props.countryCode || "").trim().toLowerCase(); const location = [props.municipality, props.countryName].filter(Boolean).join(", "); const flag = /^[a-z]{2}$/.test(countryCode) ? `<span class="fi fi-${escapeHtml(countryCode)}" aria-hidden="true"></span>` : `<span class="flight-airport-popup__flag-fallback" aria-hidden="true">—</span>`; const popupContent = `<div class="flight-airport-popup__header"><span class="flight-airport-popup__flag">${flag}</span><div class="min-w-0"><h3 class="flight-airport-popup__name">${escapeHtml(props.name || "Airport")}</h3><p class="flight-airport-popup__meta">${escapeHtml(props.icao || code || "Airport code unavailable")}${location ? ` · ${escapeHtml(location)}` : ""}</p></div></div><a class="flight-airport-popup__flights" href="/flights?airport=${encodeURIComponent(code)}"><span>${escapeHtml(relatedFlightsLabel)}</span><strong>${escapeHtml(props.count ?? 0)} <span aria-hidden="true">→</span></strong></a>`; airportPopup?.remove(); airportPopup = new maplibregl.Popup({ closeButton: true, closeOnClick: false, maxWidth: "min(320px, calc(100vw - 32px))", className: "flight-airport-popup" }).setLngLat((feature.geometry as GeoJSON.Point).coordinates as [number, number]).setHTML(popupContent).addTo(instance!); });
           instance.on("mouseenter", "flight-airports", () => { instance!.getCanvas().style.cursor = "pointer"; });
           instance.on("mouseleave", "flight-airports", () => { instance!.getCanvas().style.cursor = ""; });
           instance.on("click", event => { const features = instance!.queryRenderedFeatures(event.point, { layers: ["flight-airports", "flight-routes"] }); if (!features.length) { airportPopup?.remove(); airportPopup = null; } });
@@ -55,7 +57,7 @@ export function FlightMap({ data, compact = false, defaultMode, persistMode = tr
       instance.on("error", event => { if (!loaded) console.warn("[Flight Map] MapLibre resource error during initialization", event.error); });
       return () => { live = false; resizeObserver?.disconnect(); cleanup(); };
     } catch (exception) { fail("initialization", exception); }
-  }, [data, compact]);
+  }, [data, compact, relatedFlightsLabel]);
 
   useEffect(() => {
     if (!map.current || !ready) return;
