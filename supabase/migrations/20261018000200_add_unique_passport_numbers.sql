@@ -18,6 +18,32 @@ create sequence if not exists public.passport_number_seq
 alter table public.profiles
   add column if not exists passport_number bigint;
 
+do $$
+declare
+  sequence_type regtype;
+  sequence_minimum bigint;
+  sequence_owner name;
+begin
+  select seq.seqtypid::regtype, seq.seqmin, pg_get_userbyid(cls.relowner)
+  into sequence_type, sequence_minimum, sequence_owner
+  from pg_sequence seq
+  join pg_class cls on cls.oid = seq.seqrelid
+  where seq.seqrelid = 'public.passport_number_seq'::regclass;
+
+  if sequence_type is null then
+    raise exception 'Passport migration stopped: passport_number_seq is not a valid sequence';
+  end if;
+
+  if sequence_type <> 'bigint'::regtype or sequence_minimum <> 2 then
+    raise exception 'Passport migration stopped: passport_number_seq must be bigint with MINVALUE 2';
+  end if;
+
+  if not has_sequence_privilege(sequence_owner, 'public.passport_number_seq', 'USAGE') then
+    raise exception 'Passport migration stopped: sequence owner lacks USAGE privilege';
+  end if;
+end;
+$$;
+
 -- Install the guard before backfilling so a repeated run can safely fill only
 -- NULL values. The only permitted transition is NULL -> initial assignment.
 create or replace function public.prevent_passport_number_change()
@@ -38,13 +64,30 @@ $$;
 revoke execute on function public.prevent_passport_number_change() from public, anon, authenticated;
 
 do $$
+declare
+  trigger_is_correct boolean;
 begin
-  if not exists (
+  select exists (
     select 1 from pg_trigger
     where tgrelid = 'public.profiles'::regclass
       and tgname = 'protect_passport_number'
       and not tgisinternal
-  ) then
+      and tgenabled = 'O'
+      and tgfoid = 'public.prevent_passport_number_change()'::regprocedure
+      and tgtype = 19
+      and pg_get_triggerdef(oid) ilike '%before update of passport_number%'
+  ) into trigger_is_correct;
+
+  if not trigger_is_correct then
+    if exists (
+      select 1 from pg_trigger
+      where tgrelid = 'public.profiles'::regclass
+        and tgname = 'protect_passport_number'
+        and not tgisinternal
+    ) then
+      execute 'drop trigger protect_passport_number on public.profiles';
+    end if;
+
     create trigger protect_passport_number
       before update of passport_number on public.profiles
       for each row
@@ -59,7 +102,26 @@ do $$
 declare
   trigger_owner name;
   trigger_is_security_definer boolean;
+  function_definition text;
 begin
+  select pg_get_functiondef('public.handle_new_user()'::regprocedure)
+  into function_definition;
+
+  if function_definition is null then
+    raise exception 'Passport migration stopped: public.handle_new_user() is missing';
+  end if;
+
+  if position(
+    'insert into public.profiles (id, display_name)'
+    in lower(function_definition)
+  ) = 0 then
+    raise exception 'Passport migration stopped: handle_new_user() does not insert the expected Profile fields';
+  end if;
+
+  if function_definition ~* 'passport_number' then
+    raise exception 'Passport migration stopped: handle_new_user() explicitly references passport_number';
+  end if;
+
   if not exists (
     select 1 from pg_trigger
     where tgrelid = 'auth.users'::regclass
@@ -84,6 +146,51 @@ begin
 
   if not has_sequence_privilege(trigger_owner, 'public.passport_number_seq', 'USAGE') then
     raise exception 'Passport migration stopped: auth trigger owner lacks sequence USAGE privilege';
+  end if;
+
+  if exists (
+    select 1 from pg_trigger
+    where tgrelid = 'auth.users'::regclass
+      and not tgisinternal
+      and tgfoid = 'public.handle_new_user()'::regprocedure
+      and tgname <> 'on_auth_user_created'
+  ) then
+    raise exception 'Passport migration stopped: multiple Auth triggers call handle_new_user()';
+  end if;
+end;
+$$;
+
+do $$
+declare
+  trigger_is_correct boolean;
+begin
+  select exists (
+    select 1 from pg_trigger
+    where tgrelid = 'auth.users'::regclass
+      and tgname = 'on_auth_user_created'
+      and not tgisinternal
+      and tgenabled = 'O'
+      and tgfoid = 'public.handle_new_user()'::regprocedure
+      and (tgtype & 1) <> 0
+      and (tgtype & 2) = 0
+      and (tgtype & 4) <> 0
+      and (tgtype & 24) = 0
+  ) into trigger_is_correct;
+
+  if not trigger_is_correct then
+    if exists (
+      select 1 from pg_trigger
+      where tgrelid = 'auth.users'::regclass
+        and tgname = 'on_auth_user_created'
+        and not tgisinternal
+    ) then
+      execute 'drop trigger on_auth_user_created on auth.users';
+    end if;
+
+    create trigger on_auth_user_created
+      after insert on auth.users
+      for each row
+      execute function public.handle_new_user();
   end if;
 end;
 $$;
@@ -158,6 +265,47 @@ begin
   end if;
 end;
 $$;
+
+do $$
+declare
+  profile_trigger_owner name;
+begin
+  if not (
+    select relrowsecurity
+    from pg_class
+    where oid = 'public.profiles'::regclass
+  ) then
+    raise exception 'Passport migration stopped: profiles RLS is disabled';
+  end if;
+
+  if exists (
+    select 1
+    from pg_policies
+    where schemaname = 'public'
+      and tablename = 'profiles'
+      and cmd in ('INSERT', 'ALL')
+  ) then
+    raise exception 'Passport migration stopped: profiles has an INSERT/ALL RLS policy';
+  end if;
+
+  select pg_get_userbyid(proowner)
+  into profile_trigger_owner
+  from pg_proc
+  where oid = 'public.handle_new_user()'::regprocedure;
+
+  if not has_table_privilege(
+    profile_trigger_owner,
+    'public.profiles',
+    'INSERT'
+  ) then
+    raise exception 'Passport migration stopped: Auth trigger owner lacks profiles INSERT privilege';
+  end if;
+end;
+$$;
+
+-- Auth creates Profiles through the SECURITY DEFINER trigger. Direct Profile
+-- insertion by anon/authenticated users is never allowed.
+revoke insert on table public.profiles from public, anon, authenticated;
 
 -- Reserve the two designated values only when those profiles are still NULL.
 -- Existing values are never overwritten.
