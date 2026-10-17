@@ -1,5 +1,6 @@
 "use client";
 
+import { createPortal } from "react-dom";
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "@/components/navigation-link";
 import { LocalizedDate, T } from "@/components/i18n";
@@ -23,6 +24,7 @@ const stableRandomSeed = (value: string) => {
   return (seed ^ (seed >>> 16)) >>> 0;
 };
 const stampMotifs = ["✈", "☾", "≋", "•••", "◌", "⌁", "✦", "⌇"];
+const countryName = (code: string) => { try { return new Intl.DisplayNames(["en"], { type: "region" }).of(code) || code; } catch { return code; } };
 
 function StampMotif({ code, fallback }: { code: string; fallback: string }) {
   const common = { viewBox: "0 0 32 32", "aria-hidden": true, focusable: false } as const;
@@ -90,6 +92,19 @@ export function AviationPassport({ displayName, avatarUrl, passportNumber, membe
   const [pageInput, setPageInput] = useState("1");
   const [theme, setTheme] = useState<keyof typeof themes>("navy");
   const stamps = useMemo(() => makeStamps(flights), [flights]);
+  const countryVisits = useMemo(() => {
+    const visits = new Map<string, { count: number; first: string | null; latest: string | null }>();
+    for (const flight of flights) {
+      const code = normalizeCountryCode(flight.arrival_country_code);
+      if (!/^[A-Z]{2}$/.test(code)) continue;
+      const current = visits.get(code) ?? { count: 0, first: null, latest: null };
+      current.count += 1;
+      if (!current.first || flight.flight_date < current.first) current.first = flight.flight_date;
+      if (!current.latest || flight.flight_date > current.latest) current.latest = flight.flight_date;
+      visits.set(code, current);
+    }
+    return visits;
+  }, [flights]);
   const [cover, metal] = themes[theme];
   const stampPages = useMemo(() => {
     const pages: Stamp[][] = [];
@@ -195,7 +210,7 @@ export function AviationPassport({ displayName, avatarUrl, passportNumber, membe
   useEffect(() => {
     function outside(event: PointerEvent) {
       const target = event.target as Node, book = root.current?.querySelector(".passport-book-v3");
-      if (target instanceof Element && target.closest(".passport-customizer, .passport-popover, .passport-page-jump, button, a")) return;
+      if (target instanceof Element && target.closest(".passport-customizer, .passport-popover, .passport-country-popover, .passport-page-jump, button, a")) return;
       if (root.current?.contains(target) && book && !book.contains(target)) {
         if (selected) setSelected(null);
         else if (phase === "open") requestClose();
@@ -219,7 +234,7 @@ export function AviationPassport({ displayName, avatarUrl, passportNumber, membe
       const yMargin = Math.max(14, shapeYMargin + sizeMargin);
       const x = Math.max(xMargin, Math.min(100 - xMargin, slot[0] + positionSeed % 5 - 2));
       const y = Math.max(yMargin, Math.min(100 - yMargin, slot[1] + Math.floor(positionSeed / 5) % 5 - 2));
-      return <button key={stamp.code} type="button" className={`passport-stamp ${stamp.tone} ${stamp.shape} ${stamp.size} ${stamp.line} ${stamp.layout}`} style={{ "--stamp-x": `${x}%`, "--stamp-y": `${y}%`, "--stamp-rotation": `${stamp.rotation}deg` } as React.CSSProperties} onClick={(event) => { event.stopPropagation(); setSelected(stamp); }}><span className="passport-stamp-label"><span>ENTRY</span><span>STAMP</span></span><span className="passport-stamp-flag"><CountryFlag code={stamp.code} /></span><span className="passport-stamp-motif"><StampMotif code={stamp.code} fallback={stamp.motif} /></span><span className="passport-stamp-date"><LocalizedDate value={stamp.first} /></span></button>;
+      return <button key={stamp.code} type="button" className={`passport-stamp ${stamp.tone} ${stamp.shape} ${stamp.size} ${stamp.line} ${stamp.layout}`} style={{ "--stamp-x": `${x}%`, "--stamp-y": `${y}%`, "--stamp-rotation": `${stamp.rotation}deg` } as React.CSSProperties} onClick={(event) => { event.stopPropagation(); }}><span className="passport-stamp-label"><span>ENTRY</span><span>STAMP</span></span><span className="passport-stamp-flag" role="button" tabIndex={0} onClick={(event) => { event.preventDefault(); event.stopPropagation(); setSelected(stamp); }} onPointerDown={(event) => event.stopPropagation()} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); setSelected(stamp); } }}><CountryFlag code={stamp.code} /></span><span className="passport-stamp-motif"><StampMotif code={stamp.code} fallback={stamp.motif} /></span><span className="passport-stamp-date"><LocalizedDate value={stamp.first} /></span></button>;
     })}</div>{!stamps.length && index === 0 && <div className="passport-empty"><T id="passport.empty" /><Link href="/flights/new" className="button-primary mt-4"><T id="map.addFirstFlight" /></Link></div>}</div>;
   };
   const identityPage = <div className="passport-page passport-identity"><div className="passport-identity-heading"><p className="passport-eyebrow"><T id="passport.passportNo" /></p><span className="passport-identity-number">{passportNo}</span></div><div className="passport-identity-profile"><div className="passport-holder"><div className="passport-holder-name"><h3>{passportHolderName || <T id="passport.defaultUser" />}</h3>{isDefaultHolderName && <Link href="/settings?section=account" className="passport-name-alert" aria-label="Set Your Username In Settings"><span aria-hidden="true">!</span><span className="passport-name-tooltip"><T id="passport.setUsernameHint" /></span></Link>}</div></div><div className="passport-photo" aria-label="Profile Photo">{avatarUrl ? <img src={avatarUrl} alt={passportHolderName || "User"} /> : <svg viewBox="0 0 64 84" aria-hidden="true"><circle cx="32" cy="28" r="13" /><path d="M10 76c1-18 9-27 22-27s21 9 22 27" /></svg>}</div></div><dl><div><dt><T id="passport.memberSince" /></dt><dd><LocalizedDate value={memberSince} /></dd></div><div><dt><T id="passport.totalFlights" /></dt><dd>{totalFlights}</dd></div><div><dt><T id="passport.countriesVisited" /></dt><dd>{countries}</dd></div><div><dt><T id="passport.flightTime" /></dt><dd>{Math.floor(minutes / 60)}h {minutes % 60}m</dd></div></dl></div>;
@@ -282,6 +297,12 @@ export function AviationPassport({ displayName, avatarUrl, passportNumber, membe
       </div>
       <div className="passport-spine-v2" />
     </div></div></div>
-    {selected && <div className="passport-popover" role="dialog"><button type="button" aria-label="Close" onClick={() => setSelected(null)}>×</button><h3>{selected.code}</h3><p><T id="passport.totalVisits" />: {selected.visits}</p><p><T id="passport.firstVisit" />: <LocalizedDate value={selected.first} /></p><p><T id="passport.latestVisit" />: <LocalizedDate value={selected.latest} /></p><p><T id="passport.relatedFlights" />: {selected.flights}</p></div>}
+    {selected && typeof document !== "undefined" && createPortal(<CountryPopup stamp={selected} stats={countryVisits.get(selected.code)} onClose={() => setSelected(null)} />, document.body)}
   </section>;
+}
+
+function CountryPopup({ stamp, stats, onClose }: { stamp: Stamp; stats?: { count: number; first: string | null; latest: string | null }; onClose: () => void }) {
+  useEffect(() => { const close = (event: KeyboardEvent) => { if (event.key === "Escape") onClose(); }; document.addEventListener("keydown", close); return () => document.removeEventListener("keydown", close); }, [onClose]);
+  const code = normalizeCountryCode(stamp.code);
+  return <div className="passport-country-popover" role="dialog" aria-modal="false" onPointerDown={(event) => event.stopPropagation()}><button type="button" aria-label="Close" onClick={onClose}>×</button><div className="passport-country-popover__heading"><CountryFlag code={code} /><h3>{countryName(code)}</h3></div><div className="passport-country-popover__stat"><span><T id="passport.totalVisits" /></span><strong>{stats?.count ?? 0}</strong></div><dl><div><dt><T id="passport.firstVisit" /></dt><dd>{stats?.first ? <LocalizedDate value={stats.first} /> : "—"}</dd></div><div><dt><T id="passport.latestVisit" /></dt><dd>{stats?.latest ? <LocalizedDate value={stats.latest} /> : "—"}</dd></div></dl><Link className="passport-country-popover__link" href={`/flights?destinationCountry=${encodeURIComponent(code)}&status=completed`} onClick={onClose}><T id="passport.relatedFlights" /> <span aria-hidden="true">→</span></Link></div>;
 }

@@ -81,6 +81,22 @@
 .flight-airport-popup__flights { display: flex; align-items: center; justify-content: space-between; gap: 12px; border-top: 1px solid var(--line); padding: 12px 16px; color: var(--brand); font-size: .8rem; font-weight: 600; text-decoration: none; }
 .flight-airport-popup__flights:hover { background: var(--brand-soft); }
 .flight-airport-popup__flights strong { font-size: 1.1rem; }
+.passport-stamp-flag { cursor: pointer; border-radius: 4px; transition: transform 150ms ease, opacity 150ms ease; }
+.passport-stamp-flag:hover, .passport-stamp-flag:focus-visible { transform: scale(1.08); opacity: .82; outline: 2px solid currentColor; outline-offset: 3px; }
+.passport-country-popover { position: fixed; z-index: 1000; top: 50%; left: 50%; width: min(320px, calc(100vw - 32px)); transform: translate(-50%, -50%); border: 1px solid var(--line-strong); border-radius: 14px; background: var(--surface); color: var(--ink); box-shadow: 0 12px 28px rgb(32 27 51 / 14%); }
+.passport-country-popover > button { position: absolute; top: 5px; right: 5px; width: 40px; height: 40px; border-radius: 999px; color: var(--muted); font-size: 22px; line-height: 1; }
+.passport-country-popover > button:hover { background: var(--brand-soft); color: var(--brand); }
+.passport-country-popover__heading { display: flex; align-items: center; gap: 12px; padding: 18px 52px 14px 16px; }
+.passport-country-popover__heading .country-flag { font-size: 1.6rem; }
+.passport-country-popover__heading h3 { margin: 0; color: var(--heading); font-size: 1rem; font-weight: 700; }
+.passport-country-popover__stat { display: flex; align-items: center; justify-content: space-between; gap: 12px; border-top: 1px solid var(--line); padding: 13px 16px; color: var(--brand); }
+.passport-country-popover__stat strong { font-size: 1.25rem; }
+.passport-country-popover dl { margin: 0; padding: 0 16px 12px; }
+.passport-country-popover dl div { display: flex; justify-content: space-between; gap: 12px; padding: 5px 0; font-size: .8rem; }
+.passport-country-popover dt { color: var(--muted); }
+.passport-country-popover dd { margin: 0; color: var(--ink); font-weight: 600; }
+.passport-country-popover__link { display: flex; align-items: center; justify-content: space-between; gap: 12px; border-top: 1px solid var(--line); padding: 12px 16px; color: var(--brand); font-size: .8rem; font-weight: 700; text-decoration: none; }
+.passport-country-popover__link:hover { background: var(--brand-soft); }
 body { margin: 0; background: var(--cream); color: var(--ink); font-family: Arial, Helvetica, sans-serif; }
 /* Shared public-site grid; padding is part of the container at every breakpoint. */
 :root { --site-width: 1440px; --site-gutter: 16px; }
