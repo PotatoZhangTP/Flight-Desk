@@ -1,6 +1,8 @@
--- Assign immutable, sequential Aviation Passport numbers.
--- 000000 and 000001 are reserved for the two designated accounts; all other
--- profiles are ordered by the Supabase Auth registration timestamp.
+-- Immutable Aviation Passport numbers.
+--
+-- This migration is intentionally fail-closed. It never rewrites a non-NULL
+-- passport_number. If either reserved account is missing, or existing data
+-- conflicts with the reserved values, the migration aborts for review.
 
 create sequence if not exists public.passport_number_seq
   as bigint
@@ -10,8 +12,79 @@ create sequence if not exists public.passport_number_seq
 alter table public.profiles
   add column if not exists passport_number bigint;
 
-drop trigger if exists protect_passport_number on public.profiles;
+do $$
+declare
+  missing_email text;
+begin
+  for missing_email in
+    select reserved.email
+    from (values
+      ('ericz4118@outlook.com'::text),
+      ('zhangtuopueric@outlook.com'::text)
+    ) as reserved(email)
+    where not exists (
+      select 1
+      from auth.users as auth_user
+      join public.profiles as profile on profile.id = auth_user.id
+      where lower(auth_user.email) = reserved.email
+    )
+  loop
+    raise exception 'Reserved passport account is missing from auth.users/profiles: %', missing_email;
+  end loop;
 
+  if exists (
+    select 1 from public.profiles
+    where passport_number is not null and passport_number < 0
+  ) then
+    raise exception 'Passport migration stopped: negative passport_number exists';
+  end if;
+
+  if exists (
+    select 1 from public.profiles
+    group by passport_number
+    having passport_number is not null and count(*) > 1
+  ) then
+    raise exception 'Passport migration stopped: duplicate passport_number exists';
+  end if;
+
+  if exists (
+    select 1
+    from public.profiles as profile
+    join auth.users as auth_user on auth_user.id = profile.id
+    where lower(auth_user.email) = 'ericz4118@outlook.com'
+      and profile.passport_number is not null
+      and profile.passport_number <> 0
+  ) then
+    raise exception 'Passport migration stopped: reserved admin account does not have passport_number 0';
+  end if;
+
+  if exists (
+    select 1
+    from public.profiles as profile
+    join auth.users as auth_user on auth_user.id = profile.id
+    where lower(auth_user.email) = 'zhangtuopueric@outlook.com'
+      and profile.passport_number is not null
+      and profile.passport_number <> 1
+  ) then
+    raise exception 'Passport migration stopped: reserved test account does not have passport_number 1';
+  end if;
+
+  if exists (
+    select 1
+    from public.profiles as profile
+    left join auth.users as auth_user on auth_user.id = profile.id
+    where profile.passport_number in (0, 1)
+      and coalesce(lower(auth_user.email), '') not in (
+        'ericz4118@outlook.com', 'zhangtuopueric@outlook.com'
+      )
+  ) then
+    raise exception 'Passport migration stopped: a non-reserved account uses passport_number 0 or 1';
+  end if;
+end;
+$$;
+
+-- Reserve the two designated values only when those profiles are still NULL.
+-- Existing values are never overwritten.
 update public.profiles as profile
 set passport_number = case lower(auth_user.email)
   when 'ericz4118@outlook.com' then 0
@@ -19,29 +92,55 @@ set passport_number = case lower(auth_user.email)
 end
 from auth.users as auth_user
 where auth_user.id = profile.id
-  and lower(auth_user.email) in ('ericz4118@outlook.com', 'zhangtuopueric@outlook.com');
+  and profile.passport_number is null
+  and lower(auth_user.email) in (
+    'ericz4118@outlook.com', 'zhangtuopueric@outlook.com'
+  );
 
-with ordered_profiles as (
+-- Fill only NULL values. Existing numbers remain stable; unused numbers are
+-- selected in registration order, starting at 2. Sequence gaps are allowed.
+with null_profiles as (
   select
     profile.id,
     row_number() over (
       order by coalesce(auth_user.created_at, profile.created_at), profile.id
-    ) + 1 as assigned_number
+    ) as ordinal
   from public.profiles as profile
   left join auth.users as auth_user on auth_user.id = profile.id
-  where coalesce(lower(auth_user.email), '') not in (
-    'ericz4118@outlook.com',
-    'zhangtuopueric@outlook.com'
+  where profile.passport_number is null
+    and coalesce(lower(auth_user.email), '') not in (
+      'ericz4118@outlook.com', 'zhangtuopueric@outlook.com'
+    )
+), available_numbers as (
+  select candidate.number, row_number() over (order by candidate.number) as ordinal
+  from generate_series(
+    2::bigint,
+    greatest(
+      2::bigint,
+      coalesce((select max(passport_number) from public.profiles), 1::bigint)
+        + (select count(*) from null_profiles) + 2
+    )
+  ) as candidate(number)
+  where not exists (
+    select 1 from public.profiles as used
+    where used.passport_number = candidate.number
   )
 )
 update public.profiles as profile
-set passport_number = ordered_profiles.assigned_number
-from ordered_profiles
-where profile.id = ordered_profiles.id;
+set passport_number = available_numbers.number
+from null_profiles
+join available_numbers on available_numbers.ordinal = null_profiles.ordinal
+where profile.id = null_profiles.id;
 
+-- Keep the next generated value above every existing value and above the
+-- sequence's current position. Gaps are acceptable for concurrency safety.
 select setval(
   'public.passport_number_seq',
-  greatest(coalesce((select max(passport_number) from public.profiles), 1) + 1, 2),
+  greatest(
+    coalesce((select max(passport_number) from public.profiles), 1) + 1,
+    coalesce((select last_value from public.passport_number_seq), 1) + 1,
+    2
+  ),
   false
 );
 
@@ -55,8 +154,7 @@ create unique index if not exists profiles_passport_number_key
 do $$
 begin
   if not exists (
-    select 1
-    from pg_constraint
+    select 1 from pg_constraint
     where conname = 'profiles_passport_number_nonnegative'
       and conrelid = 'public.profiles'::regclass
   ) then
@@ -66,6 +164,11 @@ begin
   end if;
 end;
 $$;
+
+-- The auth trigger is SECURITY DEFINER, so nextval() executes with the
+-- trigger function owner's sequence privileges. End users receive no
+-- sequence privilege and have no INSERT policy on profiles.
+drop trigger if exists protect_passport_number on public.profiles;
 
 create or replace function public.prevent_passport_number_change()
 returns trigger
