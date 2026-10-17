@@ -119,8 +119,11 @@ export function AviationPassport({ displayName, memberSince, userId, flights, to
     return <div className="passport-page passport-stamps"><p className="passport-eyebrow"><T id="passport.stamps" /> · {index + 1}</p><div className="passport-stamp-field">{pageStamps.map((stamp, stampIndex) => {
       const slot = slots[stampIndex];
       const positionSeed = hash(`${userId}:${index}:${stamp.code}:${stampIndex}`);
-      const x = Math.max(17, Math.min(83, slot[0] + positionSeed % 5 - 2));
-      const y = Math.max(16, Math.min(84, slot[1] + Math.floor(positionSeed / 5) % 5 - 2));
+      const stampMargin = stamp.shape === "stamp-triangle" ? 22 : 17;
+      const x = Math.max(stampMargin, Math.min(100 - stampMargin, slot[0] + positionSeed % 5 - 2));
+      const y = stamp.shape === "stamp-triangle"
+        ? Math.max(21, Math.min(79, slot[1] + Math.floor(positionSeed / 5) % 5 - 2))
+        : Math.max(16, Math.min(84, slot[1] + Math.floor(positionSeed / 5) % 5 - 2));
       return <button key={stamp.code} type="button" className={`passport-stamp ${stamp.tone} ${stamp.shape} ${stamp.size} ${stamp.line}`} style={{ "--stamp-x": `${x}%`, "--stamp-y": `${y}%`, "--stamp-rotation": `${stamp.rotation}deg` } as React.CSSProperties} onClick={(event) => { event.stopPropagation(); setSelected(stamp); }}><span className="passport-stamp-label">{stamp.label}</span><span className="passport-stamp-flag" aria-label={stamp.code}>{flagFromCountryCode(stamp.code)}</span><b>{stamp.code}</b><span className="passport-stamp-motif" aria-hidden="true">{stamp.motif}</span><span className="passport-stamp-date"><LocalizedDate value={stamp.first} /></span></button>;
     })}</div>{!stamps.length && index === 0 && <div className="passport-empty"><T id="passport.empty" /><Link href="/flights/new" className="button-primary mt-4"><T id="map.addFirstFlight" /></Link></div>}</div>;
   };
