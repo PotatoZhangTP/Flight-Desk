@@ -273,7 +273,6 @@ button:not(:disabled), summary { cursor: pointer; }
 .passport-customizer-grid { display: grid; grid-template-columns: minmax(210px, .85fr) minmax(260px, 1.15fr); gap: 22px; align-items: stretch; }
 .passport-cover-preview { display: grid; min-height: 360px; place-items: center; border: 1px solid var(--line); border-radius: 14px; background: var(--page); padding: 18px; }
 .passport-preview-cover { position: relative; display: flex; min-width: 190px; width: min(100%, 280px); aspect-ratio: 88 / 125; align-items: center; justify-content: center; overflow: hidden; border: 1px solid color-mix(in srgb, var(--passport-metal) 35%, transparent); border-radius: 7px 12px 12px 7px; background-color: var(--passport-cover); color: var(--passport-metal); }
-.passport-preview-cover::after { content: ""; position: absolute; inset: 9px; border: 1px solid color-mix(in srgb, var(--passport-metal) 20%, transparent); border-radius: 5px 9px 9px 5px; pointer-events: none; }
 .passport-preview-cover .passport-cover-brand { top: 15px; left: 15px; width: min(43%, 100px); }
 .passport-preview-cover .passport-kicker { font-size: clamp(1.1rem, 3vw, 1.75rem); }
 .passport-texture-leather { background-image: repeating-linear-gradient(115deg, color-mix(in srgb, var(--passport-metal) 11%, transparent) 0 1px, transparent 1px 5px); }
@@ -304,6 +303,14 @@ button:not(:disabled), summary { cursor: pointer; }
 .passport-customizer-close:hover { background: var(--brand-soft); color: var(--brand); }
 .passport-customizer-actions { display: grid; grid-template-columns: minmax(0, .78fr) minmax(0, 1.22fr); gap: 10px; }
 .passport-customizer-actions > button { width: 100%; min-width: 0; min-height: 40px; padding-inline: 8px; white-space: nowrap; }
+.passport-reset-modal-backdrop { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; padding: 20px; background: color-mix(in srgb, #000 24%, transparent); }
+.passport-reset-modal { width: min(420px, calc(100vw - 32px)); border: 1px solid var(--line); border-radius: 16px; background: var(--surface); padding: 20px; color: var(--ink); box-shadow: 0 18px 50px color-mix(in srgb, #000 22%, transparent); }
+.passport-reset-modal h3 { margin: 0; color: var(--brand); font-size: 1.05rem; }
+.passport-reset-modal p { margin: 8px 0 0; color: var(--muted); font-size: .84rem; line-height: 1.5; }
+.passport-reset-modal-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-top: 18px; }
+.passport-reset-modal-actions button { width: 100%; min-width: 0; min-height: 40px; white-space: nowrap; }
+.passport-reset-confirm { border: 1px solid #b84e5a; border-radius: 999px; background: #b84e5a; color: #fff; font-weight: 700; }
+.passport-reset-confirm:hover { border-color: #a6404c; background: #a6404c; }
 .passport-cover-side.passport-texture-leather, .passport-closed-book-front.passport-texture-leather { background-image: repeating-linear-gradient(115deg, color-mix(in srgb, var(--passport-metal) 11%, transparent) 0 1px, transparent 1px 5px); }
 .passport-cover-side.passport-texture-embossed, .passport-closed-book-front.passport-texture-embossed { background-image: repeating-linear-gradient(45deg, transparent 0 8px, color-mix(in srgb, var(--passport-metal) 9%, transparent) 8px 9px); }
 .passport-cover-side.passport-texture-linen, .passport-closed-book-front.passport-texture-linen { background-image: repeating-linear-gradient(0deg, color-mix(in srgb, var(--passport-metal) 9%, transparent) 0 1px, transparent 1px 4px), repeating-linear-gradient(90deg, color-mix(in srgb, var(--passport-metal) 7%, transparent) 0 1px, transparent 1px 4px); }
@@ -315,7 +322,6 @@ button:not(:disabled), summary { cursor: pointer; }
 .passport-cover-side.passport-texture-passport-weave, .passport-closed-book-front.passport-texture-passport-weave { background-image: repeating-linear-gradient(25deg, transparent 0 13px, color-mix(in srgb, var(--passport-metal) 8%, transparent) 13px 14px), repeating-linear-gradient(155deg, transparent 0 13px, color-mix(in srgb, var(--passport-metal) 5%, transparent) 13px 14px); }
 .passport-kicker { font-family: Georgia, "Times New Roman", serif; font-size: clamp(1.45rem, 3.5vw, 2.05rem); line-height: 1.08; letter-spacing: .14em; text-align: center; }
 .passport-cover-side { gap: 26px; }
-.passport-cover-outer::after, .passport-closed-book-front::after { content: ""; position: absolute; inset: 9px; border: 1px solid color-mix(in srgb, var(--passport-metal) 18%, transparent); border-radius: 5px 9px 9px 5px; pointer-events: none; }
 .passport-stamps { background: var(--passport-inner-bg, #f7f0df); }
 .passport-stamps.passport-texture-leather { background-image: repeating-linear-gradient(115deg, color-mix(in srgb, var(--passport-inner-texture) 11%, transparent) 0 1px, transparent 1px 5px); }
 .passport-stamps.passport-texture-embossed { background-image: repeating-linear-gradient(45deg, transparent 0 8px, color-mix(in srgb, var(--passport-inner-texture) 9%, transparent) 8px 9px); }
