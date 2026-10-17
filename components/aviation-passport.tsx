@@ -21,7 +21,26 @@ function StampMotif({ code, fallback }: { code: string; fallback: string }) {
   if (code === "CN") return <svg {...common}><path d="M3 24c5-1 6-5 10-5s5 3 9 2 4-4 7-5M6 22v-6h5v4M20 20v-7h5v5M8 16l1-4 2 4M21 13l2-4 2 4" /><path d="M4 27h24" /></svg>;
   if (code === "JP") return <svg {...common}><path d="M6 10h20M9 10v15M23 10v15M4 7h24M12 13l4 4 4-4" /><circle cx="16" cy="5" r="2" /></svg>;
   if (code === "FR") return <svg {...common}><path d="M16 3l-3 10-5 15M16 3l3 10 5 15M10 20h12M7 28h18M13 13h6" /></svg>;
-  return <svg {...common}><path d="M4 19c7-8 17-9 24-3" /><path d="M18 9l7 6-8 2-4 7-2-1 2-7-6-3 1-2 7 1z" /><circle cx="6" cy="21" r="1" /><circle cx="27" cy="11" r="1" /><text x="16" y="30" textAnchor="middle">{fallback}</text></svg>;
+  if (code === "GB") return <svg {...common}><path d="M10 28h12M12 28V8h8v20M14 5h4v3M14 12h4M14 17h4M14 22h4" /><circle cx="16" cy="14.5" r="1.7" /></svg>;
+  if (code === "DE") return <svg {...common}><path d="M4 27h24M7 24h18M8 12h16M10 12V24M15 12V24M20 12V24M25 12V24M6 12l10-7 10 7" /></svg>;
+  if (code === "KR") return <svg {...common}><path d="M6 26h20M9 26V14h14v12M7 14h18M10 11h12M12 8h8M14 5h4M12 18h8M12 22h8" /><path d="M8 11l4 3M24 11l-4 3" /></svg>;
+  if (code === "CA") return <svg {...common}><path d="M16 3l2 6 4-2-1 5 5 1-4 4 2 3-6-1v9h-4v-9l-6 1 2-3-4-4 5-1-1-5 4 2z" /></svg>;
+  if (code === "MX") return <svg {...common}><path d="M4 27h24M7 24h18l-3-5H10zM10 19h12l-3-5h-6zM13 14h6l-3-6z" /></svg>;
+  if (code === "BR") return <svg {...common}><path d="M16 5v7M12 8l4 4 4-4M10 12h12M12 12l-2 15M20 12l2 15M8 27h16" /><path d="M4 20c4-3 7-3 11 0s8 3 13 0" /></svg>;
+  if (code === "NL") return <svg {...common}><path d="M12 28h8l-1-15h-6zM16 13V3M16 13L7 8M16 13l9-5M16 13l7 8M16 13l-7 8" /></svg>;
+  if (code === "TH") return <svg {...common}><path d="M5 27h22M8 24h16M10 20h12M12 15h8M14 10h4M16 4v6M8 24l2-4M24 24l-2-4M10 20l2-5M22 20l-2-5" /></svg>;
+  if (code === "TR") return <svg {...common}><path d="M22 8a9 9 0 1 0 0 16 10 10 0 1 1 0-16z" /><path d="M22 13l1.2 2.5 2.8.4-2 2 .5 2.8-2.5-1.3-2.5 1.3.5-2.8-2-2 2.8-.4z" /></svg>;
+  if (code === "VN") return <svg {...common}><path d="M5 27h22M8 24h16M10 20h12M12 15h8M14 10h4M16 4v6" /><path d="M6 27c4-3 7-3 10 0 3-3 6-3 10 0" /></svg>;
+  if (code === "MY") return <svg {...common}><path d="M7 28h7V9h-4v19M18 28h7V9h-4v19M9 9l3-5 3 5M20 9l3-5 3 5M14 18h7" /></svg>;
+  if (code === "ZA") return <svg {...common}><path d="M3 26l8-13 5 7 4-6 9 12zM9 26c4-4 10-4 14 0" /><circle cx="24" cy="7" r="3" /></svg>;
+  if (code === "ES") return <svg {...common}><path d="M6 28h20M8 28V13h5v15M19 28V10h5v18M10 13l1-7 2 7M21 10l1-7 2 7M13 19h6v9" /></svg>;
+  if (code === "IT") return <svg {...common}><path d="M7 27h18M10 27V12h12v15M8 12h16M12 8h8M14 5h4M13 16h6M13 21h6" /></svg>;
+  if (code === "AU") return <svg {...common}><path d="M5 25c3-8 7-12 13-14 4-1 7 1 9 5-3 1-5 3-6 7-5-2-10-1-16 2z" /><path d="M8 9l1-4M6 7l5 1M25 7l1-3M23 5l5 1" /></svg>;
+  const variant = hash(code) % 4;
+  if (variant === 0) return <svg {...common}><path d="M3 25l7-10 5 6 5-9 9 13z" /><path d="M4 28h24" /><text x="16" y="9" textAnchor="middle">{fallback}</text></svg>;
+  if (variant === 1) return <svg {...common}><path d="M3 20c4-4 8-4 12 0s8 4 14 0M3 25c4-4 8-4 12 0s8 4 14 0" /><path d="M16 4v11M11 9l5-5 5 5" /></svg>;
+  if (variant === 2) return <svg {...common}><path d="M5 27h22M8 27V13h5v14M14 27V8h5v19M20 27V16h5v11" /><circle cx="24" cy="7" r="3" /></svg>;
+  return <svg {...common}><circle cx="16" cy="16" r="10" /><path d="M16 3v5M16 24v5M3 16h5M24 16h5M16 16l6-5M16 16l-3 7" /><text x="16" y="19" textAnchor="middle">{fallback}</text></svg>;
 }
 
 const stampSlots: Record<number, Array<[number, number]>> = {
