@@ -336,7 +336,7 @@ button:not(:disabled), summary { cursor: pointer; }
 .passport-book-v3 > .passport-spine-v2::before { content: ""; position: absolute; inset: 0 1px; width: 1px; background: rgba(63,44,22,.72); box-shadow: 1px 0 rgba(255,255,255,.32); }
 .passport-book-v3 > .passport-spine-v2::after { content: ""; position: absolute; top: 0; bottom: 0; left: -3px; width: 1px; background: rgba(72,51,28,.28); box-shadow: 6px 0 rgba(255,255,255,.22); }
 .passport-phase-open .passport-book-v3 > .passport-spine-v2 { opacity: 0; }
-.passport-stage-v3.passport-phase-open::after { content: ""; position: absolute; z-index: 100; top: 0; bottom: 0; left: 50%; width: 1px; pointer-events: none; background: #806744; box-shadow: -1px 0 1px rgba(74,52,29,.2), 1px 0 1px rgba(255,255,255,.45); }
+.passport-stage-v3.passport-phase-open::after, .passport-stage-v3.passport-phase-turning-forward::after, .passport-stage-v3.passport-phase-turning-backward::after { content: ""; position: absolute; z-index: 100; top: 0; bottom: 0; left: 50%; width: 1px; pointer-events: none; background: rgba(150, 119, 77, .72); box-shadow: -1px 0 1px rgba(91,65,34,.1), 1px 0 1px rgba(255,255,255,.38); }
 .passport-phase-turning-forward .passport-book-v3 > .passport-spine-v2, .passport-phase-turning-backward .passport-book-v3 > .passport-spine-v2 { z-index: 30; transform: translateZ(0); }
 .passport-phase-closed .passport-page-sheet-v3, .passport-phase-opening .passport-page-sheet-v3 { pointer-events: none; }
 @keyframes passport-sheet-forward-v3 { from { transform: translateZ(1px) rotateY(0deg); box-shadow: 0 0 0 transparent; } 50% { box-shadow: -10px 0 24px color-mix(in srgb, #000 32%, transparent); } to { transform: translateZ(2px) rotateY(-179.9deg); box-shadow: 0 0 0 transparent; } }
