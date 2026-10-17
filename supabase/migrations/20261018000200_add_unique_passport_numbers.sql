@@ -103,6 +103,7 @@ declare
   trigger_owner name;
   trigger_is_security_definer boolean;
   function_definition text;
+  normalized_definition text;
 begin
   select pg_get_functiondef('public.handle_new_user()'::regprocedure)
   into function_definition;
@@ -111,11 +112,17 @@ begin
     raise exception 'Passport migration stopped: public.handle_new_user() is missing';
   end if;
 
-  if position(
-    'insert into public.profiles (id, display_name)'
-    in lower(function_definition)
-  ) = 0 then
-    raise exception 'Passport migration stopped: handle_new_user() does not insert the expected Profile fields';
+  normalized_definition := regexp_replace(
+    lower(function_definition),
+    '\s+',
+    '',
+    'g'
+  );
+
+  if position('insertintopublic.profiles' in normalized_definition) = 0
+     and position('insertintoprofiles' in normalized_definition) = 0 then
+    raise exception
+      'Passport migration stopped: handle_new_user() does not insert a Profile';
   end if;
 
   if function_definition ~* 'passport_number' then
@@ -379,8 +386,41 @@ $$;
 
 revoke all on sequence public.passport_number_seq from public, anon, authenticated;
 
+do $$
+declare
+  trigger_owner name;
+begin
+  select pg_get_userbyid(proowner)
+  into trigger_owner
+  from pg_proc
+  where oid = 'public.handle_new_user()'::regprocedure;
+
+  if not has_sequence_privilege(
+    trigger_owner,
+    'public.passport_number_seq',
+    'USAGE'
+  ) then
+    raise exception
+      'Passport migration stopped: Auth trigger owner lost Sequence USAGE after REVOKE';
+  end if;
+
+  if has_sequence_privilege(
+    'authenticated',
+    'public.passport_number_seq',
+    'USAGE'
+  ) or has_sequence_privilege(
+    'anon',
+    'public.passport_number_seq',
+    'USAGE'
+  ) then
+    raise exception
+      'Passport migration stopped: ordinary roles still have Sequence USAGE';
+  end if;
+end;
+$$;
+
 -- Advance the sequence only when its next value could collide. In particular,
--- a repeated migration must not call setval() unnecessarily. is_called=false
+-- a repeated migration must not reset the sequence unnecessarily. is_called=false
 -- means last_value itself is returned by the next nextval(); is_called=true
 -- means nextval() returns last_value + 1.
 do $$
@@ -404,10 +444,9 @@ begin
   end;
 
   if next_available < greatest(required_next, 2) then
-    perform setval(
-      'public.passport_number_seq',
-      greatest(required_next, 2),
-      false
+    execute format(
+      'alter sequence public.passport_number_seq restart with %s',
+      greatest(required_next, 2)
     );
   end if;
 end;
