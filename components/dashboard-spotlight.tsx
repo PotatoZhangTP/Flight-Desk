@@ -7,7 +7,7 @@ export function DashboardSpotlight() {
     const finePointer = window.matchMedia("(hover: hover) and (pointer: fine)");
     if (!finePointer.matches) return;
     const move = (event: PointerEvent) => {
-      const card = (event.target as Element | null)?.closest<HTMLElement>(".spotlight-card");
+      const card = (event.target as Element | null)?.closest<HTMLElement>(".spotlight-card, .spotlight-card-selected");
       if (!card) return;
       const rect = card.getBoundingClientRect();
       card.style.setProperty("--spotlight-x", `${event.clientX - rect.left}px`);
@@ -15,7 +15,7 @@ export function DashboardSpotlight() {
       card.dataset.spotlightActive = "true";
     };
     const leave = (event: PointerEvent) => {
-      const card = (event.target as Element | null)?.closest<HTMLElement>(".spotlight-card");
+      const card = (event.target as Element | null)?.closest<HTMLElement>(".spotlight-card, .spotlight-card-selected");
       if (card && !card.contains(event.relatedTarget as Node | null)) delete card.dataset.spotlightActive;
     };
     document.addEventListener("pointermove", move, { passive: true });
