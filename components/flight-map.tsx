@@ -65,7 +65,7 @@ export function FlightMap({ data, compact = false, defaultMode, persistMode = tr
 
   if (!styleUrl) return <div className="grid h-full min-h-[260px] place-items-center rounded-2xl border border-dashed border-line bg-page p-6 text-center text-sm text-muted"><T id="map.styleMissing" /></div>;
   if (error) return <div role="alert" className="flight-map-shell grid h-full min-h-[260px] place-items-center overflow-hidden rounded-2xl border border-danger-line bg-danger-bg p-6 text-center text-sm text-danger-fg"><div><T id="map.loadError" /><Link href="/flight-map" className="button-secondary mt-4"><T id="common.retry" /></Link></div></div>;
-  return <div className="flight-map-shell flex h-full min-h-0 flex-col overflow-hidden rounded-2xl" style={{ minHeight: compact ? "0" : "590px" }}>
+  return <div className={`flight-map-shell flex min-h-0 flex-col overflow-hidden rounded-2xl ${compact ? "h-full" : "h-[590px]"}`}>
     <div className="relative min-h-0 flex-1">
       <div ref={container} className="absolute inset-0 h-full w-full" />
       {!ready && <div className="absolute inset-0 grid place-items-center bg-page/60 text-sm text-muted"><T id="map.loading" /></div>}
