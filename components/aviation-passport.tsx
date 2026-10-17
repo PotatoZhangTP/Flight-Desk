@@ -83,7 +83,7 @@ export function AviationPassport({ displayName, memberSince, userId, flights, to
     let cursor = 0;
     while (cursor < stamps.length) {
       const pageIndex = pages.length;
-      const targetCount = 1 + hash(`${userId}:stamp-page:${pageIndex}`) % 5;
+      const targetCount = 1 + hash(`${userId}:stamp-page:${pageIndex}`) % 3;
       pages.push(stamps.slice(cursor, cursor + targetCount));
       cursor += targetCount;
     }
