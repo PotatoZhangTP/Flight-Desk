@@ -348,6 +348,8 @@ button:not(:disabled), summary { cursor: pointer; }
 .passport-page-sheet-v3.is-turned { transform: translateZ(2px) rotateY(-179.9deg); }
 .passport-page-sheet-v3.turning-forward { animation: passport-sheet-forward-v3 900ms cubic-bezier(.45,.05,.25,1) both; }
 .passport-page-sheet-v3.turning-backward { animation: passport-sheet-backward-v3 900ms cubic-bezier(.45,.05,.25,1) both; }
+.passport-stage-v3.passport-quick-closing .passport-page-sheet-v3.turning-backward { animation-duration: 220ms; }
+.passport-stage-v3.passport-quick-closing .passport-front-cover-v3.closing { animation-duration: 360ms; }
 .passport-ending-assembly-v3 { position: absolute; top: 0; right: 0; width: 50%; height: 100%; transform-origin: left center; transform-style: preserve-3d; will-change: transform; }
 .passport-ending-sheet-v3, .passport-ending-back-cover-v3, .passport-ending-face, .passport-ending-cover-face { position: absolute; inset: 0; transform-style: preserve-3d; -webkit-transform-style: preserve-3d; }
 .passport-ending-face, .passport-ending-cover-face { overflow: hidden; backface-visibility: hidden; -webkit-backface-visibility: hidden; }

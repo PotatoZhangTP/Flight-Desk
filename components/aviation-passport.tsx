@@ -71,6 +71,7 @@ export function AviationPassport({ displayName, memberSince, userId, flights, to
   const root = useRef<HTMLElement>(null);
   const closeRequested = useRef(false);
   const [phase, setPhase] = useState<Phase>("closed");
+  const [quickClosing, setQuickClosing] = useState(false);
   const [turnedSheetCount, setTurnedSheetCount] = useState(0);
   const [turningSheetIndex, setTurningSheetIndex] = useState<number | null>(null);
   const [selected, setSelected] = useState<Stamp | null>(null);
@@ -112,6 +113,7 @@ export function AviationPassport({ displayName, memberSince, userId, flights, to
   const requestClose = () => {
     if (phase !== "open") return;
     setSelected(null);
+    setQuickClosing(true);
     if (turnedSheetCount > 1) { closeRequested.current = true; turnBackward(); }
     else setPhase("closing");
   };
@@ -178,8 +180,8 @@ export function AviationPassport({ displayName, memberSince, userId, flights, to
   return <section ref={root} data-spine-style="crease" className="dashboard-module relative min-w-0 bg-surface" style={{ "--passport-cover": cover, "--passport-metal": metal } as React.CSSProperties}>
     <div className="flex items-center justify-between gap-3"><h2 className="text-xl font-bold"><T id="passport.title" /></h2><button type="button" className="button-secondary" onClick={() => setCustomize((value) => !value)}>◈ <T id="passport.customize" /></button></div>
     {customize && <div className="passport-customizer" role="dialog"><h3><T id="passport.customize" /></h3><p><T id="passport.coverColor" /></p><div className="flex flex-wrap gap-2">{Object.keys(themes).map((key) => <button key={key} type="button" className="passport-swatch" style={{ background: themes[key as keyof typeof themes][0] }} aria-label={key} onClick={() => saveTheme(key as keyof typeof themes)} />)}</div><button type="button" className="button-secondary mt-4" onClick={() => setCustomize(false)}><T id="common.close" /></button></div>}
-    <div className="mt-4 flex min-h-[390px] items-center justify-center"><div className={`passport-stage-v3 passport-phase-${phase}`}><div className="passport-book-v3" onClick={handleBookClick}>
-      <div className={`passport-front-cover-v3 ${phase} ${turnedSheetCount >= 1 ? "is-open" : ""} ${turnedSheetCount > 1 ? "is-behind" : ""}`} onAnimationEnd={(event) => { if (event.currentTarget !== event.target) return; if (phase === "opening") { setTurnedSheetCount(1); setPhase("open"); } if (phase === "closing") { setTurnedSheetCount(0); setPhase("closed"); } }}>
+    <div className="mt-4 flex min-h-[390px] items-center justify-center"><div className={`passport-stage-v3 passport-phase-${phase} ${quickClosing ? "passport-quick-closing" : ""}`}><div className="passport-book-v3" onClick={handleBookClick}>
+      <div className={`passport-front-cover-v3 ${phase} ${turnedSheetCount >= 1 ? "is-open" : ""} ${turnedSheetCount > 1 ? "is-behind" : ""}`} onAnimationEnd={(event) => { if (event.currentTarget !== event.target) return; if (phase === "opening") { setTurnedSheetCount(1); setPhase("open"); } if (phase === "closing") { setTurnedSheetCount(0); setQuickClosing(false); setPhase("closed"); } }}>
         <div className="passport-cover-side passport-cover-outer">{coverFace}</div><div className="passport-cover-side passport-cover-inner">{identityPage}</div>
       </div>
       {Array.from({ length: visaSheetCount }, (_, index) => {
