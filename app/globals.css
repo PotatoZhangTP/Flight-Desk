@@ -260,11 +260,11 @@ button:not(:disabled), summary { cursor: pointer; }
 .stamp-circle { border-radius: 50%; }.stamp-square { border-radius: 8px; }.stamp-triangle { clip-path: polygon(50% 0, 100% 100%, 0 100%); padding-top: 18px; }.stamp-hex { clip-path: polygon(25% 3%, 75% 3%, 100% 50%, 75% 97%, 25% 97%, 0 50%); }
 .passport-stamp b { font-size: 1rem; letter-spacing: .06em; }
 .passport-stamp span { font-size: .58rem; }
-.passport-ending { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; background: #f7f0df; color: #24314c; }
-.passport-ending-rule { width: 54px; height: 1px; margin: 20px 0; background: #b99652; }
+.passport-ending { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; background: var(--passport-inner-bg, #f7f0df); color: var(--passport-inner-metal, #24314c); }
+.passport-ending-rule { width: 54px; height: 1px; margin: 20px 0; background: var(--passport-inner-metal, #b99652); }
 .passport-ending-primary { max-width: 240px; font-family: Georgia, "Times New Roman", serif; font-size: clamp(1.05rem, 2.2vw, 1.45rem); line-height: 1.35; letter-spacing: .025em; }
 .passport-ending-primary > span { display: block; }
-.passport-ending-secondary { max-width: 230px; margin-top: 0; color: #806d4d; font-family: Georgia, "Times New Roman", serif; font-size: clamp(.8rem, 1.6vw, 1rem); line-height: 1.5; }
+.passport-ending-secondary { max-width: 230px; margin-top: 0; color: color-mix(in srgb, var(--passport-inner-metal, #806d4d) 72%, #806d4d); font-family: var(--passport-inner-font, Georgia), "Times New Roman", serif; font-size: clamp(.8rem, 1.6vw, 1rem); line-height: 1.5; }
 .passport-blank { background: #f7f0df; }
 .stamp-blue { color: #3d648b; border-radius: 45%; }.stamp-green { color: #4b775f; border-radius: 40%; }.stamp-purple { color: #704d79; border-radius: 46%; }
 .passport-empty { display: grid; place-items: center; min-height: 180px; text-align: center; font-size: .85rem; color: #806d4d; }
@@ -302,8 +302,8 @@ button:not(:disabled), summary { cursor: pointer; }
 .passport-reset-button:hover { background: #fff1f2; color: #8f3541; }
 .passport-customizer-close { display: grid; width: 40px; height: 40px; flex: none; place-items: center; border-radius: 999px; color: #4b4b55; font-size: 1.25rem; line-height: 1; }
 .passport-customizer-close:hover { background: var(--brand-soft); color: var(--brand); }
-.passport-customizer-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
-.passport-customizer-actions > button { width: 100%; min-height: 40px; white-space: nowrap; }
+.passport-customizer-actions { display: grid; grid-template-columns: minmax(0, .78fr) minmax(0, 1.22fr); gap: 10px; }
+.passport-customizer-actions > button { width: 100%; min-width: 0; min-height: 40px; padding-inline: 8px; white-space: nowrap; }
 .passport-cover-side.passport-texture-leather, .passport-closed-book-front.passport-texture-leather { background-image: repeating-linear-gradient(115deg, color-mix(in srgb, var(--passport-metal) 11%, transparent) 0 1px, transparent 1px 5px); }
 .passport-cover-side.passport-texture-embossed, .passport-closed-book-front.passport-texture-embossed { background-image: repeating-linear-gradient(45deg, transparent 0 8px, color-mix(in srgb, var(--passport-metal) 9%, transparent) 8px 9px); }
 .passport-cover-side.passport-texture-linen, .passport-closed-book-front.passport-texture-linen { background-image: repeating-linear-gradient(0deg, color-mix(in srgb, var(--passport-metal) 9%, transparent) 0 1px, transparent 1px 4px), repeating-linear-gradient(90deg, color-mix(in srgb, var(--passport-metal) 7%, transparent) 0 1px, transparent 1px 4px); }
