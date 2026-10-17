@@ -5,19 +5,33 @@ import Link from "@/components/navigation-link";
 import { LocalizedDate, T } from "@/components/i18n";
 
 type Flight = { id: string; flight_date: string; departure_country_code?: string | null; arrival_country_code?: string | null };
-type Stamp = { code: string; first: string; latest: string; visits: number; flights: number; rotation: number; tone: string; shape: string; size: string; line: string };
+type Stamp = { code: string; first: string; latest: string; visits: number; flights: number; rotation: number; tone: string; shape: string; size: string; line: string; label: string; motif: string };
 type Props = { displayName: string; memberSince: string; userId: string; flights: Flight[]; totalFlights: number; countries: number; minutes: number };
 type Phase = "closed" | "opening" | "open" | "turning-forward" | "turning-backward" | "closing" | "back-cover" | "book-flipping-front";
 
 const themes = { navy: ["#171427", "#d5b36a"], purple: ["#26163d", "#c8b6e9"], green: ["#12352d", "#d0b86b"], burgundy: ["#481d2b", "#e7c18c"], charcoal: ["#202126", "#c7c8d0"] } as const;
 const hash = (value: string) => [...value].reduce((sum, character) => (sum * 31 + character.charCodeAt(0)) % 997, 0);
+const stampLabels = ["ARRIVED", "ENTRY", "IMMIGRATION", "VISA", "TRANSIT"];
+const stampMotifs = ["✈", "★", "⌁", "△", "≋"];
+const countryCodeAliases: Record<string, string> = { USA: "US", GBR: "GB", CHN: "CN", TUR: "TR", MEX: "MX", CHL: "CL", MYS: "MY", VNM: "VN", ZAF: "ZA", THA: "TH" };
+const normalizeCountryCode = (value: string) => countryCodeAliases[value.toUpperCase()] ?? value.toUpperCase();
+const flagFromCountryCode = (value: string) => /^[A-Z]{2}$/.test(value) ? String.fromCodePoint(...[...value].map((character) => 127397 + character.charCodeAt(0))) : value;
+
+const stampSlots: Record<number, Array<[number, number]>> = {
+  1: [[50, 48]],
+  2: [[31, 34], [68, 65]],
+  3: [[28, 28], [70, 39], [45, 73]],
+  4: [[28, 25], [70, 31], [35, 69], [72, 75]],
+  5: [[25, 23], [67, 25], [48, 49], [27, 75], [73, 73]],
+  6: [[23, 22], [51, 29], [78, 23], [28, 70], [55, 75], [79, 66]],
+};
 
 function makeStamps(flights: Flight[]) {
   const stamps = new Map<string, Stamp>();
   for (const flight of [...flights].sort((a, b) => a.flight_date.localeCompare(b.flight_date))) for (const countryCode of [flight.departure_country_code, flight.arrival_country_code]) {
     if (!countryCode) continue;
-    const code = countryCode.toUpperCase(), existing = stamps.get(code), seed = hash(code);
-    if (!existing) stamps.set(code, { code, first: flight.flight_date, latest: flight.flight_date, visits: 1, flights: 1, rotation: seed % 21 - 10, tone: ["stamp-red", "stamp-blue", "stamp-green", "stamp-purple", "stamp-slate", "stamp-brown", "stamp-brass", "stamp-teal", "stamp-mauve"][seed % 9], shape: ["stamp-circle", "stamp-square", "stamp-rounded", "stamp-hex", "stamp-octagon", "stamp-ellipse"][seed % 6], size: ["stamp-small", "stamp-medium", "stamp-large"][seed % 3], line: ["stamp-single", "stamp-double", "stamp-dashed", "stamp-heavy"][seed % 4] });
+    const code = normalizeCountryCode(countryCode), existing = stamps.get(code), seed = hash(code);
+    if (!existing) stamps.set(code, { code, first: flight.flight_date, latest: flight.flight_date, visits: 1, flights: 1, rotation: seed % 25 - 12, tone: ["stamp-red", "stamp-blue", "stamp-green", "stamp-purple", "stamp-slate", "stamp-brown", "stamp-brass", "stamp-teal", "stamp-mauve"][seed % 9], shape: ["stamp-circle", "stamp-square", "stamp-rounded", "stamp-hex", "stamp-octagon", "stamp-ellipse", "stamp-oblong", "stamp-triangle"][seed % 8], size: ["stamp-small", "stamp-medium", "stamp-large"][seed % 3], line: ["stamp-single", "stamp-double", "stamp-dashed", "stamp-heavy", "stamp-notched"][seed % 5], label: stampLabels[seed % stampLabels.length], motif: stampMotifs[(seed * 7) % stampMotifs.length] });
     else { existing.latest = flight.flight_date; existing.flights += 1; if (existing.latest !== existing.first) existing.visits += 1; }
   }
   return [...stamps.values()];
@@ -99,11 +113,21 @@ export function AviationPassport({ displayName, memberSince, userId, flights, to
     document.addEventListener("pointerdown", outside); return () => document.removeEventListener("pointerdown", outside);
   }, [phase, selected, turnedSheetCount]);
 
-  const stampPage = (index: number) => <div className="passport-page passport-stamps"><p className="passport-eyebrow"><T id="passport.stamps" /> · {index + 1}</p><div className="passport-stamp-field">{(stampPages[index] ?? []).map((stamp, stampIndex) => <button key={stamp.code} type="button" className={`passport-stamp ${stamp.tone} ${stamp.shape} ${stamp.size} ${stamp.line}`} style={{ "--stamp-index": stampIndex, "--stamp-count": (stampPages[index] ?? []).length, "--stamp-rotation": `${stamp.rotation}deg` } as React.CSSProperties} onClick={(event) => { event.stopPropagation(); setSelected(stamp); }}><b>{stamp.code}</b><span><LocalizedDate value={stamp.first} /></span></button>)}</div>{!stamps.length && index === 0 && <div className="passport-empty"><T id="passport.empty" /><Link href="/flights/new" className="button-primary mt-4"><T id="map.addFirstFlight" /></Link></div>}</div>;
+  const stampPage = (index: number) => {
+    const pageStamps = stampPages[index] ?? [];
+    const slots = stampSlots[Math.max(1, pageStamps.length)] ?? stampSlots[6];
+    return <div className="passport-page passport-stamps"><p className="passport-eyebrow"><T id="passport.stamps" /> · {index + 1}</p><div className="passport-stamp-field">{pageStamps.map((stamp, stampIndex) => {
+      const slot = slots[stampIndex];
+      const positionSeed = hash(`${userId}:${index}:${stamp.code}:${stampIndex}`);
+      const x = Math.max(17, Math.min(83, slot[0] + positionSeed % 5 - 2));
+      const y = Math.max(16, Math.min(84, slot[1] + Math.floor(positionSeed / 5) % 5 - 2));
+      return <button key={stamp.code} type="button" className={`passport-stamp ${stamp.tone} ${stamp.shape} ${stamp.size} ${stamp.line}`} style={{ "--stamp-x": `${x}%`, "--stamp-y": `${y}%`, "--stamp-rotation": `${stamp.rotation}deg` } as React.CSSProperties} onClick={(event) => { event.stopPropagation(); setSelected(stamp); }}><span className="passport-stamp-label">{stamp.label}</span><span className="passport-stamp-flag" aria-label={stamp.code}>{flagFromCountryCode(stamp.code)}</span><b>{stamp.code}</b><span className="passport-stamp-motif" aria-hidden="true">{stamp.motif}</span><span className="passport-stamp-date"><LocalizedDate value={stamp.first} /></span></button>;
+    })}</div>{!stamps.length && index === 0 && <div className="passport-empty"><T id="passport.empty" /><Link href="/flights/new" className="button-primary mt-4"><T id="map.addFirstFlight" /></Link></div>}</div>;
+  };
   const identityPage = <div className="passport-page passport-identity"><p className="passport-eyebrow"><T id="passport.identity" /></p><h3>Captain {displayName}</h3><dl><div><dt><T id="passport.memberSince" /></dt><dd><LocalizedDate value={memberSince} /></dd></div><div><dt><T id="passport.totalFlights" /></dt><dd>{totalFlights}</dd></div><div><dt><T id="passport.countriesVisited" /></dt><dd>{countries}</dd></div><div><dt><T id="passport.flightTime" /></dt><dd>{Math.floor(minutes / 60)}h {minutes % 60}m</dd></div><div><dt>Passport No.</dt><dd>{passportNo}</dd></div></dl></div>;
   const endingPage = <div className="passport-page passport-ending"><div className="passport-ending-rule" /><p className="passport-ending-primary"><T id="passport.endingPrimary" /></p><p className="passport-ending-secondary"><T id="passport.endingSecondary" /></p></div>;
   const blankPage = <div className="passport-page passport-blank" aria-hidden="true" />;
-  const coverFace = <><img className="passport-cover-art" src="/images/flight-desk-logo.svg" alt="" /><span className="passport-kicker">AVIATION<br />PASSPORT</span></>;
+  const coverFace = <><img className="passport-cover-brand" src="/images/flight-desk-logo-dark.svg" alt="Flight Desk" /><span className="passport-kicker">AVIATION<br />PASSPORT</span></>;
 
   const handleBookClick = (event: React.MouseEvent<HTMLDivElement>) => {
     if (phase === "closed") { setPhase("opening"); return; }
@@ -118,7 +142,7 @@ export function AviationPassport({ displayName, memberSince, userId, flights, to
     else turnForward();
   };
 
-  return <section ref={root} data-spine-style="thread" className="dashboard-module relative min-w-0 bg-surface" style={{ "--passport-cover": cover, "--passport-metal": metal } as React.CSSProperties}>
+  return <section ref={root} data-spine-style="crease" className="dashboard-module relative min-w-0 bg-surface" style={{ "--passport-cover": cover, "--passport-metal": metal } as React.CSSProperties}>
     <div className="flex items-center justify-between gap-3"><h2 className="text-xl font-bold"><T id="passport.title" /></h2><button type="button" className="button-secondary" onClick={() => setCustomize((value) => !value)}>◈ <T id="passport.customize" /></button></div>
     {customize && <div className="passport-customizer" role="dialog"><h3><T id="passport.customize" /></h3><p><T id="passport.coverColor" /></p><div className="flex flex-wrap gap-2">{Object.keys(themes).map((key) => <button key={key} type="button" className="passport-swatch" style={{ background: themes[key as keyof typeof themes][0] }} aria-label={key} onClick={() => saveTheme(key as keyof typeof themes)} />)}</div><button type="button" className="button-secondary mt-4" onClick={() => setCustomize(false)}><T id="common.close" /></button></div>}
     <div className="mt-4 flex min-h-[390px] items-center justify-center"><div className={`passport-stage-v3 passport-phase-${phase}`}><div className="passport-book-v3" onClick={handleBookClick}>
