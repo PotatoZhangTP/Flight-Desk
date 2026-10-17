@@ -232,6 +232,10 @@ dashboard.passportPage|Passport Page|护照页面
 dashboard.passportEmpty|Your completed journeys will appear here as passport stamps.|完成的旅程将在这里生成护照印章。
 passport.title|Aviation Passport|航空护照
 passport.customize|Customize|自定义
+passport.design|Design|设计
+passport.passportDesign|Passport Design|护照设计
+passport.cover|Cover|封面
+passport.innerPages|Inner Pages|内页
 passport.identity|Aviation Identity|航空身份
 passport.passportNo|PASSPORT NO.|护照编号
 passport.defaultUser|USER|用户

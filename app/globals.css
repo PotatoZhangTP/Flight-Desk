@@ -276,11 +276,11 @@ button:not(:disabled), summary { cursor: pointer; }
 .passport-preview-cover::after { content: ""; position: absolute; inset: 9px; border: 1px solid color-mix(in srgb, var(--passport-metal) 20%, transparent); border-radius: 5px 9px 9px 5px; pointer-events: none; }
 .passport-preview-cover .passport-cover-brand { top: 15px; left: 15px; width: min(43%, 100px); }
 .passport-preview-cover .passport-kicker { font-size: clamp(1.1rem, 3vw, 1.75rem); }
-.passport-texture-leather { background-image: repeating-linear-gradient(115deg, color-mix(in srgb, var(--passport-metal) 5%, transparent) 0 1px, transparent 1px 5px); }
-.passport-texture-embossed { background-image: repeating-linear-gradient(45deg, transparent 0 8px, color-mix(in srgb, var(--passport-metal) 4%, transparent) 8px 9px); }
-.passport-texture-linen { background-image: repeating-linear-gradient(0deg, color-mix(in srgb, var(--passport-metal) 4%, transparent) 0 1px, transparent 1px 4px), repeating-linear-gradient(90deg, color-mix(in srgb, var(--passport-metal) 3%, transparent) 0 1px, transparent 1px 4px); }
-.passport-texture-fine { background-image: radial-gradient(color-mix(in srgb, var(--passport-metal) 8%, transparent) .7px, transparent .8px); background-size: 7px 7px; }
-.passport-texture-classic { background-image: repeating-linear-gradient(135deg, transparent 0 11px, color-mix(in srgb, var(--passport-metal) 4%, transparent) 11px 12px); }
+.passport-texture-leather { background-image: repeating-linear-gradient(115deg, color-mix(in srgb, var(--passport-metal) 11%, transparent) 0 1px, transparent 1px 5px); }
+.passport-texture-embossed { background-image: repeating-linear-gradient(45deg, transparent 0 8px, color-mix(in srgb, var(--passport-metal) 9%, transparent) 8px 9px); }
+.passport-texture-linen { background-image: repeating-linear-gradient(0deg, color-mix(in srgb, var(--passport-metal) 9%, transparent) 0 1px, transparent 1px 4px), repeating-linear-gradient(90deg, color-mix(in srgb, var(--passport-metal) 7%, transparent) 0 1px, transparent 1px 4px); }
+.passport-texture-fine { background-image: radial-gradient(color-mix(in srgb, var(--passport-metal) 15%, transparent) .7px, transparent .8px); background-size: 7px 7px; }
+.passport-texture-classic { background-image: repeating-linear-gradient(135deg, transparent 0 11px, color-mix(in srgb, var(--passport-metal) 9%, transparent) 11px 12px); }
 .passport-page-jump { position: absolute; z-index: 30; top: calc(100% + 8px); right: 0; width: min(260px, calc(100vw - 48px)); border: 1px solid var(--line); border-radius: 14px; background: var(--surface); padding: 16px; color: var(--ink); box-shadow: 0 14px 35px color-mix(in srgb, #000 20%, transparent); animation: passport-popover-in 180ms ease-out both; }
 .passport-page-jump-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .passport-page-jump h3 { margin: 0; color: var(--brand); font-size: .95rem; }
@@ -292,6 +292,10 @@ button:not(:disabled), summary { cursor: pointer; }
 .passport-popover button:first-child { float: right; font-size: 1.25rem; }.passport-popover h3, .passport-customizer h3 { margin: 0 0 10px; color: var(--brand); }.passport-popover p { margin: 5px 0; font-size: .8rem; }
 .passport-swatch { width: 34px; height: 34px; border: 2px solid var(--surface); border-radius: 50%; box-shadow: 0 0 0 1px var(--line-strong); }
 .passport-cover-brand { position: absolute; top: 18px; left: 18px; width: min(39%, 112px); height: 31px; display: block; background: var(--passport-brand, var(--passport-metal)); -webkit-mask: url('/images/flight-desk-logo-dark.svg') center / contain no-repeat; mask: url('/images/flight-desk-logo-dark.svg') center / contain no-repeat; opacity: .9; }
+.passport-cover-brand { background: none; mask: none; -webkit-mask: none; opacity: 1; }
+.passport-cover-brand-svg { display: block; width: 100%; height: 100%; overflow: visible; }
+.passport-reset-button { min-height: 38px; border: 1px solid #c86b73; border-radius: 999px; background: transparent; padding: 0 14px; color: #a84350; font-weight: 700; white-space: nowrap; transition: background-color 160ms ease, color 160ms ease; }
+.passport-reset-button:hover { background: #fff1f2; color: #8f3541; }
 .passport-kicker { font-family: Georgia, "Times New Roman", serif; font-size: clamp(1.45rem, 3.5vw, 2.05rem); line-height: 1.08; letter-spacing: .14em; text-align: center; }
 .passport-cover-side { gap: 26px; }
 .passport-cover-outer::after, .passport-closed-book-front::after { content: ""; position: absolute; inset: 9px; border: 1px solid color-mix(in srgb, var(--passport-metal) 18%, transparent); border-radius: 5px 9px 9px 5px; pointer-events: none; }
