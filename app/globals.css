@@ -68,6 +68,19 @@
 * { box-sizing: border-box; }
 .flight-map-shell { position: relative; isolation: isolate; }
 .flight-map-shell > .maplibregl-map { position: absolute; inset: 0; width: 100%; height: 100%; overflow: hidden; }
+.flight-airport-popup .maplibregl-popup-content { width: min(300px, calc(100vw - 32px)); padding: 0; overflow: hidden; border: 1px solid var(--line-strong); border-radius: 14px; background: var(--surface); color: var(--ink); box-shadow: 0 12px 28px rgb(32 27 51 / 14%); }
+.flight-airport-popup .maplibregl-popup-close-button { z-index: 1; top: 5px; right: 5px; width: 40px; height: 40px; border-radius: 999px; color: var(--muted); font-size: 22px; line-height: 1; }
+.flight-airport-popup .maplibregl-popup-close-button:hover { background: var(--brand-soft); color: var(--brand); }
+.flight-airport-popup .maplibregl-popup-tip { border-top-color: var(--surface); border-bottom-color: var(--surface); }
+.flight-airport-popup__header { display: flex; align-items: center; gap: 12px; padding: 18px 48px 14px 16px; }
+.flight-airport-popup__flag { display: inline-flex; flex: 0 0 auto; align-items: center; font-size: 1.55rem; line-height: 1; }
+.flight-airport-popup__flag .fi { display: inline-block; width: 1.65em; height: 1.1em; background-size: cover; }
+.flight-airport-popup__flag-fallback { display: grid; width: 1.65em; height: 1.1em; place-items: center; border: 1px solid var(--line); border-radius: 3px; color: var(--muted); font-size: .8rem; }
+.flight-airport-popup__name { margin: 0; color: var(--heading); font-size: 1rem; font-weight: 700; line-height: 1.3; }
+.flight-airport-popup__meta { margin: 4px 0 0; color: var(--muted); font-size: .75rem; line-height: 1.4; }
+.flight-airport-popup__flights { display: flex; align-items: center; justify-content: space-between; gap: 12px; border-top: 1px solid var(--line); padding: 12px 16px; color: var(--brand); font-size: .8rem; font-weight: 600; text-decoration: none; }
+.flight-airport-popup__flights:hover { background: var(--brand-soft); }
+.flight-airport-popup__flights strong { font-size: 1.1rem; }
 body { margin: 0; background: var(--cream); color: var(--ink); font-family: Arial, Helvetica, sans-serif; }
 /* Shared public-site grid; padding is part of the container at every breakpoint. */
 :root { --site-width: 1440px; --site-gutter: 16px; }

@@ -7,6 +7,7 @@ import { T } from "@/components/i18n";
 import type { FlightMapData } from "@/lib/flight-map-data";
 
 const styleUrl = process.env.NEXT_PUBLIC_MAP_STYLE_URL;
+const escapeHtml = (value: unknown) => String(value ?? "").replace(/[&<>'"]/g, character => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" }[character] ?? character));
 
 export function FlightMap({ data, compact = false, defaultMode, persistMode = true }: { data: FlightMapData; compact?: boolean; defaultMode?: "2d" | "3d"; persistMode?: boolean }) {
   const container = useRef<HTMLDivElement>(null);
@@ -21,8 +22,9 @@ export function FlightMap({ data, compact = false, defaultMode, persistMode = tr
     let live = true;
     let loaded = false;
     let instance: MapLibreMap | null = null;
+    let airportPopup: maplibregl.Popup | null = null;
     let resizeObserver: ResizeObserver | null = null;
-    const cleanup = () => { resizeObserver?.disconnect(); resizeObserver = null; if (instance) { instance.remove(); instance = null; } map.current = null; };
+    const cleanup = () => { airportPopup?.remove(); airportPopup = null; resizeObserver?.disconnect(); resizeObserver = null; if (instance) { instance.remove(); instance = null; } map.current = null; };
     const fail = (stage: string, exception: unknown) => {
       console.error(`[Flight Map] ${stage} failed`, exception);
       if (live) { cleanup(); setReady(false); setError(exception instanceof Error ? exception.message : `Flight Map ${stage} failed.`); }
@@ -43,12 +45,10 @@ export function FlightMap({ data, compact = false, defaultMode, persistMode = tr
           instance.addLayer({ id: "flight-airports", type: "circle", source: "flight-airports", paint: { "circle-color": "#7554C8", "circle-radius": compact ? 4 : 6, "circle-stroke-color": "#fff", "circle-stroke-width": 1.5 } });
           instance.resize();
           loaded = true;
-          instance.on("click", "flight-airports", event => { const feature = event.features?.[0]; if (!feature) return; const props = feature.properties ?? {}; const popup = document.createElement("div"); popup.textContent = `${props.name ?? "Airport"} · ${props.icao ?? ""} ${props.iata ?? ""} · Completed Flights: ${props.count ?? 0}`; new maplibregl.Popup({ closeButton: true }).setLngLat((feature.geometry as GeoJSON.Point).coordinates as [number, number]).setDOMContent(popup).addTo(instance!); });
+          instance.on("click", "flight-airports", event => { const feature = event.features?.[0]; if (!feature || feature.geometry.type !== "Point") return; const props = feature.properties ?? {}; const code = String(props.code || props.icao || props.iata || "").trim().toUpperCase(); const countryCode = String(props.countryCode || "").trim().toLowerCase(); const location = [props.municipality, props.countryName].filter(Boolean).join(", "); const flag = /^[a-z]{2}$/.test(countryCode) ? `<span class="fi fi-${escapeHtml(countryCode)}" aria-hidden="true"></span>` : `<span class="flight-airport-popup__flag-fallback" aria-hidden="true">—</span>`; const popupContent = `<div class="flight-airport-popup__header"><span class="flight-airport-popup__flag">${flag}</span><div class="min-w-0"><h3 class="flight-airport-popup__name">${escapeHtml(props.name || "Airport")}</h3><p class="flight-airport-popup__meta">${escapeHtml(props.icao || code || "Airport code unavailable")}${location ? ` · ${escapeHtml(location)}` : ""}</p></div></div><a class="flight-airport-popup__flights" href="/flights?airport=${encodeURIComponent(code)}"><span>Completed Flights</span><strong>${escapeHtml(props.count ?? 0)} <span aria-hidden="true">→</span></strong></a>`; airportPopup?.remove(); airportPopup = new maplibregl.Popup({ closeButton: true, closeOnClick: false, maxWidth: "min(320px, calc(100vw - 32px))", className: "flight-airport-popup" }).setLngLat((feature.geometry as GeoJSON.Point).coordinates as [number, number]).setHTML(popupContent).addTo(instance!); });
           instance.on("mouseenter", "flight-airports", () => { instance!.getCanvas().style.cursor = "pointer"; });
           instance.on("mouseleave", "flight-airports", () => { instance!.getCanvas().style.cursor = ""; });
-          instance.on("click", "flight-routes", event => { const feature = event.features?.[0]; if (!feature) return; const props = feature.properties ?? {}; const popup = document.createElement("div"); popup.textContent = `${props.from ?? ""} → ${props.to ?? ""} · Completed Flights: ${props.count ?? 0}`; new maplibregl.Popup({ closeButton: true }).setLngLat(event.lngLat).setDOMContent(popup).addTo(instance!); });
-          instance.on("mouseenter", "flight-routes", () => { instance!.getCanvas().style.cursor = "pointer"; });
-          instance.on("mouseleave", "flight-routes", () => { instance!.getCanvas().style.cursor = ""; });
+          instance.on("click", event => { const features = instance!.queryRenderedFeatures(event.point, { layers: ["flight-airports", "flight-routes"] }); if (!features.length) { airportPopup?.remove(); airportPopup = null; } });
           setReady(true);
         } catch (exception) { fail("load and layer setup", exception); }
       });
