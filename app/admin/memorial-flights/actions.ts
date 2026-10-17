@@ -11,11 +11,16 @@ export async function saveMemorial(form: FormData): Promise<MemorialResult> {
   const { supabase, user, isAdmin } = await siteAdminAccess();
   if (!user || !isAdmin) return { error: "Access denied." };
   const id = String(form.get("id") ?? "").trim();
+  const publishDate = String(form.get("publish_date") ?? "").trim();
+  const publishMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(publishDate);
+  const publishYear = publishMatch ? Number(publishMatch[1]) : NaN;
+  const publishMonth = publishMatch ? Number(publishMatch[2]) : NaN;
+  const publishDay = publishMatch ? Number(publishMatch[3]) : NaN;
   const input = {
     event_key: String(form.get("event_key") ?? "").trim().toLowerCase(),
     title_en: String(form.get("title_en") ?? "").trim(), title_zh: String(form.get("title_zh") ?? "").trim(),
     description_en: String(form.get("description_en") ?? "").trim(), description_zh: String(form.get("description_zh") ?? "").trim(),
-    event_year: Number(form.get("event_year")), event_month: Number(form.get("event_month")), event_day: Number(form.get("event_day")), publish_year: Number(form.get("publish_year")), publish_month: Number(form.get("publish_month")), publish_day: Number(form.get("publish_day")),
+    event_year: Number(form.get("event_year")), event_month: Number(form.get("event_month")), event_day: Number(form.get("event_day")), publish_year: publishYear, publish_month: publishMonth, publish_day: publishDay,
     recurring: form.get("recurring") === "on", departure_iata: code(form.get("departure_iata"), 3), departure_icao: code(form.get("departure_icao"), 4), arrival_iata: code(form.get("arrival_iata"), 3), arrival_icao: code(form.get("arrival_icao"), 4), suggested_aircraft: String(form.get("suggested_aircraft") ?? "").trim() || null, enabled: form.get("enabled") === "on",
   };
   if (!/^[a-z0-9][a-z0-9-]{2,80}$/.test(input.event_key) || !input.title_en || !input.title_zh || !input.description_en || !input.description_zh || !/^[A-Z]{3}$/.test(input.departure_iata) || !/^[A-Z]{4}$/.test(input.departure_icao) || !/^[A-Z]{3}$/.test(input.arrival_iata) || !/^[A-Z]{4}$/.test(input.arrival_icao) || !Number.isInteger(input.event_year) || input.event_month < 1 || input.event_month > 12 || input.event_day < 1 || input.event_day > 31 || !Number.isInteger(input.publish_year) || input.publish_month < 1 || input.publish_month > 12 || input.publish_day < 1 || input.publish_day > 31) return { error: "Check the event key, airport codes, dates, and required text." };
