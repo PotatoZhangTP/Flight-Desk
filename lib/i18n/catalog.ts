@@ -248,6 +248,8 @@ passport.latestVisit|Latest Visit|最近到访
 passport.relatedFlights|Related Flights|相关航班
 passport.coverColor|Cover Color|封面颜色
 passport.endingPrimary|The sky is not the limit.|天空并非极限。
+passport.endingPrimaryLine1|The sky is|天空并非
+passport.endingPrimaryLine2|not the limit.|极限。
 passport.endingSecondary|It's where your story begins.|你的故事，正从这里开始。
 dashboard.previous|Previous|上一页
 dashboard.next|Next|下一页
