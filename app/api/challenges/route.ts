@@ -1,12 +1,15 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 
 export async function GET(request: Request) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   const date = new URL(request.url).searchParams.get("date") || new Date().toISOString().slice(0, 10);
-  const { error: ensureError } = await supabase.rpc("ensure_daily_challenges", { p_date: date });
+  let generator;
+  try { generator = createServiceClient(); } catch { return NextResponse.json({ error: "unavailable" }, { status: 503 }); }
+  const { error: ensureError } = await generator.rpc("ensure_daily_challenges", { p_date: date });
   if (ensureError) return NextResponse.json({ error: "unavailable" }, { status: 503 });
   const [{ data: challenges, error }, { data: memorials }] = await Promise.all([
     supabase.from("daily_challenges").select("*").eq("challenge_date", date).order("category"),

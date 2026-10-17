@@ -17,5 +17,6 @@ export default async function AdminPage() {
     { href: "/admin/roadmap", title: "Manage Roadmap", description: "Organize product milestones, development statuses and published updates." },
     { href: "/admin/landing-page", title: "Manage Landing Page", description: "Edit homepage copy privately, save a draft, then publish it when you’re ready." },
     { href: "/admin/translations", title: "Languages / Translations", description: "Review and customize interface translations without redeploying the website." },
+    { href: "/admin/memorial-flights", title: "Memorial Flights", description: "Create, publish and maintain aviation memorial routes." },
   ].map(module => <Link key={module.href} href={module.href} className="interaction-card rounded-2xl border border-line bg-surface p-7 shadow-sm shadow-ink/5 transition hover:border-brand/40 hover:shadow-md focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand"><h2 className="text-xl font-bold"><T source={module.title} /> <span aria-hidden="true" className="text-brand">→</span></h2><p className="mt-3 text-sm leading-7 text-muted"><T source={module.description} /></p></Link>)}</div></main></>;
 }

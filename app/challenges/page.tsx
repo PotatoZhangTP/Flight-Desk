@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 import { SiteHeader } from "@/components/site-header";
 import { DailyChallengePage, type Challenge, type Memorial } from "@/components/daily-challenge";
 
@@ -9,7 +10,9 @@ export default async function ChallengesPage({ searchParams }: { searchParams: P
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/auth?next=/challenges");
   const date = new Date().toISOString().slice(0, 10);
-  await supabase.rpc("ensure_daily_challenges", { p_date: date });
+  let generator;
+  try { generator = createServiceClient(); } catch { generator = null; }
+  if (generator) await generator.rpc("ensure_daily_challenges", { p_date: date });
   const [{ data: challenges }, { data: memorials }] = await Promise.all([
     supabase.from("daily_challenges").select("*").eq("challenge_date", date).order("category"),
     supabase.from("memorial_events").select("*").eq("enabled", true),
