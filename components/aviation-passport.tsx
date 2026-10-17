@@ -245,7 +245,7 @@ export function AviationPassport({ displayName, avatarUrl, passportNumber, membe
     const pageStamps = stampPages[index] ?? [];
     const layouts = stampSlotLayouts[Math.max(1, pageStamps.length)] ?? stampSlotLayouts[5];
     const slots = layouts[stableRandomSeed(`${userId}:stamp-layout:${index}`) % layouts.length];
-    return <div className="passport-page passport-stamps"><div className="passport-stamp-page-heading"><p className="passport-eyebrow"><T id="passport.stamps" /></p><span className="passport-stamp-page-number">{index + 1}</span></div><div className="passport-stamp-field">{pageStamps.map((stamp, stampIndex) => {
+    return <div className={`passport-page passport-stamps passport-texture-${innerTexture}`}><div className="passport-stamp-page-heading"><p className="passport-eyebrow"><T id="passport.stamps" /></p><span className="passport-stamp-page-number">{index + 1}</span></div><div className="passport-stamp-field">{pageStamps.map((stamp, stampIndex) => {
       const slot = slots[stampIndex];
       const positionSeed = stableRandomSeed(`${userId}:${index}:${stamp.code}:${stampIndex}`);
       const shapeXMargin = stamp.shape === "stamp-triangle" ? 27 : stamp.shape === "stamp-oblong" || stamp.shape === "stamp-ellipse" ? 25 : stamp.shape === "stamp-octagon" || stamp.shape === "stamp-hex" ? 23 : 21;
