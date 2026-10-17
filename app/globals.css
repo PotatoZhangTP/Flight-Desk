@@ -279,7 +279,7 @@ button:not(:disabled), summary { cursor: pointer; }
 .passport-page-jump select:focus { border-color: var(--brand); box-shadow: 0 0 0 2px color-mix(in srgb, var(--brand) 15%, transparent); }
 .passport-popover button:first-child { float: right; font-size: 1.25rem; }.passport-popover h3, .passport-customizer h3 { margin: 0 0 10px; color: var(--brand); }.passport-popover p { margin: 5px 0; font-size: .8rem; }
 .passport-swatch { width: 34px; height: 34px; border: 2px solid var(--surface); border-radius: 50%; box-shadow: 0 0 0 1px var(--line-strong); }
-.passport-cover-brand { position: absolute; top: 18px; left: 18px; width: min(39%, 112px); height: auto; object-fit: contain; filter: sepia(1) saturate(.38) brightness(1.55); opacity: .8; }
+.passport-cover-brand { position: absolute; top: 18px; left: 18px; width: min(39%, 112px); height: 31px; display: block; background: var(--passport-brand, var(--passport-metal)); -webkit-mask: url('/images/flight-desk-logo-dark.svg') center / contain no-repeat; mask: url('/images/flight-desk-logo-dark.svg') center / contain no-repeat; opacity: .9; }
 .passport-kicker { font-family: Georgia, "Times New Roman", serif; font-size: clamp(1.45rem, 3.5vw, 2.05rem); line-height: 1.08; letter-spacing: .14em; text-align: center; }
 .passport-cover-side { gap: 26px; }
 .passport-cover-outer::after, .passport-closed-book-front::after { content: ""; position: absolute; inset: 9px; border: 1px solid color-mix(in srgb, var(--passport-metal) 18%, transparent); border-radius: 5px 9px 9px 5px; pointer-events: none; }
