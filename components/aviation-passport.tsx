@@ -8,7 +8,7 @@ import { normalizeCountryCode } from "@/lib/country-codes";
 
 type Flight = { id: string; flight_date: string; departure_country_code?: string | null; arrival_country_code?: string | null };
 type Stamp = { code: string; first: string; latest: string; visits: number; flights: number; rotation: number; tone: string; shape: string; size: string; line: string; motif: string; layout: string };
-type Props = { displayName: string; memberSince: string; userId: string; flights: Flight[]; totalFlights: number; countries: number; minutes: number };
+type Props = { displayName?: string | null; avatarUrl?: string | null; passportNumber?: number | null; memberSince: string; userId: string; flights: Flight[]; totalFlights: number; countries: number; minutes: number };
 type Phase = "closed" | "opening" | "open" | "turning-forward" | "turning-backward" | "closing" | "back-cover" | "book-flipping-front";
 
 const themes = { navy: ["#171427", "#d5b36a"], purple: ["#26163d", "#c8b6e9"], green: ["#12352d", "#d0b86b"], burgundy: ["#481d2b", "#e7c18c"], charcoal: ["#202126", "#c7c8d0"] } as const;
@@ -75,7 +75,7 @@ function makeStamps(flights: Flight[]) {
   return [...stamps.values()];
 }
 
-export function AviationPassport({ displayName, memberSince, userId, flights, totalFlights, countries, minutes }: Props) {
+export function AviationPassport({ displayName, avatarUrl, passportNumber, memberSince, userId, flights, totalFlights, countries, minutes }: Props) {
   const root = useRef<HTMLElement>(null);
   const closeRequested = useRef(false);
   const jumpTargetSheet = useRef<number | null>(null);
@@ -112,7 +112,9 @@ export function AviationPassport({ displayName, memberSince, userId, flights, to
   const visaPageCount = Math.max(4, requiredVisaPageCount + (requiredVisaPageCount % 2));
   const visaSheetCount = visaPageCount / 2;
   const physicalSheetCount = visaSheetCount + 1;
-  const passportNo = `FD-${hash(userId).toString().padStart(4, "0")}`;
+  const passportNo = passportNumber == null ? "—" : String(passportNumber).padStart(6, "0");
+  const passportHolderName = displayName?.trim();
+  const isDefaultHolderName = !passportHolderName;
 
   useEffect(() => { try { setTheme((localStorage.getItem("flightdesk-passport-theme") as keyof typeof themes) || "navy"); } catch {} }, []);
   const saveTheme = (next: keyof typeof themes) => { setTheme(next); try { localStorage.setItem("flightdesk-passport-theme", next); } catch {} };
@@ -220,7 +222,7 @@ export function AviationPassport({ displayName, memberSince, userId, flights, to
       return <button key={stamp.code} type="button" className={`passport-stamp ${stamp.tone} ${stamp.shape} ${stamp.size} ${stamp.line} ${stamp.layout}`} style={{ "--stamp-x": `${x}%`, "--stamp-y": `${y}%`, "--stamp-rotation": `${stamp.rotation}deg` } as React.CSSProperties} onClick={(event) => { event.stopPropagation(); setSelected(stamp); }}><span className="passport-stamp-label"><span>ENTRY</span><span>STAMP</span></span><span className="passport-stamp-flag"><CountryFlag code={stamp.code} /></span><span className="passport-stamp-motif"><StampMotif code={stamp.code} fallback={stamp.motif} /></span><span className="passport-stamp-date"><LocalizedDate value={stamp.first} /></span></button>;
     })}</div>{!stamps.length && index === 0 && <div className="passport-empty"><T id="passport.empty" /><Link href="/flights/new" className="button-primary mt-4"><T id="map.addFirstFlight" /></Link></div>}</div>;
   };
-  const identityPage = <div className="passport-page passport-identity"><p className="passport-eyebrow"><T id="passport.identity" /></p><h3>Captain {displayName}</h3><dl><div><dt><T id="passport.memberSince" /></dt><dd><LocalizedDate value={memberSince} /></dd></div><div><dt><T id="passport.totalFlights" /></dt><dd>{totalFlights}</dd></div><div><dt><T id="passport.countriesVisited" /></dt><dd>{countries}</dd></div><div><dt><T id="passport.flightTime" /></dt><dd>{Math.floor(minutes / 60)}h {minutes % 60}m</dd></div><div><dt>Passport No.</dt><dd>{passportNo}</dd></div></dl></div>;
+  const identityPage = <div className="passport-page passport-identity"><div className="passport-identity-heading"><p className="passport-eyebrow"><T id="passport.passportNo" /></p><span className="passport-identity-number">{passportNo}</span></div><div className="passport-identity-profile"><div className="passport-holder"><div className="passport-holder-name"><h3>{passportHolderName || <T id="passport.defaultUser" />}</h3>{isDefaultHolderName && <Link href="/settings?section=account" className="passport-name-alert" aria-label="Set Your Username In Settings"><span aria-hidden="true">!</span><span className="passport-name-tooltip"><T id="passport.setUsernameHint" /></span></Link>}</div></div><div className="passport-photo" aria-label="Profile Photo">{avatarUrl ? <img src={avatarUrl} alt={passportHolderName || "User"} /> : <svg viewBox="0 0 64 84" aria-hidden="true"><circle cx="32" cy="28" r="13" /><path d="M10 76c1-18 9-27 22-27s21 9 22 27" /></svg>}</div></div><dl><div><dt><T id="passport.memberSince" /></dt><dd><LocalizedDate value={memberSince} /></dd></div><div><dt><T id="passport.totalFlights" /></dt><dd>{totalFlights}</dd></div><div><dt><T id="passport.countriesVisited" /></dt><dd>{countries}</dd></div><div><dt><T id="passport.flightTime" /></dt><dd>{Math.floor(minutes / 60)}h {minutes % 60}m</dd></div></dl></div>;
   const endingPage = <div className="passport-page passport-ending"><p className="passport-ending-primary"><span><T id="passport.endingPrimaryLine1" /></span><span><T id="passport.endingPrimaryLine2" /></span></p><div className="passport-ending-rule" /><p className="passport-ending-secondary"><T id="passport.endingSecondary" /></p></div>;
   const blankPage = <div className="passport-page passport-blank" aria-hidden="true" />;
   const coverFace = <><img className="passport-cover-brand" src="/images/flight-desk-logo-dark.svg" alt="Flight Desk" /><span className="passport-kicker">AVIATION<br />PASSPORT</span></>;

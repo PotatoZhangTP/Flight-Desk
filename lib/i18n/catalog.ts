@@ -233,6 +233,9 @@ dashboard.passportEmpty|Your completed journeys will appear here as passport sta
 passport.title|Aviation Passport|航空护照
 passport.customize|Customize|自定义
 passport.identity|Aviation Identity|航空身份
+passport.passportNo|PASSPORT NO.|护照编号
+passport.defaultUser|USER|用户
+passport.setUsernameHint|Set Your Username In Settings.|请前往设置中设置用户名。
 passport.memberSince|Member Since|加入日期
 passport.totalFlights|Total Flights|已完成航班
 passport.countriesVisited|Countries Visited|到访国家
