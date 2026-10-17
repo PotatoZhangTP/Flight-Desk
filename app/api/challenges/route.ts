@@ -19,6 +19,6 @@ export async function GET(request: Request) {
   const today = new Date(`${date}T00:00:00Z`);
   const monday = new Date(today); monday.setUTCDate(today.getUTCDate() - ((today.getUTCDay() + 6) % 7));
   const sunday = new Date(monday); sunday.setUTCDate(monday.getUTCDate() + 6);
-  const memorialInWeek = (memorials ?? []).filter(event => { const year = event.recurring ? today.getUTCFullYear() : event.event_year; const anniversary = new Date(Date.UTC(year, event.event_month - 1, event.event_day)); return anniversary >= monday && anniversary <= sunday; });
+  const memorialInWeek = (memorials ?? []).filter(event => { const year = event.recurring ? today.getUTCFullYear() : event.publish_year; const publishDate = new Date(Date.UTC(year, event.publish_month - 1, event.publish_day)); return publishDate >= monday && publishDate <= sunday; });
   return NextResponse.json({ date, challenges: challenges ?? [], memorials: memorialInWeek }, { headers: { "Cache-Control": "private, max-age=60" } });
 }

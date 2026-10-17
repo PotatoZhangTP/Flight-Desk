@@ -17,6 +17,6 @@ export default async function ChallengesPage({ searchParams }: { searchParams: P
     supabase.from("daily_challenges").select("*").eq("challenge_date", date).order("category"),
     supabase.from("memorial_events").select("*").eq("enabled", true),
   ]);
-  const today = new Date(`${date}T00:00:00Z`); const monday = new Date(today); monday.setUTCDate(today.getUTCDate() - ((today.getUTCDay() + 6) % 7)); const sunday = new Date(monday); sunday.setUTCDate(monday.getUTCDate() + 6); const memorialInWeek = (memorials ?? []).filter(event => { const year = event.recurring ? today.getUTCFullYear() : event.event_year; const anniversary = new Date(Date.UTC(year, event.event_month - 1, event.event_day)); return anniversary >= monday && anniversary <= sunday; });
+  const today = new Date(`${date}T00:00:00Z`); const monday = new Date(today); monday.setUTCDate(today.getUTCDate() - ((today.getUTCDay() + 6) % 7)); const sunday = new Date(monday); sunday.setUTCDate(monday.getUTCDate() + 6); const memorialInWeek = (memorials ?? []).filter(event => { const year = event.recurring ? today.getUTCFullYear() : event.publish_year; const publishDate = new Date(Date.UTC(year, event.publish_month - 1, event.publish_day)); return publishDate >= monday && publishDate <= sunday; });
   return <div className="min-h-screen bg-page"><SiteHeader /><main className="mx-auto max-w-6xl px-6 py-12 lg:px-12"><DailyChallengePage initial={{ challenges: (challenges ?? []) as Challenge[], memorials: memorialInWeek as Memorial[] }} selected={(await searchParams).route} /></main></div>;
 }
