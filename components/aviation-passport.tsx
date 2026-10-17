@@ -13,6 +13,15 @@ type Phase = "closed" | "opening" | "open" | "turning-forward" | "turning-backwa
 
 const themes = { navy: ["#171427", "#d5b36a"], purple: ["#26163d", "#c8b6e9"], green: ["#12352d", "#d0b86b"], burgundy: ["#481d2b", "#e7c18c"], charcoal: ["#202126", "#c7c8d0"] } as const;
 const hash = (value: string) => [...value].reduce((sum, character) => (sum * 31 + character.charCodeAt(0)) % 997, 0);
+const stableRandomSeed = (value: string) => {
+  let seed = 2166136261;
+  for (const character of value) seed = Math.imul(seed ^ character.charCodeAt(0), 16777619);
+  seed ^= seed >>> 16;
+  seed = Math.imul(seed, 0x7feb352d);
+  seed ^= seed >>> 15;
+  seed = Math.imul(seed, 0x846ca68b);
+  return (seed ^ (seed >>> 16)) >>> 0;
+};
 const stampMotifs = ["✈", "☾", "≋", "•••", "◌", "⌁", "✦", "⌇"];
 
 function StampMotif({ code, fallback }: { code: string; fallback: string }) {
@@ -81,9 +90,12 @@ export function AviationPassport({ displayName, memberSince, userId, flights, to
   const stampPages = useMemo(() => {
     const pages: Stamp[][] = [];
     let cursor = 0;
+    let randomState = stableRandomSeed(`${userId}:stamp-page-counts`) || 1;
     while (cursor < stamps.length) {
-      const pageIndex = pages.length;
-      const targetCount = 1 + hash(`${userId}:stamp-page:${pageIndex}`) % 3;
+      randomState ^= randomState << 13;
+      randomState ^= randomState >>> 17;
+      randomState ^= randomState << 5;
+      const targetCount = 1 + (randomState >>> 0) % 3;
       pages.push(stamps.slice(cursor, cursor + targetCount));
       cursor += targetCount;
     }
@@ -146,10 +158,10 @@ export function AviationPassport({ displayName, memberSince, userId, flights, to
   const stampPage = (index: number) => {
     const pageStamps = stampPages[index] ?? [];
     const layouts = stampSlotLayouts[Math.max(1, pageStamps.length)] ?? stampSlotLayouts[5];
-    const slots = layouts[hash(`${userId}:stamp-layout:${index}`) % layouts.length];
+    const slots = layouts[stableRandomSeed(`${userId}:stamp-layout:${index}`) % layouts.length];
     return <div className="passport-page passport-stamps"><p className="passport-eyebrow"><T id="passport.stamps" /> · {index + 1}</p><div className="passport-stamp-field">{pageStamps.map((stamp, stampIndex) => {
       const slot = slots[stampIndex];
-      const positionSeed = hash(`${userId}:${index}:${stamp.code}:${stampIndex}`);
+      const positionSeed = stableRandomSeed(`${userId}:${index}:${stamp.code}:${stampIndex}`);
       const shapeXMargin = stamp.shape === "stamp-triangle" ? 27 : stamp.shape === "stamp-oblong" || stamp.shape === "stamp-ellipse" ? 25 : stamp.shape === "stamp-octagon" || stamp.shape === "stamp-hex" ? 23 : 21;
       const shapeYMargin = stamp.shape === "stamp-triangle" ? 19 : stamp.shape === "stamp-oblong" || stamp.shape === "stamp-ellipse" ? 14 : 17;
       const sizeMargin = stamp.size === "stamp-large" ? 3 : stamp.size === "stamp-small" ? -2 : 0;
