@@ -1,10 +1,7 @@
--- Immutable Aviation Passport numbers.
---
--- This migration is intentionally fail-closed. It never rewrites a non-NULL
--- passport_number. If either reserved account is missing, or existing data
--- conflicts with the reserved values, the migration aborts for review.
-
 begin;
+
+-- Immutable Aviation Passport numbers.
+-- This migration is fail-closed: it never rewrites a non-NULL number.
 
 -- Serialize this backfill with Auth registration/profile creation. Auth uses
 -- auth.users first and then the SECURITY DEFINER profile trigger, so acquire
