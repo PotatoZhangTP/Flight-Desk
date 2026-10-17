@@ -73,22 +73,25 @@ export function AllFlightsFilters({ values, countries = [] }: AllFlightsFiltersP
 
   return (
     <section className="mt-6">
-      <button
-        type="button"
-        onClick={() => setOpen((current) => !current)}
-        className="flex items-center gap-2 text-sm font-semibold text-primary transition hover:opacity-80"
-        aria-expanded={open}
-      >
-        <span>
-          <T id={open ? "dashboard.hideFilters" : "dashboard.showFilters"} />
-        </span>
-        {activeCount > 0 && (
-          <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs text-primary">
-            {activeCount}
+      <div className="flex justify-end">
+        <button
+          type="button"
+          onClick={() => setOpen((current) => !current)}
+          className="inline-flex min-h-9 max-w-full items-center gap-2 rounded-full border border-brand bg-transparent px-4 py-1.5 text-sm font-semibold text-brand transition hover:bg-brand-soft focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+          aria-expanded={open}
+        >
+          <span aria-hidden="true" className="text-base leading-none">⌕</span>
+          <span>
+            <T id={open ? "dashboard.hideFilters" : "dashboard.showFilters"} />
           </span>
-        )}
-      </button>
-
+          {activeCount > 0 && (
+            <span className="grid h-5 min-w-5 place-items-center rounded-full bg-brand px-1.5 text-xs font-bold text-on-brand">
+              {activeCount}
+            </span>
+          )}
+          <span aria-hidden="true" className="text-sm leading-none">{open ? "⌃" : "⌄"}</span>
+        </button>
+      </div>
       <div
         className={`grid transition-[grid-template-rows,opacity] duration-200 ${
           open ? "mt-3 grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
