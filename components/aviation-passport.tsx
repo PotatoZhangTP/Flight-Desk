@@ -6,10 +6,11 @@ import Link from "@/components/navigation-link";
 import { LocalizedDate, T } from "@/components/i18n";
 import { CountryFlag } from "@/components/country-flag";
 import { normalizeCountryCode } from "@/lib/country-codes";
+import { createClient } from "@/lib/supabase/browser";
 
 type Flight = { id: string; flight_date: string; departure_country_code?: string | null; arrival_country_code?: string | null };
 type Stamp = { code: string; first: string; latest: string; visits: number; flights: number; rotation: number; tone: string; shape: string; size: string; line: string; motif: string; layout: string };
-type Props = { displayName?: string | null; avatarUrl?: string | null; passportNumber?: number | null; memberSince: string; userId: string; flights: Flight[]; totalFlights: number; countries: number; minutes: number };
+type Props = { displayName?: string | null; avatarUrl?: string | null; passportNumber?: number | null; memberSince: string; userId: string; flights: Flight[]; totalFlights: number; countries: number; minutes: number; passportCoverBackground?: string | null; passportTitleColor?: string | null; passportBrandColor?: string | null; passportTitleFont?: string | null };
 type Phase = "closed" | "opening" | "open" | "turning-forward" | "turning-backward" | "closing" | "back-cover" | "book-flipping-front";
 
 const themes = { navy: ["#171427", "#d5b36a"], purple: ["#26163d", "#c8b6e9"], green: ["#12352d", "#d0b86b"], burgundy: ["#481d2b", "#e7c18c"], charcoal: ["#202126", "#c7c8d0"] } as const;
@@ -77,7 +78,7 @@ function makeStamps(flights: Flight[]) {
   return [...stamps.values()];
 }
 
-export function AviationPassport({ displayName, avatarUrl, passportNumber, memberSince, userId, flights, totalFlights, countries, minutes }: Props) {
+export function AviationPassport({ displayName, avatarUrl, passportNumber, memberSince, userId, flights, totalFlights, countries, minutes, passportCoverBackground, passportTitleColor, passportBrandColor, passportTitleFont }: Props) {
   const root = useRef<HTMLElement>(null);
   const closeRequested = useRef(false);
   const jumpTargetSheet = useRef<number | null>(null);
@@ -91,6 +92,12 @@ export function AviationPassport({ displayName, avatarUrl, passportNumber, membe
   const [pagePicker, setPagePicker] = useState(false);
   const [pageInput, setPageInput] = useState("1");
   const [theme, setTheme] = useState<keyof typeof themes>("navy");
+  const [coverColor, setCoverColor] = useState(passportCoverBackground || themes.navy[0]);
+  const [titleColor, setTitleColor] = useState(passportTitleColor || themes.navy[1]);
+  const [brandColor, setBrandColor] = useState(passportBrandColor || themes.navy[1]);
+  const [titleFont, setTitleFont] = useState(passportTitleFont || "Georgia");
+  const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const saveCover = async () => { setSaveState("saving"); const { error } = await createClient().from("profiles").update({ passport_cover_background: coverColor, passport_title_color: titleColor, passport_brand_color: brandColor, passport_title_font: titleFont }).eq("id", userId); setSaveState(error ? "error" : "saved"); };
   const stamps = useMemo(() => makeStamps(flights), [flights]);
   const countryVisits = useMemo(() => {
     const visits = new Map<string, { count: number; first: string | null; latest: string | null }>();
@@ -105,7 +112,7 @@ export function AviationPassport({ displayName, avatarUrl, passportNumber, membe
     }
     return visits;
   }, [flights]);
-  const [cover, metal] = themes[theme];
+  const [cover, metal] = [coverColor, titleColor];
   const stampPages = useMemo(() => {
     const pages: Stamp[][] = [];
     let cursor = 0;
@@ -240,7 +247,7 @@ export function AviationPassport({ displayName, avatarUrl, passportNumber, membe
   const identityPage = <div className="passport-page passport-identity"><div className="passport-identity-heading"><p className="passport-eyebrow"><T id="passport.passportNo" /></p><span className="passport-identity-number">{passportNo}</span></div><div className="passport-identity-profile"><div className="passport-holder"><div className="passport-holder-name"><h3>{passportHolderName || <T id="passport.defaultUser" />}</h3>{isDefaultHolderName && <Link href="/settings?section=account" className="passport-name-alert" aria-label="Set Your Username In Settings"><span aria-hidden="true">!</span><span className="passport-name-tooltip"><T id="passport.setUsernameHint" /></span></Link>}</div></div><div className="passport-photo" aria-label="Profile Photo">{avatarUrl ? <img src={avatarUrl} alt={passportHolderName || "User"} /> : <svg viewBox="0 0 64 84" aria-hidden="true"><circle cx="32" cy="28" r="13" /><path d="M10 76c1-18 9-27 22-27s21 9 22 27" /></svg>}</div></div><dl><div><dt><T id="passport.memberSince" /></dt><dd><LocalizedDate value={memberSince} /></dd></div><div><dt><T id="passport.totalFlights" /></dt><dd>{totalFlights}</dd></div><div><dt><T id="passport.countriesVisited" /></dt><dd>{countries}</dd></div><div><dt><T id="passport.flightTime" /></dt><dd>{Math.floor(minutes / 60)}h {minutes % 60}m</dd></div></dl></div>;
   const endingPage = <div className="passport-page passport-ending"><p className="passport-ending-primary"><span><T id="passport.endingPrimaryLine1" /></span><span><T id="passport.endingPrimaryLine2" /></span></p><div className="passport-ending-rule" /><p className="passport-ending-secondary"><T id="passport.endingSecondary" /></p></div>;
   const blankPage = <div className="passport-page passport-blank" aria-hidden="true" />;
-  const coverFace = <><img className="passport-cover-brand" src="/images/flight-desk-logo-dark.svg" alt="Flight Desk" /><span className="passport-kicker">AVIATION<br />PASSPORT</span></>;
+  const coverFace = <><img className="passport-cover-brand" style={{ color: brandColor }} src="/images/flight-desk-logo-dark.svg" alt="Flight Desk" /><span className="passport-kicker" style={{ color: titleColor, fontFamily: titleFont }}>AVIATION<br />PASSPORT</span></>;
 
   const handleBookClick = (event: React.MouseEvent<HTMLDivElement>) => {
     if (phase === "closed") { setPhase("opening"); return; }
@@ -257,7 +264,7 @@ export function AviationPassport({ displayName, avatarUrl, passportNumber, membe
 
   return <section ref={root} data-spine-style="crease" className="dashboard-module spotlight-card relative min-w-0 bg-surface" style={{ "--passport-cover": cover, "--passport-metal": metal } as React.CSSProperties}>
     <div className="flex flex-wrap items-center justify-between gap-3"><h2 className="text-xl font-bold"><T id="passport.title" /></h2><div className="flex flex-wrap justify-end gap-2"><div className="relative"><button type="button" disabled={!['closed', 'open', 'back-cover'].includes(phase)} className="button-secondary" onClick={() => { setCustomize(false); setPagePicker((value) => !value); }}>↗ <T id="passport.goToPage" /></button>{pagePicker && <div className="passport-page-jump" role="dialog" aria-labelledby="passport-page-jump-title"><div className="passport-page-jump-header"><h3 id="passport-page-jump-title"><T id="passport.goToPage" /></h3><button type="button" aria-label="Close" onClick={() => setPagePicker(false)}>×</button></div><label><T id="passport.selectPage" /><select value={pageInput} onChange={(event) => setPageInput(event.target.value)}>{Array.from({ length: visaPageCount }, (_, index) => <option key={index + 1} value={index + 1}>{index + 1}</option>)}</select></label><button type="button" className="button-primary mt-3 w-full" onClick={jumpToPage}><T id="passport.go" /></button></div>}</div><button type="button" className="button-secondary" onClick={() => { setPagePicker(false); setCustomize((value) => !value); }}>◈ <T id="passport.customize" /></button></div></div>
-    {customize && <div className="passport-customizer" role="dialog"><h3><T id="passport.customize" /></h3><p><T id="passport.coverColor" /></p><div className="flex flex-wrap gap-2">{Object.keys(themes).map((key) => <button key={key} type="button" className="passport-swatch" style={{ background: themes[key as keyof typeof themes][0] }} aria-label={key} onClick={() => saveTheme(key as keyof typeof themes)} />)}</div><button type="button" className="button-secondary mt-4" onClick={() => setCustomize(false)}><T id="common.close" /></button></div>}
+    {customize && <div className="passport-customizer" role="dialog"><div className="flex items-center justify-between gap-3"><h3><T id="passport.customize" /></h3><button type="button" aria-label="Close" onClick={() => setCustomize(false)}>×</button></div><div className="mt-4 flex gap-2 border-b border-line pb-2 text-sm font-semibold"><span className="border-b-2 border-brand pb-2 text-brand"><T source="Cover Design" /></span><span className="text-subtle"><T source="Inner Pages Design" /> · <T id="common.soon" /></span></div><div className="mt-4 space-y-3"><ColorField label="Cover Background Color" value={coverColor} onChange={setCoverColor} /><ColorField label="Title Color" value={titleColor} onChange={setTitleColor} /><ColorField label="Logo & Brand Color" value={brandColor} onChange={setBrandColor} /><label className="block text-sm font-semibold text-muted"><T source="Font" /><select value={titleFont} onChange={event => setTitleFont(event.target.value)} className="mt-1.5 w-full rounded-xl border border-line-strong bg-surface px-3 py-2 text-ink outline-none focus:border-brand focus:ring-2 focus:ring-brand/15">{["Georgia","Cinzel","Cormorant Garamond","Montserrat","Libre Baskerville","Space Grotesk"].map(font => <option key={font}>{font}</option>)}</select></label><div className="flex flex-wrap gap-2"><button type="button" className="button-primary" onClick={saveCover}><T source="Save Changes" /></button><button type="button" className="button-secondary" onClick={() => { setCoverColor(passportCoverBackground || themes.navy[0]); setTitleColor(passportTitleColor || themes.navy[1]); setBrandColor(passportBrandColor || themes.navy[1]); setTitleFont(passportTitleFont || "Georgia"); }}><T source="Reset to Default" /></button></div>{saveState !== "idle" && <p className="text-xs text-muted">{saveState === "saving" ? "Saving…" : saveState === "saved" ? "Saved" : "Unable to save changes."}</p>}</div></div>}
     <div className="mt-4 flex min-h-[390px] items-center justify-center"><div className={`passport-stage-v3 passport-phase-${phase} ${quickClosing ? "passport-quick-closing" : ""} ${quickJumping ? "passport-quick-jumping" : ""}`}><div className="passport-book-v3" onClick={handleBookClick}>
       <div className={`passport-front-cover-v3 ${phase} ${turnedSheetCount >= 1 ? "is-open" : ""} ${turnedSheetCount > 1 ? "is-behind" : ""}`} onAnimationEnd={(event) => { if (event.currentTarget !== event.target) return; if (phase === "opening") { const targetCount = jumpTargetSheet.current; setTurnedSheetCount(1); if (targetCount !== null && targetCount > 1) requestAnimationFrame(() => { setTurningSheetIndex(0); setPhase("turning-forward"); }); else { jumpTargetSheet.current = null; setQuickJumping(false); setPhase("open"); } } if (phase === "closing") { setTurnedSheetCount(0); setQuickClosing(false); setPhase("closed"); } }}>
         <div className="passport-cover-side passport-cover-outer">{coverFace}</div><div className="passport-cover-side passport-cover-inner">{identityPage}</div>
@@ -299,6 +306,11 @@ export function AviationPassport({ displayName, avatarUrl, passportNumber, membe
     </div></div></div>
     {selected && typeof document !== "undefined" && createPortal(<CountryPopup boundaryRef={root} stamp={selected} stats={countryVisits.get(selected.code)} onClose={() => setSelected(null)} />, document.body)}
   </section>;
+}
+
+function ColorField({ label, value, onChange }: { label: string; value: string; onChange: (value: string) => void }) {
+  const valid = /^#[0-9A-Fa-f]{6}$/.test(value);
+  return <label className="block text-sm font-semibold text-muted"><T source={label} /><span className="mt-1.5 flex items-center gap-2"><input type="color" value={valid ? value : "#171427"} onChange={event => onChange(event.target.value)} className="h-10 w-12 rounded-lg border border-line bg-surface p-1" /><input value={value} onChange={event => onChange(event.target.value)} className={`min-w-0 flex-1 rounded-xl border bg-surface px-3 py-2 font-mono text-sm text-ink outline-none focus:border-brand focus:ring-2 focus:ring-brand/15 ${valid ? "border-line-strong" : "border-danger-line"}`} aria-invalid={!valid} /><span className="h-8 w-8 shrink-0 rounded-lg border border-line" style={{ background: valid ? value : "transparent" }} /></span>{!valid && <span className="mt-1 block text-xs text-danger-fg">Use #RRGGBB</span>}</label>;
 }
 
 function CountryPopup({ boundaryRef, stamp, stats, onClose }: { boundaryRef: React.RefObject<HTMLElement | null>; stamp: Stamp; stats?: { count: number; first: string | null; latest: string | null }; onClose: () => void }) {
