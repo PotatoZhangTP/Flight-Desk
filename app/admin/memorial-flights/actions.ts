@@ -11,19 +11,24 @@ export async function saveMemorial(form: FormData): Promise<MemorialResult> {
   const { supabase, user, isAdmin } = await siteAdminAccess();
   if (!user || !isAdmin) return { error: "Access denied." };
   const id = String(form.get("id") ?? "").trim();
-  const publishDate = String(form.get("publish_date") ?? "").trim();
-  const publishMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(publishDate);
-  const publishYear = publishMatch ? Number(publishMatch[1]) : NaN;
-  const publishMonth = publishMatch ? Number(publishMatch[2]) : NaN;
-  const publishDay = publishMatch ? Number(publishMatch[3]) : NaN;
+  const parseDate = (name: string) => {
+    const value = String(form.get(name) ?? "").trim();
+    const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+    return match ? { value, year: Number(match[1]), month: Number(match[2]), day: Number(match[3]) } : null;
+  };
+  const eventDate = parseDate("event_date");
+  const publishStart = parseDate("publish_start_date");
+  const publishEnd = parseDate("publish_end_date");
   const input = {
     event_key: String(form.get("event_key") ?? "").trim().toLowerCase(),
     title_en: String(form.get("title_en") ?? "").trim(), title_zh: String(form.get("title_zh") ?? "").trim(),
     description_en: String(form.get("description_en") ?? "").trim(), description_zh: String(form.get("description_zh") ?? "").trim(),
-    event_year: Number(form.get("event_year")), event_month: Number(form.get("event_month")), event_day: Number(form.get("event_day")), publish_year: publishYear, publish_month: publishMonth, publish_day: publishDay,
+    event_date: eventDate?.value, publish_start_date: publishStart?.value, publish_end_date: publishEnd?.value,
+    event_year: eventDate?.year, event_month: eventDate?.month, event_day: eventDate?.day,
+    publish_year: publishStart?.year, publish_month: publishStart?.month, publish_day: publishStart?.day,
     recurring: form.get("recurring") === "on", departure_iata: code(form.get("departure_iata"), 3), departure_icao: code(form.get("departure_icao"), 4), arrival_iata: code(form.get("arrival_iata"), 3), arrival_icao: code(form.get("arrival_icao"), 4), suggested_aircraft: String(form.get("suggested_aircraft") ?? "").trim() || null, enabled: form.get("enabled") === "on",
   };
-  if (!/^[a-z0-9][a-z0-9-]{2,80}$/.test(input.event_key) || !input.title_en || !input.title_zh || !input.description_en || !input.description_zh || !/^[A-Z]{3}$/.test(input.departure_iata) || !/^[A-Z]{4}$/.test(input.departure_icao) || !/^[A-Z]{3}$/.test(input.arrival_iata) || !/^[A-Z]{4}$/.test(input.arrival_icao) || !Number.isInteger(input.event_year) || input.event_month < 1 || input.event_month > 12 || input.event_day < 1 || input.event_day > 31 || !Number.isInteger(input.publish_year) || input.publish_month < 1 || input.publish_month > 12 || input.publish_day < 1 || input.publish_day > 31) return { error: "Check the event key, airport codes, dates, and required text." };
+  if (!/^[a-z0-9][a-z0-9-]{2,80}$/.test(input.event_key) || !input.title_en || !input.title_zh || !input.description_en || !input.description_zh || !/^[A-Z]{3}$/.test(input.departure_iata) || !/^[A-Z]{4}$/.test(input.departure_icao) || !/^[A-Z]{3}$/.test(input.arrival_iata) || !/^[A-Z]{4}$/.test(input.arrival_icao) || !eventDate || !publishStart || !publishEnd || publishEnd.value < publishStart.value) return { error: "Check the event key, airport codes, dates, and required text." };
   const query = id ? (idPattern.test(id) ? supabase.from("memorial_events").update(input).eq("id", id) : null) : supabase.from("memorial_events").insert(input);
   if (!query) return { error: "Invalid memorial event." };
   const { error } = await query;
