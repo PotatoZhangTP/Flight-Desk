@@ -7,14 +7,13 @@ import { CountryFlag } from "@/components/country-flag";
 import { normalizeCountryCode } from "@/lib/country-codes";
 
 type Flight = { id: string; flight_date: string; departure_country_code?: string | null; arrival_country_code?: string | null };
-type Stamp = { code: string; first: string; latest: string; visits: number; flights: number; rotation: number; tone: string; shape: string; size: string; line: string; label: string; motif: string };
+type Stamp = { code: string; first: string; latest: string; visits: number; flights: number; rotation: number; tone: string; shape: string; size: string; line: string; motif: string; layout: string };
 type Props = { displayName: string; memberSince: string; userId: string; flights: Flight[]; totalFlights: number; countries: number; minutes: number };
 type Phase = "closed" | "opening" | "open" | "turning-forward" | "turning-backward" | "closing" | "back-cover" | "book-flipping-front";
 
 const themes = { navy: ["#171427", "#d5b36a"], purple: ["#26163d", "#c8b6e9"], green: ["#12352d", "#d0b86b"], burgundy: ["#481d2b", "#e7c18c"], charcoal: ["#202126", "#c7c8d0"] } as const;
 const hash = (value: string) => [...value].reduce((sum, character) => (sum * 31 + character.charCodeAt(0)) % 997, 0);
-const stampLabels = ["ARRIVED", "ENTRY", "IMMIGRATION", "VISA", "TRANSIT"];
-const stampMotifs = ["✈", "★", "⌁", "△", "≋"];
+const stampMotifs = ["✈", "☾", "≋", "•••", "◌", "⌁", "✦", "⌇"];
 
 const stampSlots: Record<number, Array<[number, number]>> = {
   1: [[50, 48]],
@@ -30,7 +29,7 @@ function makeStamps(flights: Flight[]) {
   for (const flight of [...flights].sort((a, b) => a.flight_date.localeCompare(b.flight_date))) for (const countryCode of [flight.departure_country_code, flight.arrival_country_code]) {
     if (!countryCode) continue;
     const code = normalizeCountryCode(countryCode), existing = stamps.get(code), seed = hash(code);
-    if (!existing) stamps.set(code, { code, first: flight.flight_date, latest: flight.flight_date, visits: 1, flights: 1, rotation: seed % 25 - 12, tone: ["stamp-red", "stamp-blue", "stamp-green", "stamp-purple", "stamp-slate", "stamp-brown", "stamp-brass", "stamp-teal", "stamp-mauve"][seed % 9], shape: ["stamp-circle", "stamp-square", "stamp-rounded", "stamp-hex", "stamp-octagon", "stamp-ellipse", "stamp-oblong", "stamp-triangle"][seed % 8], size: ["stamp-small", "stamp-medium", "stamp-large"][seed % 3], line: ["stamp-single", "stamp-double", "stamp-dashed", "stamp-heavy", "stamp-notched"][seed % 5], label: stampLabels[seed % stampLabels.length], motif: stampMotifs[(seed * 7) % stampMotifs.length] });
+    if (!existing) stamps.set(code, { code, first: flight.flight_date, latest: flight.flight_date, visits: 1, flights: 1, rotation: seed % 25 - 12, tone: ["stamp-red", "stamp-blue", "stamp-green", "stamp-purple", "stamp-slate", "stamp-brown", "stamp-brass", "stamp-teal", "stamp-mauve"][seed % 9], shape: ["stamp-circle", "stamp-square", "stamp-rounded", "stamp-hex", "stamp-octagon", "stamp-ellipse", "stamp-oblong", "stamp-triangle"][seed % 8], size: ["stamp-small", "stamp-medium", "stamp-large"][seed % 3], line: ["stamp-single", "stamp-double", "stamp-dashed", "stamp-heavy", "stamp-notched"][seed % 5], motif: stampMotifs[(seed * 7) % stampMotifs.length], layout: `stamp-layout-${seed % 4}` });
     else { existing.latest = flight.flight_date; existing.flights += 1; if (existing.latest !== existing.first) existing.visits += 1; }
   }
   return [...stamps.values()];
@@ -123,7 +122,7 @@ export function AviationPassport({ displayName, memberSince, userId, flights, to
       const y = stamp.shape === "stamp-triangle"
         ? Math.max(21, Math.min(79, slot[1] + Math.floor(positionSeed / 5) % 5 - 2))
         : Math.max(16, Math.min(84, slot[1] + Math.floor(positionSeed / 5) % 5 - 2));
-      return <button key={stamp.code} type="button" className={`passport-stamp ${stamp.tone} ${stamp.shape} ${stamp.size} ${stamp.line}`} style={{ "--stamp-x": `${x}%`, "--stamp-y": `${y}%`, "--stamp-rotation": `${stamp.rotation}deg` } as React.CSSProperties} onClick={(event) => { event.stopPropagation(); setSelected(stamp); }}><span className="passport-stamp-label">{stamp.label}</span><span className="passport-stamp-flag"><CountryFlag code={stamp.code} /></span><b>{stamp.code}</b><span className="passport-stamp-motif" aria-hidden="true">{stamp.motif}</span><span className="passport-stamp-date"><LocalizedDate value={stamp.first} /></span></button>;
+      return <button key={stamp.code} type="button" className={`passport-stamp ${stamp.tone} ${stamp.shape} ${stamp.size} ${stamp.line} ${stamp.layout}`} style={{ "--stamp-x": `${x}%`, "--stamp-y": `${y}%`, "--stamp-rotation": `${stamp.rotation}deg` } as React.CSSProperties} onClick={(event) => { event.stopPropagation(); setSelected(stamp); }}><span className="passport-stamp-label">ENTRY STAMP</span><span className="passport-stamp-flag"><CountryFlag code={stamp.code} /></span><span className="passport-stamp-motif" aria-hidden="true">{stamp.motif}</span><span className="passport-stamp-date"><LocalizedDate value={stamp.first} /></span></button>;
     })}</div>{!stamps.length && index === 0 && <div className="passport-empty"><T id="passport.empty" /><Link href="/flights/new" className="button-primary mt-4"><T id="map.addFirstFlight" /></Link></div>}</div>;
   };
   const identityPage = <div className="passport-page passport-identity"><p className="passport-eyebrow"><T id="passport.identity" /></p><h3>Captain {displayName}</h3><dl><div><dt><T id="passport.memberSince" /></dt><dd><LocalizedDate value={memberSince} /></dd></div><div><dt><T id="passport.totalFlights" /></dt><dd>{totalFlights}</dd></div><div><dt><T id="passport.countriesVisited" /></dt><dd>{countries}</dd></div><div><dt><T id="passport.flightTime" /></dt><dd>{Math.floor(minutes / 60)}h {minutes % 60}m</dd></div><div><dt>Passport No.</dt><dd>{passportNo}</dd></div></dl></div>;

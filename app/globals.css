@@ -235,6 +235,20 @@ button:not(:disabled), summary { cursor: pointer; }
 .passport-stamp-flag .country-flag .fi { display: inline-block; width: 1.15em; height: .8em; border-radius: 1px; background-size: cover; }
 .passport-stamp-motif { align-self: center; font-size: .68rem; }
 .passport-stamp-date { grid-column: 1 / -1; align-self: end; font-size: .44rem; letter-spacing: .02em; }
+.passport-stamp-layout-0 { grid-template-rows: auto 1fr auto; }
+.passport-stamp-layout-1 { grid-template-rows: auto 1fr auto; }
+.passport-stamp-layout-1 .passport-stamp-flag { grid-column: 1; grid-row: 2; }
+.passport-stamp-layout-1 .passport-stamp-motif { grid-column: 2; grid-row: 2; }
+.passport-stamp-layout-2 { grid-template-rows: 1fr auto 1fr; }
+.passport-stamp-layout-2 .passport-stamp-flag { grid-column: 1 / -1; grid-row: 1; align-self: end; }
+.passport-stamp-layout-2 .passport-stamp-label { grid-row: 2; }
+.passport-stamp-layout-2 .passport-stamp-motif { grid-column: 1; grid-row: 3; align-self: start; }
+.passport-stamp-layout-2 .passport-stamp-date { grid-column: 2; grid-row: 3; align-self: start; }
+.passport-stamp-layout-3 { grid-template-rows: auto 1fr auto; }
+.passport-stamp-layout-3 .passport-stamp-label { transform: rotate(-4deg); }
+.passport-stamp-layout-3 .passport-stamp-flag { grid-column: 2; grid-row: 2; align-self: start; }
+.passport-stamp-layout-3 .passport-stamp-motif { grid-column: 1; grid-row: 2; align-self: end; }
+.passport-stamp-layout-3 .passport-stamp-date { grid-row: 3; transform: rotate(4deg); }
 .stamp-small { width: 56px; }
 .stamp-medium { width: 68px; }
 .stamp-large { width: 78px; }
