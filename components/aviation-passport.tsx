@@ -95,10 +95,13 @@ export function AviationPassport({ displayName, memberSince, userId, flights, to
       randomState ^= randomState << 13;
       randomState ^= randomState >>> 17;
       randomState ^= randomState << 5;
-      const targetCount = 1 + (randomState >>> 0) % 3;
-      pages.push(stamps.slice(cursor, cursor + targetCount));
-      cursor += targetCount;
+      let targetCount = 1 + (randomState >>> 0) % 3;
+      if (pages.at(-1)?.length === 1 && targetCount === 1) targetCount = 2;
+      const page = stamps.slice(cursor, cursor + targetCount);
+      pages.push(page);
+      cursor += page.length;
     }
+    if (pages.length > 1 && pages.at(-1)?.length === 1 && pages.at(-2)?.length === 1) pages.at(-2)?.push(...(pages.pop() ?? []));
     return pages;
   }, [stamps, userId]);
   const requiredVisaPageCount = Math.max(1, stampPages.length);
@@ -159,7 +162,7 @@ export function AviationPassport({ displayName, memberSince, userId, flights, to
     const pageStamps = stampPages[index] ?? [];
     const layouts = stampSlotLayouts[Math.max(1, pageStamps.length)] ?? stampSlotLayouts[5];
     const slots = layouts[stableRandomSeed(`${userId}:stamp-layout:${index}`) % layouts.length];
-    return <div className="passport-page passport-stamps"><p className="passport-eyebrow"><T id="passport.stamps" /> · {index + 1}</p><div className="passport-stamp-field">{pageStamps.map((stamp, stampIndex) => {
+    return <div className="passport-page passport-stamps"><div className="passport-stamp-page-heading"><p className="passport-eyebrow"><T id="passport.stamps" /></p><span className="passport-stamp-page-number">{index + 1}</span></div><div className="passport-stamp-field">{pageStamps.map((stamp, stampIndex) => {
       const slot = slots[stampIndex];
       const positionSeed = stableRandomSeed(`${userId}:${index}:${stamp.code}:${stampIndex}`);
       const shapeXMargin = stamp.shape === "stamp-triangle" ? 27 : stamp.shape === "stamp-oblong" || stamp.shape === "stamp-ellipse" ? 25 : stamp.shape === "stamp-octagon" || stamp.shape === "stamp-hex" ? 23 : 21;
