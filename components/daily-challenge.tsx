@@ -8,7 +8,7 @@ import { createClient } from "@/lib/supabase/browser";
 
 export type Challenge = { challenge_date: string; category: string; departure_iata: string; departure_icao: string; arrival_iata: string; arrival_icao: string; departure_name: string; arrival_name: string; estimated_minutes: number; distance_km: number; suggested_aircraft: string | null; about: string };
 export type Memorial = { id: string; title_en: string; title_zh: string; description_en: string; description_zh: string; event_year: number; event_month: number; event_day: number; recurring: boolean; departure_iata: string; departure_icao: string; arrival_iata: string; arrival_icao: string; suggested_aircraft: string | null };
-type ChallengeData = { challenges: Challenge[]; memorials: Memorial[]; completedCategories?: string[] };
+type ChallengeData = { challenges: Challenge[]; memorials: Memorial[]; completedCategories?: string[]; flownCategories?: string[] };
 
 export const challengeCategoryOrder = ["long", "medium", "quick", "regional"] as const;
 const categoryRank = new Map<string, number>(challengeCategoryOrder.map((category, index) => [category, index]));
@@ -27,7 +27,7 @@ function useDailyChallenges(initial?: ChallengeData) {
       const response = await fetch(`/api/challenges?date=${date}`, { cache: "no-store" });
       if (!response.ok) throw new Error();
       const next = await response.json();
-      setData({ challenges: next.challenges || [], memorials: next.memorials || [], completedCategories: next.completedCategories || [] });
+      setData({ challenges: next.challenges || [], memorials: next.memorials || [], completedCategories: next.completedCategories || [], flownCategories: next.flownCategories || [] });
       setLoadedDate(date);
     } catch { /* Preserve the last confirmed data while a refresh fails. */ }
     finally { setUpdating(false); }
@@ -65,7 +65,7 @@ function CheckCircle() {
   return <svg viewBox="0 0 24 24" aria-hidden="true" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2.2"><circle cx="12" cy="12" r="8.5" /><path d="m8.5 12 2.3 2.3 4.8-5" /></svg>;
 }
 
-function ChallengeCard({ item, compact = false, selected = false, completed = false, saving = false, onSelect, onToggleComplete, showActions = false }: { item: Challenge; compact?: boolean; selected?: boolean; completed?: boolean; saving?: boolean; onSelect?: () => void; onToggleComplete?: (item: Challenge, button: HTMLButtonElement) => void; showActions?: boolean }) {
+function ChallengeCard({ item, compact = false, selected = false, completed = false, flownBefore = false, saving = false, onSelect, onToggleComplete, showActions = false }: { item: Challenge; compact?: boolean; selected?: boolean; completed?: boolean; flownBefore?: boolean; saving?: boolean; onSelect?: () => void; onToggleComplete?: (item: Challenge, button: HTMLButtonElement) => void; showActions?: boolean }) {
   const [flipped, setFlipped] = useState(false);
   const { preferences } = useLanguage();
   const t = useText();
@@ -73,7 +73,7 @@ function ChallengeCard({ item, compact = false, selected = false, completed = fa
   const flip = () => setFlipped(value => !value);
   return <div className={`challenge-card spotlight-card relative rounded-2xl border [perspective:1000px] ${selected ? "border-brand/70 shadow-sm shadow-brand/20" : "border-transparent"}`} data-spotlight-active={selected ? "true" : "false"}>
     <button type="button" aria-label={`Select ${item.departure_iata} to ${item.arrival_iata}`} aria-pressed={selected} onClick={select} className={`absolute right-4 top-4 z-30 grid h-8 w-8 place-items-center rounded-full border-2 text-sm transition ${selected ? "border-brand bg-brand text-on-brand ring-2 ring-brand/20" : "border-line-strong bg-surface text-transparent hover:border-brand hover:ring-2 hover:ring-brand/15"}`}><span aria-hidden="true">✓</span></button>
-    {completed && <span className="absolute right-14 top-5 z-30 text-brand" aria-label={t("Completed")}><CheckCircle /></span>}
+    {(completed || flownBefore) && <div className="pointer-events-none absolute right-14 top-4 z-30 flex max-w-[calc(100%-5rem)] flex-wrap justify-end gap-1" aria-label={[completed && t("Completed"), flownBefore && t("Flown Before")].filter(Boolean).join(", ")}>{completed && <span className="rounded-full border border-brand/35 bg-brand-soft px-2 py-1 text-[9px] font-bold tracking-[0.08em] text-brand">COMPLETED</span>}{flownBefore && <span className="rounded-full border border-line-strong bg-page px-2 py-1 text-[9px] font-bold tracking-[0.08em] text-muted">FLOWN BEFORE</span>}</div>}
     <div className={`relative min-h-[160px] transition-transform duration-500 [transform-style:preserve-3d] ${flipped ? "[transform:rotateY(180deg)]" : ""}`}>
       <button type="button" onClick={flip} className="group block min-h-[160px] w-full rounded-2xl border border-line bg-surface p-4 pr-16 text-left [backface-visibility:hidden] hover:border-brand/50">
         <span className="block text-sm font-bold text-brand"><T source={challengeCategoryLabel(item.category)} /></span>
@@ -128,5 +128,5 @@ export function DailyChallengePage({ initial, selected }: { initial: ChallengeDa
     }
     setSavingCategory(null);
   };
-  return <div aria-busy={updating} className="space-y-8"><section><p className="eyebrow"><T source="Today's Flight Assignments" /></p><h1 className="mt-3 text-4xl font-bold tracking-tight text-brand"><T source="Daily Challenge" /></h1><p className="mt-3 text-muted"><T source="Discover a new route every day." /></p>{notice && <p role="status" className="mt-4 text-sm font-semibold text-brand">{notice}</p>}<div className="mt-7 grid gap-4 sm:grid-cols-2">{sortChallengesByDuration(current.challenges).map(item => <ChallengeCard key={item.category} item={item} selected={chosen === item.category} completed={completedCategories.includes(item.category)} saving={savingCategory === item.category} onSelect={() => setChosen(chosen === item.category ? "" : item.category)} onToggleComplete={toggleCompletion} showActions />)}</div></section>{current.memorials.length > 0 && <section className="rounded-2xl border border-[#d5b36a]/50 bg-[#2b263d] p-6 text-white"><p className="text-xs font-bold uppercase tracking-wider text-[#d5b36a]"><T source="Memorial Flight" /></p>{current.memorials.map(event => <div key={event.id} className="mt-3"><h2 className="text-2xl font-bold">{event.title_en}</h2><p className="mt-2 max-w-2xl text-sm leading-6 text-white/75">{event.description_en}</p><p className="mt-3 font-bold">{event.departure_iata} → {event.arrival_iata}</p></div>)}</section>}</div>;
+  return <div aria-busy={updating} className="space-y-8"><section><p className="eyebrow"><T source="Today's Flight Assignments" /></p><h1 className="mt-3 text-4xl font-bold tracking-tight text-brand"><T source="Daily Challenge" /></h1><p className="mt-3 text-muted"><T source="Discover a new route every day." /></p>{notice && <p role="status" className="mt-4 text-sm font-semibold text-brand">{notice}</p>}<div className="mt-7 grid gap-4 sm:grid-cols-2">{sortChallengesByDuration(current.challenges).map(item => <ChallengeCard key={item.category} item={item} selected={chosen === item.category} completed={completedCategories.includes(item.category)} flownBefore={(current.flownCategories || []).includes(item.category)} saving={savingCategory === item.category} onSelect={() => setChosen(chosen === item.category ? "" : item.category)} onToggleComplete={toggleCompletion} showActions />)}</div></section>{current.memorials.length > 0 && <section className="rounded-2xl border border-[#d5b36a]/50 bg-[#2b263d] p-6 text-white"><p className="text-xs font-bold uppercase tracking-wider text-[#d5b36a]"><T source="Memorial Flight" /></p>{current.memorials.map(event => <div key={event.id} className="mt-3"><h2 className="text-2xl font-bold">{event.title_en}</h2><p className="mt-2 max-w-2xl text-sm leading-6 text-white/75">{event.description_en}</p><p className="mt-3 font-bold">{event.departure_iata} → {event.arrival_iata}</p></div>)}</section>}</div>;
 }

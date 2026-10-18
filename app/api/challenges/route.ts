@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
+import { flownChallengeCategories } from "@/lib/daily-challenge-flight-status";
 
 const utcDate = () => new Date().toISOString().slice(0, 10);
 
@@ -51,6 +52,12 @@ export async function GET() {
     }
   }
 
+  const { data: flownFlights, error: flownFlightsError } = await supabase
+    .from("flights")
+    .select("departure_airport_icao,arrival_airport_icao,departure_airport_iata,arrival_airport_iata")
+    .eq("user_id", user.id)
+    .eq("status", "completed");
+
   const today = new Date(`${date}T00:00:00Z`);
   const memorialInWeek = (memorials ?? []).filter(event => { const start = event.publish_start_date ? new Date(`${event.publish_start_date}T00:00:00Z`) : new Date(Date.UTC(event.publish_year, event.publish_month - 1, event.publish_day)); const end = event.publish_end_date ? new Date(`${event.publish_end_date}T23:59:59Z`) : start; if (!event.recurring) return today >= start && today <= end; const year = today.getUTCFullYear(); const startThisYear = new Date(Date.UTC(year, start.getUTCMonth(), start.getUTCDate())); const endThisYear = new Date(Date.UTC(year, end.getUTCMonth(), end.getUTCDate(), 23, 59, 59)); return startThisYear <= endThisYear ? today >= startThisYear && today <= endThisYear : today >= startThisYear || today <= endThisYear; });
   return NextResponse.json({
@@ -58,10 +65,12 @@ export async function GET() {
     challenges,
     memorials: memorialInWeek,
     completedCategories: (completions ?? []).map(completion => completion.category),
+    flownCategories: flownChallengeCategories(challenges, flownFlights ?? []),
     errors: {
       challenges: initialChallengeError?.message || generationError,
       memorials: memorialError?.message || null,
       completions: completionError?.message || null,
+      flights: flownFlightsError?.message || null,
     },
   }, { headers: { "Cache-Control": "private, max-age=60" } });
 }
