@@ -5,6 +5,7 @@ import Link from "@/components/navigation-link";
 import { T } from "@/components/i18n";
 import { AddFlightDropdown } from "@/components/add-flight-dropdown";
 import { SmartAirportFilter } from "@/components/smart-airport-filter";
+import { DurationRangeFilter } from "@/components/duration-range-filter";
 import type { Airport } from "@/lib/airports";
 
 type CountryOption = {
@@ -19,6 +20,7 @@ type AllFlightsFiltersProps = {
   countries?: CountryOption[];
   departureAirports: Airport[];
   arrivalAirports: Airport[];
+  maximumDurationHours?: number;
 };
 
 const labelClass =
@@ -26,8 +28,13 @@ const labelClass =
 const controlClass =
   "mt-1 h-9 min-h-9 w-full min-w-0 rounded-lg border border-line-strong bg-surface px-3 text-sm text-ink outline-none transition placeholder:text-subtle focus:border-brand focus:ring-2 focus:ring-brand/15 sm:h-9 sm:min-h-9";
 
-export function AllFlightsFilters({ values, countries = [], departureAirports, arrivalAirports }: AllFlightsFiltersProps) {
+export function AllFlightsFilters({ values, countries = [], departureAirports, arrivalAirports, maximumDurationHours = 48 }: AllFlightsFiltersProps) {
   const [open, setOpen] = useState(true);
+  const airports = useMemo(() => {
+    const values = new Map<string, Airport>();
+    [...departureAirports, ...arrivalAirports].forEach((airport) => values.set(airport.icao || airport.iata || airport.ident || airport.name, airport));
+    return [...values.values()];
+  }, [arrivalAirports, departureAirports]);
   const clearParams = new URLSearchParams();
   if (values.status === "planned" || values.status === "completed") clearParams.set("status", values.status);
   if (values.page) clearParams.set("page", values.page);
@@ -45,6 +52,7 @@ export function AllFlightsFilters({ values, countries = [], departureAirports, a
       [
         "q",
         "airport",
+        "airportFilter",
         "destinationCountry",
         "from",
         "to",
@@ -110,6 +118,9 @@ export function AllFlightsFilters({ values, countries = [], departureAirports, a
       >
         <div className="min-h-0 overflow-visible">
           <form action="/flights" method="get" className="grid gap-x-3 gap-y-2 overflow-visible rounded-2xl border border-line bg-surface p-4 sm:grid-cols-2 lg:grid-cols-3">
+            {(values.status === "planned" || values.status === "completed") && <input type="hidden" name="status" value={values.status} />}
+            {values.sort && <input type="hidden" name="sort" value={values.sort} />}
+            {values.dir && <input type="hidden" name="dir" value={values.dir} />}
             <label className={labelClass}>
               Search Flights
               <input name="q" defaultValue={values.q ?? ""} className={controlClass} />
@@ -183,33 +194,10 @@ export function AllFlightsFilters({ values, countries = [], departureAirports, a
               <input type="date" name="to" defaultValue={values.to ?? ""} className={controlClass} />
             </label>
             <label className={labelClass}>
-              Departure Airport
-              <SmartAirportFilter name="departure" label="Departure Airport" initialValue={values.departure ?? ""} initialExact={values.departureExact ?? ""} airports={departureAirports} />
+              Airport
+              <SmartAirportFilter name="airportFilter" label="Airport" initialValue={values.airportFilter ?? ""} initialExact={values.airportExact ?? ""} airports={airports} />
             </label>
-            <label className={labelClass}>
-              Arrival Airport
-              <SmartAirportFilter name="arrival" label="Arrival Airport" initialValue={values.arrival ?? ""} initialExact={values.arrivalExact ?? ""} airports={arrivalAirports} />
-            </label>
-            <label className={labelClass}>
-              Min Duration (Hours)
-              <input
-                type="number"
-                min="0"
-                name="minDuration"
-                defaultValue={values.minDuration ?? ""}
-                className={controlClass}
-              />
-            </label>
-            <label className={labelClass}>
-              Max Duration (Hours)
-              <input
-                type="number"
-                min="0"
-                name="maxDuration"
-                defaultValue={values.maxDuration ?? ""}
-                className={controlClass}
-              />
-            </label>
+            <DurationRangeFilter initialMin={values.minDuration ?? ""} initialMax={values.maxDuration ?? ""} maximumHours={maximumDurationHours} />
             <div className="flex flex-wrap justify-end gap-2 sm:col-span-2 lg:col-span-3">
               <Link
                 href={clearHref}

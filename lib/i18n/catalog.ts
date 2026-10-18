@@ -216,6 +216,13 @@ dashboard.date|Date|日期
 dashboard.route|Route|航线
 dashboard.aircraft|Aircraft|飞机
 dashboard.duration|Duration|时长
+flight.filterAirport|Airport|机场
+flight.filterDuration|Flight Duration|飞行时长
+flight.anyDuration|Any Duration|不限飞行时长
+flight.airportPlaceholder|IATA, ICAO, city or airport|IATA、ICAO、城市或机场
+flight.noMatchingAirports|No Matching Airports|没有匹配的机场
+flight.searchAllAirports|Search all matches for “{query}”|搜索所有匹配“{query}”
+flight.includeMatchingAirports|Include all matching airports|包含所有匹配机场
 dashboard.action|Action|操作
 dashboard.import|Import Your History|导入历史记录
 dashboard.importHelp|Already have a spreadsheet? Bring your flights into Flight Desk in a few clicks.|已有航班表格？未来可通过导入功能，轻松整理到 Flight Desk。

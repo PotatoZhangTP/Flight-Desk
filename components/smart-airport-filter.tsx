@@ -2,12 +2,14 @@
 
 import { useEffect, useId, useMemo, useRef, useState, type KeyboardEvent } from "react";
 import { CountryFlag } from "@/components/country-flag";
+import { useText } from "@/components/i18n";
 import { airportCodes, type Airport } from "@/lib/airports";
 
-type Props = { name: "departure" | "arrival"; label: string; initialValue: string; initialExact: string; airports: Airport[] };
+type Props = { name: string; label: string; initialValue: string; initialExact: string; airports: Airport[] };
 const inputClass = "h-9 min-h-9 w-full rounded-lg border border-line-strong bg-surface px-3 pr-8 text-sm text-ink outline-none transition placeholder:text-subtle focus:border-brand focus:ring-2 focus:ring-brand/15";
 
 export function SmartAirportFilter({ name, label, initialValue, initialExact, airports }: Props) {
+  const t = useText();
   const id = useId();
   const root = useRef<HTMLDivElement>(null);
   const [query, setQuery] = useState(initialValue);
@@ -46,11 +48,11 @@ export function SmartAirportFilter({ name, label, initialValue, initialExact, ai
   const expanded = open && !exact && query.trim().length >= 2;
   return <div ref={root} className="relative mt-1 min-w-0">
     <input type="hidden" name={`${name}Exact`} value={exact} readOnly />
-    <input id={id} name={name} value={query} placeholder="IATA, ICAO, city or airport" autoComplete="off" role="combobox" aria-label={label} aria-autocomplete="list" aria-expanded={expanded} aria-controls={`${id}-results`} aria-activedescendant={active >= 0 ? `${id}-option-${active}` : undefined} onFocus={() => setOpen(true)} onKeyDown={keyDown} onChange={event => { setQuery(event.target.value); setExact(""); setOpen(true); setActive(-1); }} className={inputClass} />
+    <input id={id} name={name} value={query} placeholder={t("flight.airportPlaceholder")} autoComplete="off" role="combobox" aria-label={label} aria-autocomplete="list" aria-expanded={expanded} aria-controls={`${id}-results`} aria-activedescendant={active >= 0 ? `${id}-option-${active}` : undefined} onFocus={() => setOpen(true)} onKeyDown={keyDown} onChange={event => { setQuery(event.target.value); setExact(""); setOpen(true); setActive(-1); }} className={inputClass} />
     {(query || exact) && <button type="button" onClick={() => { setQuery(""); setExact(""); setOpen(false); }} className="absolute right-2 top-1/2 -translate-y-1/2 px-1 text-lg leading-none text-subtle hover:text-brand" aria-label={`Clear ${label}`}>×</button>}
     {expanded && <div id={`${id}-results`} role="listbox" className="absolute left-0 z-40 mt-1 max-h-72 w-full overflow-y-auto rounded-xl border border-line bg-surface p-1 shadow-lg">
-      {options.length > 0 && <button id={`${id}-option-0`} type="button" role="option" aria-selected={active === 0} onMouseEnter={() => setActive(0)} onMouseDown={event => event.preventDefault()} onClick={chooseFuzzy} className={`w-full rounded-lg px-3 py-2.5 text-left ${active === 0 ? "bg-brand-soft" : "hover:bg-brand-soft"}`}><span className="block text-sm font-semibold text-ink">Search all matches for “{query.trim()}”</span><span className="mt-0.5 block text-xs text-muted">Include all matching airports</span></button>}
-      {!options.length && <p role="status" className="px-3 py-2.5 text-sm text-muted">No Matching Airports</p>}
+      {options.length > 0 && <button id={`${id}-option-0`} type="button" role="option" aria-selected={active === 0} onMouseEnter={() => setActive(0)} onMouseDown={event => event.preventDefault()} onClick={chooseFuzzy} className={`w-full rounded-lg px-3 py-2.5 text-left ${active === 0 ? "bg-brand-soft" : "hover:bg-brand-soft"}`}><span className="block text-sm font-semibold text-ink">{t("flight.searchAllAirports", { query: query.trim() })}</span><span className="mt-0.5 block text-xs text-muted">{t("flight.includeMatchingAirports")}</span></button>}
+      {!options.length && <p role="status" className="px-3 py-2.5 text-sm text-muted">{t("flight.noMatchingAirports")}</p>}
       {options.map((airport, index) => <button key={airport.id || `${airport.icao}-${airport.iata}`} id={`${id}-option-${index + 1}`} type="button" role="option" aria-selected={active === index + 1} onMouseEnter={() => setActive(index + 1)} onMouseDown={event => event.preventDefault()} onClick={() => selectExact(airport)} className={`block w-full rounded-lg px-3 py-2.5 text-left ${active === index + 1 ? "bg-brand-soft" : "hover:bg-brand-soft"}`}><span className="block text-sm font-semibold text-ink">{airportCodes(airport)}</span><span className="mt-0.5 block text-xs text-muted">{airport.name}</span><span className="mt-0.5 block text-xs text-muted"><CountryFlag code={airport.countryCode} /> {[airport.municipality, airport.countryName].filter(Boolean).join(", ")}</span></button>)}
     </div>}
   </div>;
