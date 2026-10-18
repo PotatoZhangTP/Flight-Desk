@@ -18,6 +18,13 @@ export function SmartAirportFilter({ name, label, initialValue, initialExact, ai
   const [active, setActive] = useState(-1);
 
   useEffect(() => {
+    setQuery(initialValue);
+    setExact(initialExact);
+    setOpen(false);
+    setActive(-1);
+  }, [initialExact, initialValue]);
+
+  useEffect(() => {
     function close(event: MouseEvent) { if (!root.current?.contains(event.target as Node)) setOpen(false); }
     document.addEventListener("mousedown", close);
     return () => document.removeEventListener("mousedown", close);

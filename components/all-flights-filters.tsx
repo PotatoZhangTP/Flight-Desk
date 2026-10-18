@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "@/components/navigation-link";
 import { T } from "@/components/i18n";
 import { AddFlightDropdown } from "@/components/add-flight-dropdown";
@@ -46,6 +46,10 @@ export function AllFlightsFilters({ values, countries = [], departureAirports, a
     countries.find((country) => country.code === selectedCountry)?.name ?? selectedCountry;
   const [countryName, setCountryName] = useState(selectedCountryName);
   const [selectedCode, setSelectedCode] = useState(selectedCountry);
+  useEffect(() => {
+    setCountryName(selectedCountryName);
+    setSelectedCode(selectedCountry);
+  }, [selectedCountry, selectedCountryName]);
 
   const activeCount = useMemo(
     () =>
@@ -77,12 +81,15 @@ export function AllFlightsFilters({ values, countries = [], departureAirports, a
       .slice(0, 8);
   }, [countries, countryName, selectedCode]);
 
-  const selectExactCountry = () => {
-    const query = countryName.trim().toLowerCase();
-    const match = countries.find(
+  const countryCodeFor = (value: string) => {
+    const query = value.trim().toLowerCase();
+    return countries.find(
       (country) =>
         country.code.toLowerCase() === query || country.name.toLowerCase() === query,
     );
+  };
+  const selectExactCountry = () => {
+    const match = countryCodeFor(countryName);
     if (match) {
       setCountryName(match.name);
       setSelectedCode(match.code);
@@ -117,7 +124,7 @@ export function AllFlightsFilters({ values, countries = [], departureAirports, a
         }`}
       >
         <div className="min-h-0 overflow-visible">
-          <form action="/flights" method="get" className="grid gap-x-3 gap-y-2 overflow-visible rounded-2xl border border-line bg-surface p-4 sm:grid-cols-2 lg:grid-cols-3">
+          <form action="/flights" method="get" onSubmit={(event) => { const match = countryCodeFor(countryName); if (match) { setCountryName(match.name); setSelectedCode(match.code); const input = event.currentTarget.elements.namedItem("destinationCountry"); if (input instanceof HTMLInputElement) input.value = match.code; } }} className="grid gap-x-3 gap-y-2 overflow-visible rounded-2xl border border-line bg-surface p-4 sm:grid-cols-2 lg:grid-cols-3">
             {(values.status === "planned" || values.status === "completed") && <input type="hidden" name="status" value={values.status} />}
             {values.sort && <input type="hidden" name="sort" value={values.sort} />}
             {values.dir && <input type="hidden" name="dir" value={values.dir} />}

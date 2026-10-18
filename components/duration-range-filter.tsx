@@ -18,6 +18,12 @@ export function DurationRangeFilter({ initialMin, initialMax, maximumHours }: Pr
   const active = minimum > 0 || maximum < maximumHours;
   const position = (value: number) => `${(value / maximumHours) * 100}%`;
 
+  useEffect(() => {
+    const nextMinimum = clamp(Number(initialMin) || 0, 0, maximumHours);
+    setMinimum(nextMinimum);
+    setMaximum(clamp(Number(initialMax) || maximumHours, nextMinimum, maximumHours));
+  }, [initialMax, initialMin, maximumHours]);
+
   const setValue = (thumb: Thumb, value: number) => {
     const next = Math.round(clamp(value, 0, maximumHours) * 2) / 2;
     if (thumb === "min") setMinimum(Math.min(next, maximum));

@@ -57,6 +57,8 @@ type FlightRow = {
   arrival_airport_icao: string | null;
   departure_airport_iata: string | null;
   arrival_airport_iata: string | null;
+  departure_country_code: string | null;
+  arrival_country_code: string | null;
   aircraft_type: string | null;
   status: string | null;
   actual_duration_minutes: number | null;
@@ -138,6 +140,13 @@ function mergeAirportCandidates(...groups: Airport[][]) {
   return [...candidates.values()].sort((left, right) =>
     left.name.localeCompare(right.name),
   );
+}
+function flightMatchesCountry(flight: FlightRow, country: string, catalog: Map<string, Airport>) {
+  if (!country) return true;
+  return (["departure", "arrival"] as const).some((side) => {
+    const codes = [flight[`${side}_airport_icao`], flight[`${side}_airport_iata`], flight[`${side}_airport`]].map(normal);
+    return codes.some((code) => normal(catalog.get(code)?.countryCode) === country) || normal(flight[`${side}_country_code`]) === country;
+  });
 }
 
 function parseExact(value?: string) {
@@ -320,7 +329,7 @@ export default async function AllFlightsPage({
   let query = supabase
     .from("flights")
     .select(
-      "id,flight_date,flight_number,departure_airport,arrival_airport,departure_airport_icao,arrival_airport_icao,departure_airport_iata,arrival_airport_iata,aircraft_type,status,actual_duration_minutes,scheduled_duration_minutes,duration_minutes",
+      "id,flight_date,flight_number,departure_airport,arrival_airport,departure_airport_icao,arrival_airport_icao,departure_airport_iata,arrival_airport_iata,departure_country_code,arrival_country_code,aircraft_type,status,actual_duration_minutes,scheduled_duration_minutes,duration_minutes",
       { count: "exact" },
     )
     .eq("user_id", user.id);
@@ -330,10 +339,6 @@ export default async function AllFlightsPage({
       .or(
         `departure_airport_icao.eq.${airport},arrival_airport_icao.eq.${airport},departure_airport_iata.eq.${airport},arrival_airport_iata.eq.${airport},departure_airport.eq.${airport},arrival_airport.eq.${airport}`,
       );
-  if (destinationCountry)
-    query = query
-      .eq("status", "completed")
-      .eq("arrival_country_code", destinationCountry);
   const search = (p.q || "").trim();
   if (search)
     query = query.or(
@@ -415,9 +420,10 @@ export default async function AllFlightsPage({
           p.airportFilterExact ? "" : airportFilterText,
         )),
   );
+  const countryFiltered = airportFiltered.filter((flight) => flightMatchesCountry(flight, destinationCountry, catalog));
   const durationFiltered =
     min != null || max != null
-      ? airportFiltered.filter((flight) => {
+      ? countryFiltered.filter((flight) => {
           const duration = effectiveDuration(flight);
           return (
             typeof duration === "number" &&
@@ -425,7 +431,7 @@ export default async function AllFlightsPage({
             (max == null || duration <= Math.round(max * 60))
           );
         })
-      : airportFiltered;
+      : countryFiltered;
   const ordered =
     sort === "duration_minutes"
       ? [...durationFiltered].sort((left, right) => {
