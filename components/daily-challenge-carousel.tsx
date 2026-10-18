@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "@/components/navigation-link";
 import { T, useLanguage, useText } from "@/components/i18n";
 import { formatDistance } from "@/lib/preferences";
@@ -16,11 +16,32 @@ function ChallengeRow({ challenge, distanceUnit }: { challenge: Challenge; dista
 
 export function DailyChallengeCarousel() {
   const { preferences } = useLanguage();
-  const [data, setData] = useState<{ challenges: Challenge[]; memorials: ApiMemorial[] } | null>(null);
+  const [data, setData] = useState<{ challenges: Challenge[]; memorials: ApiMemorial[] }>({ challenges: [], memorials: [] });
+  const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
+  const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState<"daily" | "memorial">("daily");
+  const selectedPageDate = useRef<string | null>(null);
   const today = utcToday();
-  useEffect(() => { let live = true; fetch("/api/challenges", { cache: "no-store" }).then(response => response.ok ? response.json() : null).then(next => { if (!live || !next) return; const memorials = (next.memorials || []) as ApiMemorial[]; setData({ challenges: next.challenges || [], memorials }); if (memorials.some(event => isPublished(event, today) && isMemorialDay(event, today))) setPage("memorial"); }).catch(() => {}); return () => { live = false; }; }, [today]);
-  const memorials = useMemo(() => (data?.memorials || []).filter(event => isPublished(event, today)), [data, today]);
-  if (!data) return <div className="rounded-xl border border-dashed border-brand/30 bg-brand-soft/30 p-5 text-sm text-muted"><T source="Loading today’s flight assignments…" /></div>;
-  return <div className="relative min-h-[178px]">{page === "daily" ? <div className="space-y-2">{data.challenges.map(challenge => <ChallengeRow key={challenge.category} challenge={challenge} distanceUnit={preferences.distanceUnit} />)}{!data.challenges.length && <p className="rounded-xl border border-dashed border-line p-5 text-sm text-muted"><T source="No Recommendations Available" /></p>}</div> : <div className="space-y-2">{memorials.length ? memorials.map(event => <Link key={event.id} href={`/challenges?memorial=${event.event_key || event.id}`} className="block rounded-xl border border-[#d5b36a]/50 bg-[#2b263d] p-3 text-white transition hover:border-[#d5b36a]"><p className="text-xs font-bold uppercase tracking-wider text-[#d5b36a]"><T source="Memorial Flight" /></p><p className="mt-1 font-bold">{event.title_en}</p><p className="mt-1 text-sm text-white/75">{event.departure_iata} → {event.arrival_iata}{event.suggested_aircraft ? ` · ${event.suggested_aircraft}` : ""}</p></Link>) : <p className="rounded-xl border border-dashed border-line p-5 text-sm text-muted"><T source="No Memorial Flights available at the moment." /></p>}</div>}<div className="absolute -bottom-1 left-0 right-0 flex justify-center gap-2"><button type="button" aria-label="Show Daily Challenges" aria-pressed={page === "daily"} onClick={() => setPage("daily")} className={`h-2.5 w-2.5 rounded-full border transition ${page === "daily" ? "border-brand bg-brand" : "border-line-strong bg-transparent"}`} /><button type="button" aria-label="Show Memorial Flights" aria-pressed={page === "memorial"} onClick={() => setPage("memorial")} className={`h-2.5 w-2.5 rounded-full border transition ${page === "memorial" ? "border-brand bg-brand" : "border-line-strong bg-transparent"}`} /></div></div>;
+  const load = async () => {
+    setStatus("loading");
+    setError(null);
+    try {
+      const response = await fetch("/api/challenges", { cache: "no-store" });
+      const next = await response.json().catch(() => null);
+      if (!response.ok || !next) throw new Error(next?.error || "Unable to load today’s flight assignments.");
+      const memorials = (next.memorials || []) as ApiMemorial[];
+      setData({ challenges: next.challenges || [], memorials });
+      setError(next.errors?.challenges || null);
+      setStatus(next.errors?.challenges && !(next.challenges || []).length ? "error" : "ready");
+      if (selectedPageDate.current !== today && memorials.some(event => isPublished(event, today) && isMemorialDay(event, today))) setPage("memorial");
+    } catch (loadError) {
+      setError(loadError instanceof Error ? loadError.message : "Unable to load today’s flight assignments.");
+      setStatus("error");
+    }
+  };
+  useEffect(() => { void load(); return undefined; // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [today]);
+  const memorials = useMemo(() => data.memorials.filter(event => isPublished(event, today)), [data, today]);
+  const selectPage = (nextPage: "daily" | "memorial") => { selectedPageDate.current = today; setPage(nextPage); };
+  return <div className="relative min-h-[178px] pb-6">{page === "daily" ? <div className="space-y-2">{status === "loading" && !data.challenges.length && <div className="rounded-xl border border-dashed border-brand/30 bg-brand-soft/30 p-5 text-sm text-muted"><T source="Loading today’s flight assignments…" /></div>}{status === "error" && !data.challenges.length && <div className="rounded-xl border border-dashed border-danger/40 p-5 text-sm text-muted"><p>{error || "Unable to load today’s flight assignments."}</p><button type="button" onClick={() => void load()} className="mt-3 text-sm font-bold text-brand underline underline-offset-4">Try Again</button></div>}{status === "ready" && data.challenges.map(challenge => <ChallengeRow key={challenge.category} challenge={challenge} distanceUnit={preferences.distanceUnit} />)}{status === "ready" && !data.challenges.length && <p className="rounded-xl border border-dashed border-line p-5 text-sm text-muted"><T source="No Recommendations Available" /></p>}</div> : <div className="space-y-2">{memorials.length ? memorials.map(event => <Link key={event.id} href={`/challenges?memorial=${event.event_key || event.id}`} className="block rounded-xl border border-[#d5b36a]/50 bg-[#2b263d] p-3 text-white transition hover:border-[#d5b36a]"><p className="text-xs font-bold uppercase tracking-wider text-[#d5b36a]"><T source="Memorial Flight" /></p><p className="mt-1 font-bold">{event.title_en}</p><p className="mt-1 text-sm text-white/75">{event.departure_iata} → {event.arrival_iata}{event.suggested_aircraft ? ` · ${event.suggested_aircraft}` : ""}</p></Link>) : <p className="rounded-xl border border-dashed border-line p-5 text-sm text-muted"><T source="No Memorial Flights Available At The Moment." /></p>}</div>}<div className="absolute bottom-0 left-0 right-0 flex justify-center gap-2"><button type="button" aria-label="Show Daily Challenges" aria-pressed={page === "daily"} onClick={() => selectPage("daily")} className={`h-2.5 w-2.5 rounded-full border transition ${page === "daily" ? "border-brand bg-brand" : "border-line-strong bg-transparent"}`} /><button type="button" aria-label="Show Memorial Flights" aria-pressed={page === "memorial"} onClick={() => selectPage("memorial")} className={`h-2.5 w-2.5 rounded-full border transition ${page === "memorial" ? "border-brand bg-brand" : "border-line-strong bg-transparent"}`} /></div></div>;
 }
