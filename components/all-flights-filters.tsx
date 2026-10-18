@@ -5,6 +5,7 @@ import Link from "@/components/navigation-link";
 import { T } from "@/components/i18n";
 import { AddFlightDropdown } from "@/components/add-flight-dropdown";
 import { SmartAirportFilter } from "@/components/smart-airport-filter";
+import type { Airport } from "@/lib/airports";
 
 type CountryOption = {
   code: string;
@@ -16,6 +17,8 @@ type FilterValues = Record<string, string | undefined>;
 type AllFlightsFiltersProps = {
   values: FilterValues;
   countries?: CountryOption[];
+  departureAirports: Airport[];
+  arrivalAirports: Airport[];
 };
 
 const labelClass =
@@ -23,7 +26,7 @@ const labelClass =
 const controlClass =
   "mt-1 h-9 min-h-9 w-full min-w-0 rounded-lg border border-line-strong bg-surface px-3 text-sm text-ink outline-none transition placeholder:text-subtle focus:border-brand focus:ring-2 focus:ring-brand/15 sm:h-9 sm:min-h-9";
 
-export function AllFlightsFilters({ values, countries = [] }: AllFlightsFiltersProps) {
+export function AllFlightsFilters({ values, countries = [], departureAirports, arrivalAirports }: AllFlightsFiltersProps) {
   const [open, setOpen] = useState(true);
   const selectedCountry = (values.destinationCountry ?? "").toUpperCase();
   const selectedCountryName =
@@ -44,7 +47,6 @@ export function AllFlightsFilters({ values, countries = [] }: AllFlightsFiltersP
         "aircraft",
         "minDuration",
         "maxDuration",
-        "status",
       ].filter((key) => values[key]).length,
     [values],
   );
@@ -176,11 +178,11 @@ export function AllFlightsFilters({ values, countries = [] }: AllFlightsFiltersP
             </label>
             <label className={labelClass}>
               Departure Airport
-              <SmartAirportFilter name="departure" label="Departure Airport" initialValue={values.departure ?? ""} initialExact={values.departureExact ?? ""} />
+              <SmartAirportFilter name="departure" label="Departure Airport" initialValue={values.departure ?? ""} initialExact={values.departureExact ?? ""} airports={departureAirports} />
             </label>
             <label className={labelClass}>
               Arrival Airport
-              <SmartAirportFilter name="arrival" label="Arrival Airport" initialValue={values.arrival ?? ""} initialExact={values.arrivalExact ?? ""} />
+              <SmartAirportFilter name="arrival" label="Arrival Airport" initialValue={values.arrival ?? ""} initialExact={values.arrivalExact ?? ""} airports={arrivalAirports} />
             </label>
             <label className={labelClass}>
               Min Duration (Hours)
@@ -202,15 +204,6 @@ export function AllFlightsFilters({ values, countries = [] }: AllFlightsFiltersP
                 className={controlClass}
               />
             </label>
-            <label className={labelClass}>
-              Status
-              <select name="status" defaultValue={values.status ?? ""} className={controlClass}>
-                <option value="">All Statuses</option>
-                <option value="completed">Completed</option>
-                <option value="planned">Planned</option>
-              </select>
-            </label>
-
             <div className="flex flex-wrap justify-end gap-2 sm:col-span-2 lg:col-span-3">
               <Link
                 href="/flights"
