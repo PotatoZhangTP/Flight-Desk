@@ -28,6 +28,7 @@ const controlClass =
 
 export function AllFlightsFilters({ values, countries = [], departureAirports, arrivalAirports }: AllFlightsFiltersProps) {
   const [open, setOpen] = useState(true);
+  const clearHref = values.status === "planned" || values.status === "completed" ? `/flights?status=${values.status}` : "/flights";
   const selectedCountry = (values.destinationCountry ?? "").toUpperCase();
   const selectedCountryName =
     countries.find((country) => country.code === selectedCountry)?.name ?? selectedCountry;
@@ -206,7 +207,7 @@ export function AllFlightsFilters({ values, countries = [], departureAirports, a
             </label>
             <div className="flex flex-wrap justify-end gap-2 sm:col-span-2 lg:col-span-3">
               <Link
-                href="/flights"
+                href={clearHref}
                 className="inline-flex min-h-11 items-center justify-center rounded-lg border border-line px-4 text-sm font-semibold text-brand transition hover:bg-brand-soft sm:min-h-9"
               >
                 <T id="dashboard.clearFilters" />
