@@ -5,10 +5,11 @@ import { PreferencesMenu } from "./preferences-menu";
 import { LogbookLink } from "./logbook-link";
 import { UpcomingButton } from "./upcoming-button";
 import { UserMenu } from "./user-menu";
-import { siteAdminAccess } from "@/lib/admin/server";
+import { createClient } from "@/lib/supabase/server";
 
 export async function SiteHeader() {
-  const { user } = await siteAdminAccess();
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
   return <header className="site-header relative z-20 border-b border-line bg-surface/95"><div className="site-container flex flex-wrap items-center justify-between gap-x-4 gap-y-3 py-4">
     <Brand />
     <LocalizedNav label="Main navigation" className="order-3 flex w-full flex-wrap items-center gap-x-5 gap-y-3 border-t border-surface-muted pt-3 text-sm font-semibold text-muted lg:order-none lg:w-auto lg:border-0 lg:pt-0"><Link className="rounded hover:text-brand focus-visible:outline-2 focus-visible:outline-brand" href="/#features"><T id="common.features" /></Link><Link className="rounded hover:text-brand focus-visible:outline-2 focus-visible:outline-brand" href="/#roadmap"><T id="common.roadmap" /></Link><UpcomingButton className="cursor-pointer rounded transition hover:text-brand focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand"><T source="Pricing" /></UpcomingButton>{user && <Link className="hover:text-brand" href="/dashboard"><T id="common.dashboard" /></Link>}</LocalizedNav>

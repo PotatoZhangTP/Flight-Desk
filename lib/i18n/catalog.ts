@@ -436,7 +436,7 @@ admin.manageRoadmapLower|Manage roadmap|管理开发路线图
 admin.manageLanding|Manage Landing Page|管理首页文案
 admin.workspace|Administrator workspace|管理员工作区
 admin.website|Website management|网站管理
-admin.intro|Manage the public product story and the plan behind it.|管理网站内容与产品开发计划。
+admin.intro|Manage Flight Desk content and settings.|管理 Flight Desk 内容与设置。
 admin.roadmapHelp|Organize product milestones, development statuses and published updates.|管理产品里程碑、开发状态与公开更新。
 admin.landingHelp|Edit homepage copy privately, save a draft, then publish it when you’re ready.|编辑首页文案，先保存草稿，确认后再发布。
 admin.access|Administrator access|管理员访问
