@@ -310,8 +310,8 @@ export default async function AllFlightsPage({
     ? (p.destinationCountry || "").toUpperCase()
     : "";
   const invalid = Boolean(
-    (p.minDuration && !min) ||
-      (p.maxDuration && !max) ||
+    (p.minDuration && min == null) ||
+      (p.maxDuration && max == null) ||
       (min != null && max != null && max < min),
   );
   const departureText = (p.departure || "").trim();
@@ -373,7 +373,7 @@ export default async function AllFlightsPage({
         )
       : [];
   const airportMatchesAny =
-    airportFilterText && !p.airportExact
+    airportFilterText && !p.airportFilterExact
       ? toAirportMatches(
           airports.filter((item) =>
             airportMatchesText(item, airportFilterText),
@@ -382,7 +382,7 @@ export default async function AllFlightsPage({
       : [];
   const departureExact = parseExact(p.departureExact);
   const arrivalExact = parseExact(p.arrivalExact);
-  const airportExact = parseExact(p.airportExact);
+  const airportExact = parseExact(p.airportFilterExact);
   const airportFiltered = (result.data || []).filter(
     (flight: FlightRow) =>
       airportMatches(
@@ -399,20 +399,20 @@ export default async function AllFlightsPage({
         arrivals,
         p.arrivalExact ? "" : arrivalText,
       ) &&
-      ((!airportFilterText && !p.airportExact) ||
+      ((!airportFilterText && !p.airportFilterExact) ||
         airportMatches(
           flight,
           "departure",
           airportExact,
           airportMatchesAny,
-          p.airportExact ? "" : airportFilterText,
+          p.airportFilterExact ? "" : airportFilterText,
         ) ||
         airportMatches(
           flight,
           "arrival",
           airportExact,
           airportMatchesAny,
-          p.airportExact ? "" : airportFilterText,
+          p.airportFilterExact ? "" : airportFilterText,
         )),
   );
   const durationFiltered =

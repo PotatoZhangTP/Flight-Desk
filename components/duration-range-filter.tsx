@@ -44,8 +44,8 @@ export function DurationRangeFilter({ initialMin, initialMax, maximumHours }: Pr
 
   return <div className="relative min-w-0 sm:col-span-2 lg:col-span-3">
     <input type="hidden" name="minDuration" value={active ? String(minimum) : ""} readOnly />
-    <input type="hidden" name="maxDuration" value={active ? String(maximum) : ""} readOnly />
-    <div className="flex items-baseline justify-between gap-3 text-[10px] font-bold uppercase tracking-[0.14em] text-subtle"><span>Flight Duration</span><span className="text-brand">{active ? `${formatHours(minimum)} – ${formatHours(maximum)}` : "Any Duration"}</span></div>
+    <input type="hidden" name="maxDuration" value={maximum < maximumHours ? String(maximum) : ""} readOnly />
+    <div className="flex items-baseline justify-between gap-3 text-[10px] font-bold uppercase tracking-[0.14em] text-subtle"><span>Flight Duration</span><span className="text-brand">{active ? `${formatHours(minimum)} – ${maximum === maximumHours ? `${formatHours(maximum)}+` : formatHours(maximum)}` : "Any Duration"}</span></div>
     <div ref={track} className="relative mt-4 h-8 touch-none" onPointerDown={(event) => { const value = valueAt(event.clientX); start(Math.abs(value - minimum) <= Math.abs(value - maximum) ? "min" : "max", event); setValue(Math.abs(value - minimum) <= Math.abs(value - maximum) ? "min" : "max", value); }}>
       <div className="absolute top-1/2 h-1.5 w-full -translate-y-1/2 rounded-full bg-surface-muted" />
       <div className="absolute top-1/2 h-1.5 -translate-y-1/2 rounded-full bg-brand" style={{ left: position(minimum), right: `${100 - (maximum / maximumHours) * 100}%` }} />

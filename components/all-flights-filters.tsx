@@ -195,7 +195,7 @@ export function AllFlightsFilters({ values, countries = [], departureAirports, a
             </label>
             <label className={labelClass}>
               Airport
-              <SmartAirportFilter name="airportFilter" label="Airport" initialValue={values.airportFilter ?? ""} initialExact={values.airportExact ?? ""} airports={airports} />
+              <SmartAirportFilter name="airportFilter" label="Airport" initialValue={values.airportFilter ?? ""} initialExact={values.airportFilterExact ?? ""} airports={airports} />
             </label>
             <DurationRangeFilter initialMin={values.minDuration ?? ""} initialMax={values.maxDuration ?? ""} maximumHours={maximumDurationHours} />
             <div className="flex flex-wrap justify-end gap-2 sm:col-span-2 lg:col-span-3">
