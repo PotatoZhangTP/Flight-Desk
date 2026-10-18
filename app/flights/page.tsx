@@ -341,9 +341,7 @@ export default async function AllFlightsPage({
       );
   const search = (p.q || "").trim();
   if (search)
-    query = query.or(
-      `flight_number.ilike.%${search}%,departure_airport.ilike.%${search}%,arrival_airport.ilike.%${search}%,departure_airport_iata.ilike.%${search}%,arrival_airport_iata.ilike.%${search}%,aircraft_type.ilike.%${search}%`,
-    );
+    query = query.ilike("flight_number", `%${search}%`);
   if (p.from) query = query.gte("flight_date", p.from);
   if (p.to) query = query.lte("flight_date", p.to);
   if (p.aircraft) query = query.ilike("aircraft_type", `%${p.aircraft}%`);

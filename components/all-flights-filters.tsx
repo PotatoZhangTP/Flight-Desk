@@ -129,7 +129,7 @@ export function AllFlightsFilters({ values, countries = [], departureAirports, a
             {values.sort && <input type="hidden" name="sort" value={values.sort} />}
             {values.dir && <input type="hidden" name="dir" value={values.dir} />}
             <label className={labelClass}>
-              Search Flights
+              Flight Number
               <input name="q" defaultValue={values.q ?? ""} className={controlClass} />
             </label>
 
