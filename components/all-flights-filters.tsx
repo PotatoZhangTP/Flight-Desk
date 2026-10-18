@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import Link from "@/components/navigation-link";
 import { T } from "@/components/i18n";
 import { AddFlightDropdown } from "@/components/add-flight-dropdown";
+import { SmartAirportFilter } from "@/components/smart-airport-filter";
 
 type CountryOption = {
   code: string;
@@ -175,11 +176,11 @@ export function AllFlightsFilters({ values, countries = [] }: AllFlightsFiltersP
             </label>
             <label className={labelClass}>
               Departure Airport
-              <input name="departure" defaultValue={values.departure ?? ""} className={controlClass} />
+              <SmartAirportFilter name="departure" label="Departure Airport" initialValue={values.departure ?? ""} initialExact={values.departureExact ?? ""} />
             </label>
             <label className={labelClass}>
               Arrival Airport
-              <input name="arrival" defaultValue={values.arrival ?? ""} className={controlClass} />
+              <SmartAirportFilter name="arrival" label="Arrival Airport" initialValue={values.arrival ?? ""} initialExact={values.arrivalExact ?? ""} />
             </label>
             <label className={labelClass}>
               Min Duration (Hours)
