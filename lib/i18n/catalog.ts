@@ -118,6 +118,10 @@ profile.details|Profile Details|个人资料
 profile.displayName|Display Name|显示名称
 profile.editName|Edit Display Name|编辑显示名称
 profile.defaultAvatar|Default avatar · uploads coming later|默认头像 · 上传功能将在后续推出
+profile.changeAvatar|Change Avatar|更换头像
+profile.avatarUrl|Profile Picture URL|头像图片链接
+profile.avatarUrlPlaceholder|https://example.com/avatar.jpg|https://example.com/avatar.jpg
+profile.avatarHelp|Use a public image URL. Leave it empty and save to restore your initials.|使用公开图片链接。清空后保存可恢复为姓名首字母头像。
 profile.emailTitle|Sign-In Email|登录邮箱
 profile.emailHelp|This is the email connected to your Flight Desk account.|这是与你的 Flight Desk 账号关联的邮箱。
 profile.settingsHelp|Manage your account details and preferences.|管理账号资料与偏好设置。
@@ -165,6 +169,8 @@ settings.passwordError|The email request could not be confirmed. Check your conn
 settings.general|General Settings|常规设置
 settings.generalHelp|Manage how Flight Desk displays your information.|管理 Flight Desk 的显示方式。
 settings.account|Account Settings|账户设置
+header.changeTheme|Click To Change Theme|点击切换主题
+header.openUserMenu|Open User Menu|打开账号菜单
 settings.flightPreferences|Flight Preferences|飞行偏好
 settings.flightPreferencesHelp|More flight preferences will appear here as they become available.|更多飞行偏好将在相关功能推出后显示。
 settings.dateFormat|Date Format|日期格式

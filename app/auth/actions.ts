@@ -73,6 +73,7 @@ export async function updateDisplayName(displayName: string) {
   revalidatePath("/dashboard");
   revalidatePath("/settings");
   revalidatePath("/profile");
+  revalidatePath("/", "layout");
   return { error: null };
 }
 
@@ -85,6 +86,30 @@ export async function updateProfileBio(bio: string) {
   const { error } = await supabase.from("profiles").update({ bio: value }).eq("id", user.id);
   if (error) return { error: error.message };
   revalidatePath("/profile");
+  revalidatePath("/settings");
+  return { error: null };
+}
+
+export async function updateAvatarUrl(avatarUrl: string) {
+  const value = avatarUrl.trim();
+  if (value) {
+    try {
+      const url = new URL(value);
+      if (url.protocol !== "https:" && url.protocol !== "http:") return { error: "Please enter a valid image URL." };
+    } catch {
+      return { error: "Please enter a valid image URL." };
+    }
+  }
+
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: "You must be signed in." };
+  const { error } = await supabase.from("profiles").update({ avatar_url: value || null }).eq("id", user.id);
+  if (error) return { error: error.message };
+  revalidatePath("/dashboard");
+  revalidatePath("/settings");
+  revalidatePath("/profile");
+  revalidatePath("/", "layout");
   return { error: null };
 }
 

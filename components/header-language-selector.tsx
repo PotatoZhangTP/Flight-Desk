@@ -1,0 +1,12 @@
+"use client";
+
+import { useEffect, useRef, useState } from "react";
+import { saveLanguage } from "@/app/settings/language-actions";
+import { useLanguage, useText } from "@/components/i18n";
+
+export function HeaderLanguageSelector() {
+  const { locale, setLocale, accountReady } = useLanguage(); const t = useText(); const [open, setOpen] = useState(false); const root = useRef<HTMLDivElement>(null);
+  useEffect(() => { const close = (event: PointerEvent) => { if (!root.current?.contains(event.target as Node)) setOpen(false); }; const escape = (event: KeyboardEvent) => { if (event.key === "Escape") setOpen(false); }; document.addEventListener("pointerdown", close); document.addEventListener("keydown", escape); return () => { document.removeEventListener("pointerdown", close); document.removeEventListener("keydown", escape); }; }, []);
+  const choose = (next: "en" | "zh-CN") => { setLocale(next); setOpen(false); if (accountReady) void saveLanguage(next); };
+  return <div ref={root} className="relative"><button type="button" onClick={() => setOpen(!open)} aria-label={t("language.label")} aria-haspopup="menu" aria-expanded={open} title={t("language.label")} className="grid h-10 w-10 place-items-center rounded-full border border-line text-brand transition hover:bg-brand-soft focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" className="h-5 w-5"><circle cx="12" cy="12" r="9" /><ellipse cx="12" cy="12" rx="4" ry="9" /><path d="M3 12h18M5 6.5h14M5 17.5h14" /></svg></button>{open && <div role="menu" aria-label={t("language.label")} className="absolute right-0 z-40 mt-2 w-40 rounded-2xl border border-line bg-elevated p-1.5 shadow-xl shadow-ink/10"><button role="menuitemradio" aria-checked={locale === "en"} type="button" onClick={() => choose("en")} className="flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-left text-sm font-semibold text-ink hover:bg-brand-soft focus-visible:outline-2 focus-visible:outline-brand">English {locale === "en" && <span className="text-brand">✓</span>}</button><button role="menuitemradio" aria-checked={locale === "zh-CN"} type="button" onClick={() => choose("zh-CN")} className="flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-left text-sm font-semibold text-ink hover:bg-brand-soft focus-visible:outline-2 focus-visible:outline-brand">简体中文 {locale === "zh-CN" && <span className="text-brand">✓</span>}</button></div>}</div>;
+}
