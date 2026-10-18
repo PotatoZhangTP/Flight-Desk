@@ -13,9 +13,10 @@ export async function GET() {
   // Reading today's records must not depend on the optional server-side
   // generation credentials. This matters for previews, where the cron has
   // already generated the data but SUPABASE_SERVICE_ROLE_KEY may not exist.
-  const [{ data: initialChallenges, error: initialChallengeError }, { data: memorials, error: memorialError }] = await Promise.all([
+  const [{ data: initialChallenges, error: initialChallengeError }, { data: memorials, error: memorialError }, { data: completions, error: completionError }] = await Promise.all([
     supabase.from("daily_challenges").select("*").eq("challenge_date", date).order("category"),
     supabase.from("memorial_events").select("*").eq("enabled", true),
+    supabase.from("daily_challenge_completions").select("category").eq("challenge_date", date),
   ]);
 
   let challenges = initialChallenges ?? [];
@@ -56,9 +57,11 @@ export async function GET() {
     date,
     challenges,
     memorials: memorialInWeek,
+    completedCategories: (completions ?? []).map(completion => completion.category),
     errors: {
       challenges: initialChallengeError?.message || generationError,
       memorials: memorialError?.message || null,
+      completions: completionError?.message || null,
     },
   }, { headers: { "Cache-Control": "private, max-age=60" } });
 }
