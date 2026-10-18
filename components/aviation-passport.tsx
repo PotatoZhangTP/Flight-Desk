@@ -7,6 +7,7 @@ import { LocalizedDate, T } from "@/components/i18n";
 import { CountryFlag } from "@/components/country-flag";
 import { normalizeCountryCode } from "@/lib/country-codes";
 import { createClient } from "@/lib/supabase/browser";
+import { defaultPassportCover } from "@/lib/passport-design";
 
 type Flight = { id: string; flight_date: string; departure_country_code?: string | null; arrival_country_code?: string | null };
 type Stamp = { code: string; first: string; latest: string; visits: number; flights: number; rotation: number; tone: string; shape: string; size: string; line: string; motif: string; layout: string };
@@ -99,12 +100,12 @@ export function AviationPassport({ displayName, avatarUrl, passportNumber, membe
   const [pagePicker, setPagePicker] = useState(false);
   const [pageInput, setPageInput] = useState("1");
   const [theme, setTheme] = useState<keyof typeof themes>("navy");
-  const [coverColor, setCoverColor] = useState(passportCoverBackground || themes.navy[0]);
-  const [titleColor, setTitleColor] = useState(passportTitleColor || themes.navy[1]);
-  const [brandColor, setBrandColor] = useState(passportBrandColor || themes.navy[1]);
-  const [titleFont, setTitleFont] = useState(passportTitleFont || "Georgia");
-  const [texture, setTexture] = useState<PassportTexture>((textureOptions as readonly string[]).includes(passportCoverTexture || "") ? passportCoverTexture as PassportTexture : "plain");
-  const [textureColor, setTextureColor] = useState(passportCoverTextureColor || "#b9aa88");
+  const [coverColor, setCoverColor] = useState(passportCoverBackground || defaultPassportCover.background);
+  const [titleColor, setTitleColor] = useState(passportTitleColor || defaultPassportCover.titleColor);
+  const [brandColor, setBrandColor] = useState(passportBrandColor || defaultPassportCover.brandColor);
+  const [titleFont, setTitleFont] = useState(passportTitleFont || defaultPassportCover.font);
+  const [texture, setTexture] = useState<PassportTexture>((textureOptions as readonly string[]).includes(passportCoverTexture || "") ? passportCoverTexture as PassportTexture : defaultPassportCover.texture);
+  const [textureColor, setTextureColor] = useState(passportCoverTextureColor || defaultPassportCover.textureColor);
   const [customizeTab, setCustomizeTab] = useState<"cover" | "inner">("cover");
   const [innerColor, setInnerColor] = useState(passportInnerBackground || "#f7f0df");
   const [innerTitleColor, setInnerTitleColor] = useState(passportInnerTitleColor || "#34291c");
@@ -118,8 +119,7 @@ export function AviationPassport({ displayName, avatarUrl, passportNumber, membe
   const resetConfirmRef = useRef<HTMLButtonElement>(null);
   const saveCover = async () => { setSaveState("saving"); const { error } = await createClient().from("profiles").update({ passport_cover_background: coverColor, passport_title_color: titleColor, passport_brand_color: brandColor, passport_title_font: titleFont, passport_cover_texture: texture, passport_cover_texture_color: textureColor, passport_inner_background: innerColor, passport_inner_title_color: innerTitleColor, passport_inner_font: innerFont, passport_inner_texture: innerTexture, passport_inner_texture_color: innerTextureColor, passport_inner_page_number_color: innerTitleColor }).eq("id", userId); setSaveState(error ? "error" : "saved"); };
   const resetToDefaults = () => {
-    setCoverColor("#f7f0df"); setTitleColor("#000000"); setBrandColor("#713cec"); setTitleFont("Georgia"); setTexture("plain"); setTextureColor("#b9aa88");
-    setInnerColor("#f7f0df"); setInnerTitleColor("#34291c"); setInnerFont("Georgia"); setInnerTexture("plain"); setInnerTextureColor("#b9aa88"); setInnerPageNumberColor("#b9aa88");
+    setCoverColor(defaultPassportCover.background); setTitleColor(defaultPassportCover.titleColor); setBrandColor(defaultPassportCover.brandColor); setTitleFont(defaultPassportCover.font); setTexture(defaultPassportCover.texture); setTextureColor(defaultPassportCover.textureColor);
     setSaveState("idle"); setResetConfirm(false);
   };
   useEffect(() => {
