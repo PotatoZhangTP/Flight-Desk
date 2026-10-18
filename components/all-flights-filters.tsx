@@ -28,7 +28,12 @@ const controlClass =
 
 export function AllFlightsFilters({ values, countries = [], departureAirports, arrivalAirports }: AllFlightsFiltersProps) {
   const [open, setOpen] = useState(true);
-  const clearHref = values.status === "planned" || values.status === "completed" ? `/flights?status=${values.status}` : "/flights";
+  const clearParams = new URLSearchParams();
+  if (values.status === "planned" || values.status === "completed") clearParams.set("status", values.status);
+  if (values.page) clearParams.set("page", values.page);
+  if (values.sort) clearParams.set("sort", values.sort);
+  if (values.dir) clearParams.set("dir", values.dir);
+  const clearHref = clearParams.size ? `/flights?${clearParams}` : "/flights";
   const selectedCountry = (values.destinationCountry ?? "").toUpperCase();
   const selectedCountryName =
     countries.find((country) => country.code === selectedCountry)?.name ?? selectedCountry;
