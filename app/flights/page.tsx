@@ -7,14 +7,15 @@ import { DeleteFlightForm } from "@/components/delete-flight-form";
 import { AllFlightsFilters } from "@/components/all-flights-filters";
 import { airportFromRow, type Airport } from "@/lib/airports";
 import { createClient } from "@/lib/supabase/server";
+import { normalizeFlightNumber } from "@/lib/flight-number";
 
 const sortable: Record<string, string> = {
   flight_date: "Date",
   flight_number: "Flight",
   route: "Route",
   aircraft_type: "Aircraft",
-  status: "Status",
   duration_minutes: "Duration",
+  status: "Status",
 };
 const hours = (value?: string) => {
   if (!value) return null;
@@ -340,8 +341,6 @@ export default async function AllFlightsPage({
         `departure_airport_icao.eq.${airport},arrival_airport_icao.eq.${airport},departure_airport_iata.eq.${airport},arrival_airport_iata.eq.${airport},departure_airport.eq.${airport},arrival_airport.eq.${airport}`,
       );
   const search = (p.q || "").trim();
-  if (search)
-    query = query.ilike("flight_number", `%${search}%`);
   if (p.from) query = query.gte("flight_date", p.from);
   if (p.to) query = query.lte("flight_date", p.to);
   if (p.aircraft) query = query.ilike("aircraft_type", `%${p.aircraft}%`);
@@ -386,7 +385,10 @@ export default async function AllFlightsPage({
   const departureExact = parseExact(p.departureExact);
   const arrivalExact = parseExact(p.arrivalExact);
   const airportExact = parseExact(p.airportFilterExact);
-  const airportFiltered = (result.data || []).filter(
+  const flightNumberFiltered = search
+    ? (result.data || []).filter((flight: FlightRow) => normalizeFlightNumber(flight.flight_number).includes(normalizeFlightNumber(search)))
+    : result.data || [];
+  const airportFiltered = flightNumberFiltered.filter(
     (flight: FlightRow) =>
       airportMatches(
         flight,
@@ -562,6 +564,13 @@ export default async function AllFlightsPage({
                   </td>
                   <td>{flight.aircraft_type || "—"}</td>
                   <td>
+                    {effectiveDuration(flight) == null ? (
+                      "—"
+                    ) : (
+                      <LocalizedDuration minutes={effectiveDuration(flight)!} />
+                    )}
+                  </td>
+                  <td>
                     <T
                       id={
                         flight.status === "planned"
@@ -569,13 +578,6 @@ export default async function AllFlightsPage({
                           : "dashboard.completed"
                       }
                     />
-                  </td>
-                  <td>
-                    {effectiveDuration(flight) == null ? (
-                      "—"
-                    ) : (
-                      <LocalizedDuration minutes={effectiveDuration(flight)!} />
-                    )}
                   </td>
                   <td>
                     <div className="flex justify-center gap-2">
