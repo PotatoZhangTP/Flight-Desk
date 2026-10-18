@@ -14,6 +14,13 @@ challenge.completed|Completed|已完成
 challenge.completedMessage|Challenge completed! Great flight, Captain!|挑战完成！精彩飞行，机长！
 challenge.completionError|Unable to update challenge completion.|无法更新挑战完成状态。
 challenge.flownBefore|Flown Before|曾飞过
+memorial.start|Start|开始
+memorial.storyBackground|Story Background|故事背景
+memorial.historicalEventDate|Historical Event Date|历史事件日期
+memorial.suggestedAircraft|Suggested Aircraft|推荐机型
+memorial.markComplete|Mark as Complete|标记为已完成
+memorial.completed|Completed|已完成
+memorial.completionError|Unable to update memorial flight completion.|无法更新纪念飞行完成状态。
 common.sending|Sending…|正在发送…
 common.deleting|Deleting…|正在删除…
 common.publishing|Publishing…|正在发布…
