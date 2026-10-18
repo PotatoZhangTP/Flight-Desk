@@ -28,7 +28,8 @@ export async function saveMemorial(form: FormData): Promise<MemorialResult> {
     publish_year: publishStart?.year, publish_month: publishStart?.month, publish_day: publishStart?.day,
     recurring: form.get("recurring") === "on", departure_iata: code(form.get("departure_iata"), 3), departure_icao: code(form.get("departure_icao"), 4), arrival_iata: code(form.get("arrival_iata"), 3), arrival_icao: code(form.get("arrival_icao"), 4), suggested_aircraft: String(form.get("suggested_aircraft") ?? "").trim() || null, enabled: form.get("enabled") === "on",
   };
-  if (!/^[a-z0-9][a-z0-9-]{2,80}$/.test(input.event_key) || !input.title_en || !input.title_zh || !input.description_en || !input.description_zh || !/^[A-Z]{3}$/.test(input.departure_iata) || !/^[A-Z]{4}$/.test(input.departure_icao) || !/^[A-Z]{3}$/.test(input.arrival_iata) || !/^[A-Z]{4}$/.test(input.arrival_icao) || !eventDate || !publishStart || !publishEnd || publishEnd.value < publishStart.value) return { error: "Check the event key, airport codes, dates, and required text." };
+  if (!/^[a-z0-9][a-z0-9-]{2,80}$/.test(input.event_key)) return { error: "Event Key can only use lowercase letters, numbers, and hyphens. Spaces and special characters are not allowed." };
+  if (!input.title_en || !input.title_zh || !input.description_en || !input.description_zh || !/^[A-Z]{3}$/.test(input.departure_iata) || !/^[A-Z]{4}$/.test(input.departure_icao) || !/^[A-Z]{3}$/.test(input.arrival_iata) || !/^[A-Z]{4}$/.test(input.arrival_icao) || !eventDate || !publishStart || !publishEnd || publishEnd.value < publishStart.value) return { error: "Check the airport codes, dates, and required text." };
   const query = id ? (idPattern.test(id) ? supabase.from("memorial_events").update(input).eq("id", id) : null) : supabase.from("memorial_events").insert(input);
   if (!query) return { error: "Invalid memorial event." };
   const { error } = await query;
