@@ -237,6 +237,12 @@ dashboard.route|Route|航线
 dashboard.aircraft|Aircraft|飞机
 dashboard.duration|Duration|时长
 flight.filterAirport|Airport|机场
+flight.category|Flight Category|航班类别
+flight.categoryAll|All Flights|全部航班
+flight.categoryRegular|Regular Flights|普通航班
+flight.categoryMemorial|Memorial Flights|纪念航班
+flight.categoryError|Flight category data could not be loaded. Please try again.|无法加载航班类别数据，请重试。
+flight.listError|Your flights could not be loaded. Please try again.|无法加载你的航班，请重试。
 flight.filterDuration|Flight Duration|飞行时长
 flight.anyDuration|Any Duration|不限飞行时长
 flight.airportPlaceholder|IATA, ICAO, city or airport|IATA、ICAO、城市或机场

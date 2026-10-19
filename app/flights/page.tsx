@@ -8,6 +8,8 @@ import { AllFlightsFilters } from "@/components/all-flights-filters";
 import { airportFromRow, type Airport } from "@/lib/airports";
 import { createClient } from "@/lib/supabase/server";
 import { normalizeFlightNumber } from "@/lib/flight-number";
+import { normalizeFlightCategory, filterFlightCategory, flightPage } from "@/lib/flight-list-state";
+import { FlightArrival } from "@/components/flight-arrival";
 
 const sortable: Record<string, string> = {
   flight_date: "Date",
@@ -207,6 +209,8 @@ export default async function AllFlightsPage({
     const params = new URLSearchParams(
       Object.entries(p).filter(([, value]) => value) as [string, string][],
     );
+    params.delete("focusFlightId");
+    params.delete("saved");
     Object.entries(extra).forEach(([key, value]) =>
       value ? params.set(key, value) : params.delete(key),
     );
@@ -348,11 +352,29 @@ export default async function AllFlightsPage({
     query = query.eq("status", p.status);
   const sort = sortable[p.sort || ""] ? p.sort! : "flight_date";
   const ascending = p.dir === "asc";
-  const result = invalid
-    ? { data: [], error: null, count: 0 }
-    : await query.order(sort === "duration_minutes" ? "flight_date" : sort, {
-        ascending,
-      });
+  // Fetch the complete authorized result before category/filter/sort/pagination.
+  // Supabase otherwise defaults to a 1,000-row response cap.
+  const result = { data: [] as FlightRow[], error: null as string | null };
+  if (!invalid) {
+    for (let offset = 0; ; offset += 1000) {
+      const batch = await query.order(sort === "duration_minutes" ? "flight_date" : sort, { ascending }).order("id", { ascending: true }).range(offset, offset + 999);
+      if (batch.error) { result.error = batch.error.message; result.data = []; break; }
+      result.data.push(...(batch.data || []));
+      if (!batch.data || batch.data.length < 1000) break;
+    }
+  }
+  const category = normalizeFlightCategory(p.flightCategory);
+  const memorialFlightIds = new Set<string>();
+  let categoryError = false;
+  if (category !== "all") {
+    for (let offset = 0; ; offset += 1000) {
+      const { data: links, error } = await supabase.from("memorial_participation").select("flight_id").eq("user_id", user.id).not("flight_id", "is", null).order("id").range(offset, offset + 999);
+      if (error) { categoryError = true; break; }
+      for (const link of links || []) if (link.flight_id) memorialFlightIds.add(link.flight_id);
+      if (!links || links.length < 1000) break;
+    }
+  }
+  const categoryFiltered = categoryError ? [] : filterFlightCategory(result.data, category, memorialFlightIds);
   const toAirportMatches = (rows: Airport[]) =>
     rows.map((row) => ({
       icao: normal(row.icao) || null,
@@ -386,8 +408,8 @@ export default async function AllFlightsPage({
   const arrivalExact = parseExact(p.arrivalExact);
   const airportExact = parseExact(p.airportFilterExact);
   const flightNumberFiltered = search
-    ? (result.data || []).filter((flight: FlightRow) => normalizeFlightNumber(flight.flight_number).includes(normalizeFlightNumber(search)))
-    : result.data || [];
+    ? categoryFiltered.filter((flight: FlightRow) => normalizeFlightNumber(flight.flight_number).includes(normalizeFlightNumber(search)))
+    : categoryFiltered;
   const airportFiltered = flightNumberFiltered.filter(
     (flight: FlightRow) =>
       airportMatches(
@@ -440,12 +462,13 @@ export default async function AllFlightsPage({
           if (leftDuration == null && rightDuration == null) return 0;
           if (leftDuration == null) return 1;
           if (rightDuration == null) return -1;
-          return (leftDuration - rightDuration) * (ascending ? 1 : -1);
+          return (leftDuration - rightDuration) * (ascending ? 1 : -1) || left.id.localeCompare(right.id);
         })
       : durationFiltered;
   const total = ordered.length;
   const pages = Math.ceil(total / size);
-  const currentPage = Math.min(page, Math.max(1, pages || 1));
+  const currentPage = flightPage(ordered, page, p.focusFlightId, size);
+  const focusedFlight = p.focusFlightId && ordered.some(flight => flight.id === p.focusFlightId) ? p.focusFlightId : "";
   const data = ordered.slice((currentPage - 1) * size, currentPage * size);
   const url = hrefFor;
   const from = total ? (currentPage - 1) * size + 1 : 0;
@@ -497,12 +520,14 @@ export default async function AllFlightsPage({
           </Link>
         </nav>
         <AllFlightsFilters
-          values={p}
+          values={{ ...p, page: String(currentPage) }}
           countries={countryOptions}
           departureAirports={departureAirports}
           arrivalAirports={arrivalAirports}
           maximumDurationHours={maximumDurationHours}
         />
+        {focusedFlight && <FlightArrival flightId={focusedFlight} page={currentPage} saved={p.saved} />}
+        {(categoryError || result.error) && <p role="alert" className="mt-4 text-sm text-danger-fg"><T id={categoryError ? "flight.categoryError" : "flight.listError"} /> <Link href={hrefFor({})} className="underline"><T id="common.retry" /></Link></p>}
         {invalid && (
           <p role="alert" className="mt-3 text-sm text-danger-fg">
             <T id="dashboard.durationFilterError" />
@@ -550,7 +575,7 @@ export default async function AllFlightsPage({
             </thead>
             <tbody>
               {data.map((flight, index) => (
-                <tr key={flight.id} className="border-b border-surface-muted">
+                <tr key={flight.id} id={`flight-${flight.id}`} className={`border-b border-surface-muted ${flight.id === focusedFlight ? "!bg-brand-soft ring-2 ring-inset ring-brand" : ""}`}>
                   <td className="py-4 pr-5">
                     {(currentPage - 1) * size + index + 1}
                   </td>

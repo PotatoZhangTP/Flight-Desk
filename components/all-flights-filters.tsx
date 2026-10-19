@@ -7,6 +7,7 @@ import { AddFlightDropdown } from "@/components/add-flight-dropdown";
 import { SmartAirportFilter } from "@/components/smart-airport-filter";
 import { DurationRangeFilter } from "@/components/duration-range-filter";
 import type { Airport } from "@/lib/airports";
+import { clearFlightFilters, normalizeFlightCategory } from "@/lib/flight-list-state";
 
 type CountryOption = {
   code: string;
@@ -30,17 +31,14 @@ const controlClass =
 
 export function AllFlightsFilters({ values, countries = [], departureAirports, arrivalAirports, maximumDurationHours = 48 }: AllFlightsFiltersProps) {
   const [open, setOpen] = useState(true);
+  const [resetVersion, setResetVersion] = useState(0);
   const airports = useMemo(() => {
     const values = new Map<string, Airport>();
     [...departureAirports, ...arrivalAirports].forEach((airport) => values.set(airport.icao || airport.iata || airport.ident || airport.name, airport));
     return [...values.values()];
   }, [arrivalAirports, departureAirports]);
-  const clearParams = new URLSearchParams();
-  if (values.status === "planned" || values.status === "completed") clearParams.set("status", values.status);
-  if (values.page) clearParams.set("page", values.page);
-  if (values.sort) clearParams.set("sort", values.sort);
-  if (values.dir) clearParams.set("dir", values.dir);
-  const clearHref = clearParams.size ? `/flights?${clearParams}` : "/flights";
+  const clearHref = clearFlightFilters(values);
+  const draftKey = JSON.stringify([resetVersion, ...["q", "aircraft", "destinationCountry", "airport", "airportFilter", "airportFilterExact", "departure", "departureExact", "arrival", "arrivalExact", "from", "to", "minDuration", "maxDuration", "flightCategory"].map(key => values[key] || "")]);
   const selectedCountry = (values.destinationCountry ?? "").toUpperCase();
   const selectedCountryName =
     countries.find((country) => country.code === selectedCountry)?.name ?? selectedCountry;
@@ -65,7 +63,8 @@ export function AllFlightsFilters({ values, countries = [], departureAirports, a
         "aircraft",
         "minDuration",
         "maxDuration",
-      ].filter((key) => values[key]).length,
+        "flightCategory",
+      ].filter((key) => values[key] && (key !== "flightCategory" || normalizeFlightCategory(values[key]) !== "all")).length,
     [values],
   );
 
@@ -124,7 +123,7 @@ export function AllFlightsFilters({ values, countries = [], departureAirports, a
         }`}
       >
         <div className="min-h-0 overflow-visible">
-          <form action="/flights" method="get" onSubmit={(event) => { const match = countryCodeFor(countryName); if (match) { setCountryName(match.name); setSelectedCode(match.code); const input = event.currentTarget.elements.namedItem("destinationCountry"); if (input instanceof HTMLInputElement) input.value = match.code; } }} className="grid gap-x-3 gap-y-2 overflow-visible rounded-2xl border border-line bg-surface p-4 sm:grid-cols-2 lg:grid-cols-3">
+          <form key={draftKey} action="/flights" method="get" onSubmit={(event) => { const match = countryCodeFor(countryName); if (match) { setCountryName(match.name); setSelectedCode(match.code); const input = event.currentTarget.elements.namedItem("destinationCountry"); if (input instanceof HTMLInputElement) input.value = match.code; } }} className="grid gap-x-3 gap-y-2 overflow-visible rounded-2xl border border-line bg-surface p-4 sm:grid-cols-2 lg:grid-cols-3">
             {(values.status === "planned" || values.status === "completed") && <input type="hidden" name="status" value={values.status} />}
             {values.sort && <input type="hidden" name="sort" value={values.sort} />}
             {values.dir && <input type="hidden" name="dir" value={values.dir} />}
@@ -204,10 +203,19 @@ export function AllFlightsFilters({ values, countries = [], departureAirports, a
               Airport
               <SmartAirportFilter name="airportFilter" label="Airport" initialValue={values.airportFilter ?? ""} initialExact={values.airportFilterExact ?? ""} airports={airports} />
             </label>
+            <label className={labelClass}>
+              <T id="flight.category" />
+              <select name="flightCategory" defaultValue={normalizeFlightCategory(values.flightCategory)} className={controlClass}>
+                <option value="all"><T id="flight.categoryAll" /></option>
+                <option value="regular"><T id="flight.categoryRegular" /></option>
+                <option value="memorial"><T id="flight.categoryMemorial" /></option>
+              </select>
+            </label>
             <DurationRangeFilter initialMin={values.minDuration ?? ""} initialMax={values.maxDuration ?? ""} maximumHours={maximumDurationHours} />
             <div className="flex flex-wrap justify-end gap-2 sm:col-span-2 lg:col-span-3">
               <Link
                 href={clearHref}
+                onClick={() => { setCountryName(""); setSelectedCode(""); setResetVersion(value => value + 1); }}
                 className="inline-flex min-h-11 items-center justify-center rounded-lg border border-line px-4 text-sm font-semibold text-brand transition hover:bg-brand-soft sm:min-h-9"
               >
                 <T id="dashboard.clearFilters" />
