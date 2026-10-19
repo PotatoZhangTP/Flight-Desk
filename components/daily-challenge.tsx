@@ -89,7 +89,7 @@ function ChallengeCard({ item, compact = false, selected = false, completed = fa
         <span className="mt-2 block text-sm leading-5 text-muted">{item.about}</span>
       </button>
     </div>
-    {showActions && selected && !flipped && <div className="flex min-w-0 flex-wrap gap-1.5 px-4 pb-4 pt-3 sm:flex-nowrap sm:gap-1.5">
+    {showActions && selected && !flipped && <div className="flex min-w-0 flex-wrap justify-center gap-2.5 px-4 pb-4 pt-3 sm:flex-nowrap">
       <a target="_blank" rel="noreferrer" href={simbriefUrl(item)} className="button-primary min-w-0 shrink whitespace-nowrap !px-2 !text-[12px] !tracking-[-0.2px]">Import to SimBrief ↗</a>
       <Link href={`/flights/new?departure=${item.departure_iata}&arrival=${item.arrival_iata}`} className="button-secondary min-w-0 shrink whitespace-nowrap !px-2 !text-[12px] !tracking-[-0.2px]">Add to My Flights</Link>
       <button type="button" disabled={saving} onClick={event => { event.stopPropagation(); onToggleComplete?.(item, event.currentTarget); }} className={`button-secondary inline-flex min-w-0 shrink items-center gap-1 whitespace-nowrap !px-2 !text-[12px] !tracking-[-0.2px] disabled:cursor-wait disabled:opacity-60 ${completed ? "border-brand bg-brand-soft text-brand" : "border-brand text-brand"}`}>{saving ? <T source="Saving…" /> : <>{completed && <CheckCircle />}<T source={completed ? "Completed" : "Mark as Complete"} /></>}</button>
