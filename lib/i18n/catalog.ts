@@ -15,6 +15,12 @@ challenge.completedMessage|Challenge completed! Great flight, Captain!|挑战完
 challenge.completionError|Unable to update challenge completion.|无法更新挑战完成状态。
 challenge.flownBefore|Flown Before|曾飞过
 memorial.start|Start|开始
+memorial.type|Memorial Type|纪念类型
+memorial.typeAccident|Accident Memorial|空难纪念
+memorial.typeHistorical|Historical Anniversary|航空历史纪念
+memorial.messageEn|English Memorial Message|英文纪念文案
+memorial.messageZh|Chinese Memorial Message|中文纪念文案
+memorial.messageHelp|Optional short card message. Leave blank to use the existing description.|可选的卡片简短文案，留空时使用已有说明文字。
 memorial.storyBackground|Story Background|故事背景
 memorial.historicalEventDate|Historical Event Date|历史事件日期
 memorial.suggestedAircraft|Suggested Aircraft|推荐机型

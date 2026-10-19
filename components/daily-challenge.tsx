@@ -5,9 +5,10 @@ import Link from "@/components/navigation-link";
 import { T, useLanguage, useText } from "@/components/i18n";
 import { formatDistance } from "@/lib/preferences";
 import { createClient } from "@/lib/supabase/browser";
+import type { MemorialPresentation } from "@/lib/memorial-presentation";
 
 export type Challenge = { challenge_date: string; category: string; departure_iata: string; departure_icao: string; arrival_iata: string; arrival_icao: string; departure_name: string; arrival_name: string; estimated_minutes: number; distance_km: number; suggested_aircraft: string | null; about: string };
-export type Memorial = { id: string; event_key?: string; title_en: string; title_zh: string; description_en: string; description_zh: string; event_date?: string; event_year: number; event_month: number; event_day: number; recurring: boolean; departure_iata: string; departure_icao: string; arrival_iata: string; arrival_icao: string; suggested_aircraft: string | null };
+export type Memorial = MemorialPresentation & { id: string; event_key?: string; title_en: string; title_zh: string; description_en: string; description_zh: string; event_date?: string; event_year: number; event_month: number; event_day: number; recurring: boolean; departure_iata: string; departure_icao: string; arrival_iata: string; arrival_icao: string; suggested_aircraft: string | null };
 type ChallengeData = { challenges: Challenge[]; memorials: Memorial[]; completedCategories?: string[]; flownCategories?: string[] };
 
 export const challengeCategoryOrder = ["long", "medium", "quick", "regional"] as const;

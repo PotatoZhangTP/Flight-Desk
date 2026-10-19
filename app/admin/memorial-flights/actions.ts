@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { siteAdminAccess } from "@/lib/admin/server";
+import { memorialTypes } from "@/lib/memorial-presentation";
 
 export type MemorialResult = { error?: string; success?: string };
 const idPattern = /^[0-9a-f-]{36}$/i;
@@ -19,7 +20,12 @@ export async function saveMemorial(form: FormData): Promise<MemorialResult> {
   const eventDate = parseDate("event_date");
   const publishStart = parseDate("publish_start_date");
   const publishEnd = parseDate("publish_end_date");
+  const memorialType = String(form.get("memorial_type") ?? "accident_memorial");
+  const messageEn = String(form.get("memorial_message_en") ?? "").trim();
+  const messageZh = String(form.get("memorial_message_zh") ?? "").trim();
+  if (!memorialTypes.some(type => type === memorialType) || messageEn.length > 600 || messageZh.length > 600) return { error: "Check the memorial type and message length (600 characters maximum)." };
   const input = {
+    memorial_type: memorialType, memorial_message_en: messageEn || null, memorial_message_zh: messageZh || null,
     event_key: String(form.get("event_key") ?? "").trim().toLowerCase(),
     title_en: String(form.get("title_en") ?? "").trim(), title_zh: String(form.get("title_zh") ?? "").trim(),
     description_en: String(form.get("description_en") ?? "").trim(), description_zh: String(form.get("description_zh") ?? "").trim(),
@@ -33,7 +39,7 @@ export async function saveMemorial(form: FormData): Promise<MemorialResult> {
   const query = id ? (idPattern.test(id) ? supabase.from("memorial_events").update(input).eq("id", id) : null) : supabase.from("memorial_events").insert(input);
   if (!query) return { error: "Invalid memorial event." };
   const { error } = await query;
-  if (error) return { error: error.code === "23505" ? "That Event Key already exists." : "The memorial event could not be saved." };
+  if (error) return { error: error.code === "23505" ? "That Event Key already exists." : error.code === "PGRST204" || error.code === "42703" ? "Apply the Memorial Presentation migration in Supabase before saving these fields." : "The memorial event could not be saved." };
   revalidatePath("/admin/memorial-flights"); revalidatePath("/challenges"); revalidatePath("/dashboard");
   return { success: "Memorial event saved." };
 }
