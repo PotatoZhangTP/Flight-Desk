@@ -8,53 +8,29 @@ export type AchievementProgress = { value: number | null; unit: string | null; l
 export type AchievementItem = AchievementDefinition & { unlocked: UserAchievement | null; progress: AchievementProgress };
 export type AchievementCabin = { ready: boolean; categories: AchievementCategory[]; items: AchievementItem[]; featured: AchievementItem[]; unlockedCount: number; totalCount: number; completionRate: number; latest: AchievementItem | null; highestTier: AchievementLevel | null };
 
-const fallbackSlugs = ["first-flight", "frequent-flyer", "country-collector", "challenge-accepted", "heritage-keeper"];
+const fallbackSlugs = ["frequent-flyer"];
 
 function asRecord(value: unknown): Record<string, unknown> { return value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : {}; }
 
-function calculateProgress(definition: Omit<AchievementDefinition, "levels">, values: { completedFlights: number; actualMinutes: number; dailyChallenges: number; memorialFlights: number; challengeCategories: Set<string>; scheduledLongHaul: boolean }): number | null {
+function calculateProgress(definition: Omit<AchievementDefinition, "levels">, completedFlights: number): number | null {
   switch (definition.unlock_rule_type) {
-    case "completed_flight_count": return values.completedFlights;
-    // Achievement thresholds for Time Aloft are intentionally stored in hours
-    // for display; actual flight durations are persisted in minutes.
-    case "actual_duration_minutes": return values.actualMinutes / 60;
-    case "daily_challenge_count": return values.dailyChallenges;
-    case "memorial_flight_count": return values.memorialFlights;
-    case "first_completed_flight": return values.completedFlights ? 1 : 0;
-    case "first_daily_challenge": return values.dailyChallenges ? 1 : 0;
-    case "first_challenge_quick": return values.challengeCategories.has("quick") ? 1 : 0;
-    case "first_challenge_regional": return values.challengeCategories.has("regional") ? 1 : 0;
-    case "first_challenge_medium": return values.challengeCategories.has("medium") ? 1 : 0;
-    case "first_challenge_long": return values.challengeCategories.has("long") ? 1 : 0;
-    case "first_memorial_flight": return values.memorialFlights ? 1 : 0;
-    case "long_haul_scheduled_minutes": return values.scheduledLongHaul ? 1 : 0;
+    case "completed_flight_count": return completedFlights;
     default: return null;
   }
 }
 
 export async function readAchievementCabin(supabase: SupabaseClient, userId: string): Promise<AchievementCabin> {
   await supabase.rpc("refresh_my_achievements");
-  const [categoriesResult, definitionsResult, levelsResult, unlockedResult, flightsResult, challengesResult, memorialsResult] = await Promise.all([
+  const [categoriesResult, definitionsResult, levelsResult, unlockedResult, flightsResult] = await Promise.all([
     supabase.from("achievement_categories").select("id,slug,name_en,name_zh,description_en,description_zh,display_order,icon_key").order("display_order"),
     supabase.from("achievement_definitions").select("id,slug,category_id,name_en,name_zh,description_en,description_zh,badge_type,icon_key,unlock_rule_type,unlock_rule_config,display_order").order("display_order"),
     supabase.from("achievement_levels").select("id,achievement_definition_id,level_key,level_order,threshold_value,threshold_unit,name_en,name_zh").order("level_order"),
     supabase.from("user_achievements").select("achievement_definition_id,achievement_level_id,unlocked_at").eq("user_id", userId).order("unlocked_at", { ascending: false }),
-    supabase.from("flights").select("id,status,actual_duration_minutes,scheduled_duration_minutes").eq("user_id", userId).eq("status", "completed"),
-    supabase.from("daily_challenge_completions").select("id,category").eq("user_id", userId),
-    supabase.from("memorial_participation").select("flight_id").eq("user_id", userId),
+    supabase.from("flights").select("id").eq("user_id", userId).eq("status", "completed"),
   ]);
   if (categoriesResult.error || definitionsResult.error || levelsResult.error || unlockedResult.error) return { ready: false, categories: [], items: [], featured: [], unlockedCount: 0, totalCount: 0, completionRate: 0, latest: null, highestTier: null };
 
-  const completedFlights = flightsResult.data ?? [];
-  const completedIds = new Set(completedFlights.map(flight => flight.id));
-  const values = {
-    completedFlights: completedFlights.length,
-    actualMinutes: completedFlights.reduce((sum, flight) => sum + (flight.actual_duration_minutes ?? 0), 0),
-    dailyChallenges: challengesResult.data?.length ?? 0,
-    memorialFlights: (memorialsResult.data ?? []).filter(item => item.flight_id && completedIds.has(item.flight_id)).length,
-    challengeCategories: new Set((challengesResult.data ?? []).map(item => item.category)),
-    scheduledLongHaul: completedFlights.some(flight => (flight.scheduled_duration_minutes ?? 0) >= 420),
-  };
+  const completedFlightCount = flightsResult.data?.length ?? 0;
   const levelsByDefinition = new Map<string, AchievementLevel[]>();
   for (const level of (levelsResult.data ?? []) as AchievementLevel[]) levelsByDefinition.set(level.achievement_definition_id, [...(levelsByDefinition.get(level.achievement_definition_id) ?? []), level]);
   const levelById = new Map((levelsResult.data ?? [] as AchievementLevel[]).map(level => [level.id, level]));
@@ -67,7 +43,7 @@ export async function readAchievementCabin(supabase: SupabaseClient, userId: str
   }
   const items: AchievementItem[] = ((definitionsResult.data ?? []) as Omit<AchievementDefinition, "levels">[]).map(definition => {
     const levels = (levelsByDefinition.get(definition.id) ?? []).sort((a, b) => a.level_order - b.level_order);
-    const value = calculateProgress(definition, values);
+    const value = calculateProgress(definition, completedFlightCount);
     const level = value === null ? null : [...levels].reverse().find(item => value >= Number(item.threshold_value)) ?? null;
     const nextLevel = value === null ? levels[0] ?? null : levels.find(item => value < Number(item.threshold_value)) ?? null;
     return { ...definition, unlock_rule_config: asRecord(definition.unlock_rule_config), levels, unlocked: unlockedByDefinition.get(definition.id) ?? null, progress: { value, unit: levels[0]?.threshold_unit ?? null, level, nextLevel, isMaxLevel: Boolean(level && !nextLevel) } };

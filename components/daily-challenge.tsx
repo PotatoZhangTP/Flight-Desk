@@ -125,11 +125,9 @@ export function DailyChallengePage({ initial, selected }: { initial: ChallengeDa
     if (result.error) setNotice(t("Unable to update challenge completion."));
     else if (wasCompleted) {
       setCompletedCategories(categories => categories.filter(category => category !== challenge.category));
-      void client.rpc("refresh_my_achievements");
     }
     else {
       setCompletedCategories(categories => [...new Set([...categories, challenge.category])]);
-      void client.rpc("refresh_my_achievements");
       setNotice(t("Challenge completed! Great flight, Captain!"));
       try { await launchCompletionConfetti(button); } catch { /* Completion remains saved if animation fails to load. */ }
     }

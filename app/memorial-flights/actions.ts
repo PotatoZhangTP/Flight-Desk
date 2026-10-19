@@ -24,8 +24,8 @@ export async function saveMemorialFlight(eventId: string, action: "plan" | "comp
   if (!user) return { error: "common.loginRequired" };
   const { data, error } = await supabase.rpc("save_memorial_flight", { p_event_id: eventId, p_action: action });
   if (error || !data?.length) return { error: error?.code === "PGRST202" ? "memorial.migrationRequired" : "memorial.flightSaveError" };
-  // Memorial completion may unlock First Memorial Flight and Heritage Keeper.
-  // The refresh function is idempotent and derives awards from persisted rows.
+  // Completing a Memorial Flight writes a completed flight. Refresh the phase-one
+  // Frequent Flyer badge from the same completed-flight source of truth.
   await supabase.rpc("refresh_my_achievements");
   for (const path of ["/flights", "/dashboard", "/challenges", "/achievements"]) revalidatePath(path);
   revalidatePath("/memorial-flights/[eventKey]", "page");
