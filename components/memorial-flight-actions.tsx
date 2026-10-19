@@ -1,14 +1,12 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
 import { T, useText } from "@/components/i18n";
 import { readMemorialFlightState, saveMemorialFlight } from "@/app/memorial-flights/actions";
 import { simbriefUrl } from "@/lib/simbrief-url";
 
 export function MemorialFlightActions({ event, dark = false }: { event: { id: string; departure_icao: string; arrival_icao: string; suggested_aircraft?: string | null }; dark?: boolean }) {
   const t = useText();
-  const router = useRouter();
   const [status, setStatus] = useState<string | null>(null);
   const [flightId, setFlightId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -45,7 +43,6 @@ export function MemorialFlightActions({ event, dark = false }: { event: { id: st
       else {
         setFlightId(result.flightId!); setStatus(result.status!);
         setMessage(action === "uncomplete" ? "memorial.savedPlanned" : result.status === "completed" ? "memorial.savedCompleted" : "memorial.savedPlanned");
-        if (action === "complete") router.push(`/flights?${new URLSearchParams({ flightCategory: "memorial", focusFlightId: result.flightId!, saved: result.status! })}`);
       }
     } catch { if (mounted.current) { setFailed(true); setMessage("memorial.flightSaveError"); } }
     finally { locked.current = false; if (mounted.current) setBusy(null); }
