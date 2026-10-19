@@ -1,8 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "@/components/navigation-link";
-import { DashboardMemorialCard } from "@/components/dashboard-memorial-card";
 import { MemorialArtwork } from "@/components/memorial-artwork";
 import { T, useLanguage, useText } from "@/components/i18n";
 import { formatDistance } from "@/lib/preferences";
@@ -42,16 +41,6 @@ const isPublished = (event: ApiMemorial, today: string) => {
     ? monthDay >= startDay && monthDay <= endDay
     : monthDay >= startDay || monthDay <= endDay;
 };
-const isMemorialDay = (event: ApiMemorial, today: string) => {
-  const eventDate = dateFor(event, "event");
-  return (
-    Boolean(eventDate) &&
-    (event.recurring
-      ? today.slice(5) === eventDate.slice(5)
-      : today === eventDate)
-  );
-};
-
 function ChallengeRow({
   challenge,
   distanceUnit,
@@ -96,8 +85,6 @@ export function DailyChallengeCarousel() {
     "loading",
   );
   const [error, setError] = useState<string | null>(null);
-  const [page, setPage] = useState<"daily" | "memorial">("daily");
-  const selectedPageDate = useRef<string | null>(null);
   const today = utcToday();
   const load = async () => {
     setStatus("loading");
@@ -117,13 +104,6 @@ export function DailyChallengeCarousel() {
           ? "error"
           : "ready",
       );
-      if (
-        selectedPageDate.current !== today &&
-        memorials.some(
-          (event) => isPublished(event, today) && isMemorialDay(event, today),
-        )
-      )
-        setPage("memorial");
     } catch (loadError) {
       setError(
         loadError instanceof Error
@@ -141,19 +121,14 @@ export function DailyChallengeCarousel() {
     () => data.memorials.filter((event) => isPublished(event, today)),
     [data, today],
   );
-  const selectPage = (nextPage: "daily" | "memorial") => {
-    selectedPageDate.current = today;
-    setPage(nextPage);
-  };
   return (
-    <div className="relative min-h-[178px] pb-6">
-      {page === "daily" ? (
-        <div className="space-y-2">
-          {memorials.length > 0 && <button type="button" onClick={() => selectPage("memorial")} className="flex w-full items-center gap-3 rounded-xl border border-[#d5b36a]/45 bg-[#f4ead3] px-3 py-2.5 text-left transition hover:border-[#d5b36a] hover:bg-[#efe1bf] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#d5b36a]">
+    <div>
+      <div className="space-y-2">
+          {memorials.length > 0 && <Link href={`/memorial-flights/${memorials[0].event_key || memorials[0].id}`} className="flex w-full items-center gap-3 rounded-xl border border-[#d5b36a]/45 bg-[#f4ead3] px-3 py-2.5 text-left transition hover:border-[#d5b36a] hover:bg-[#efe1bf] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#d5b36a]">
             <span className="w-9 shrink-0"><MemorialArtwork type={memorials.length === 1 ? memorials[0].memorial_type : null} tone={memorials.length === 1 ? memorials[0].display_tone : null} /></span>
             <span className="min-w-0 flex-1"><span className="block text-[10px] font-bold uppercase tracking-wider text-[#80632b]">{memorials.length === 1 ? <T source="Memorial Flight This Week" /> : <T source="Memorial Flights This Week" />}</span><span className="block truncate text-sm font-bold text-[#3e3322]">{memorials.length === 1 ? (locale === "zh-CN" ? memorials[0].title_zh || memorials[0].title_en : memorials[0].title_en || memorials[0].title_zh) : <T source="Explore this week's special flights." />}</span></span>
             <span aria-hidden="true" className="shrink-0 text-xl text-[#80632b]">→</span>
-          </button>}
+          </Link>}
           {status === "loading" && !data.challenges.length && (
             <div className="rounded-xl border border-dashed border-brand/30 bg-brand-soft/30 p-5 text-sm text-muted">
               <T source="Loading today’s flight assignments…" />
@@ -185,35 +160,6 @@ export function DailyChallengeCarousel() {
             </p>
           )}
         </div>
-      ) : (
-        <div className="space-y-2">
-          {memorials.length ? (
-            memorials.map((event) => (
-              <DashboardMemorialCard key={event.id} event={event} />
-            ))
-          ) : (
-            <p className="rounded-xl border border-dashed border-line p-5 text-sm text-muted">
-              <T source="No Memorial Flights Available At The Moment." />
-            </p>
-          )}
-        </div>
-      )}
-      <div className="absolute bottom-0 left-0 right-0 flex justify-center gap-2">
-        <button
-          type="button"
-          aria-label="Show Daily Challenges"
-          aria-pressed={page === "daily"}
-          onClick={() => selectPage("daily")}
-          className={`h-2.5 w-2.5 rounded-full border transition ${page === "daily" ? "border-brand bg-brand" : "border-line-strong bg-transparent"}`}
-        />
-        <button
-          type="button"
-          aria-label="Show Memorial Flights"
-          aria-pressed={page === "memorial"}
-          onClick={() => selectPage("memorial")}
-          className={`h-2.5 w-2.5 rounded-full border transition ${page === "memorial" ? "border-brand bg-brand" : "border-line-strong bg-transparent"}`}
-        />
-      </div>
     </div>
   );
 }
