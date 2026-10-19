@@ -493,31 +493,8 @@ export default async function AllFlightsPage({
             <T id="dashboard.allFlightsHelp" />
           </p>
         </div>
-        <nav
-          className="mt-5 inline-flex rounded-full border border-line bg-brand-soft/50 p-1"
-          aria-label="Flight status"
-        >
-          <Link
-            href={hrefFor({ status: "", page: "1" })}
-            className={`rounded-full px-4 py-2 text-sm font-semibold transition ${!selectedStatus ? "bg-brand text-on-brand" : "text-muted hover:bg-surface hover:text-brand"}`}
-          >
-            All
-          </Link>
-          <Link
-            href={hrefFor({ status: "planned", page: "1" })}
-            className={`rounded-full px-4 py-2 text-sm font-semibold transition ${selectedStatus === "planned" ? "bg-brand text-on-brand" : "text-muted hover:bg-surface hover:text-brand"}`}
-          >
-            Planned
-          </Link>
-          <Link
-            href={hrefFor({ status: "completed", page: "1" })}
-            className={`rounded-full px-4 py-2 text-sm font-semibold transition ${selectedStatus === "completed" ? "bg-brand text-on-brand" : "text-muted hover:bg-surface hover:text-brand"}`}
-          >
-            Completed
-          </Link>
-        </nav>
         <AllFlightsFilters
-          values={{ ...p, page: String(currentPage) }}
+          values={{ ...p, page: String(currentPage), selectedStatus, statusHref: hrefFor({ status: "", page: "1" }), plannedHref: hrefFor({ status: "planned", page: "1" }), completedHref: hrefFor({ status: "completed", page: "1" }) }}
           countries={countryOptions}
           departureAirports={departureAirports}
           arrivalAirports={arrivalAirports}

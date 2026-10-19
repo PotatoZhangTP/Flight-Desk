@@ -97,8 +97,31 @@ export function AllFlightsFilters({ values, countries = [], departureAirports, a
 
   return (
     <section className="mt-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
+      <div className="grid items-center gap-3 sm:grid-cols-[auto_1fr_auto]">
         <AddFlightDropdown />
+        <nav
+          className="order-3 inline-flex w-fit justify-self-start rounded-full border border-line bg-brand-soft/50 p-1 sm:order-none sm:justify-self-center"
+          aria-label="Flight status"
+        >
+          <Link
+            href={values.statusHref ?? "/flights"}
+            className={`rounded-full px-4 py-2 text-sm font-semibold transition ${!values.selectedStatus ? "bg-brand text-on-brand" : "text-muted hover:bg-surface hover:text-brand"}`}
+          >
+            All
+          </Link>
+          <Link
+            href={values.plannedHref ?? "/flights?status=planned&page=1"}
+            className={`rounded-full px-4 py-2 text-sm font-semibold transition ${values.selectedStatus === "planned" ? "bg-brand text-on-brand" : "text-muted hover:bg-surface hover:text-brand"}`}
+          >
+            Planned
+          </Link>
+          <Link
+            href={values.completedHref ?? "/flights?status=completed&page=1"}
+            className={`rounded-full px-4 py-2 text-sm font-semibold transition ${values.selectedStatus === "completed" ? "bg-brand text-on-brand" : "text-muted hover:bg-surface hover:text-brand"}`}
+          >
+            Completed
+          </Link>
+        </nav>
         <button
           type="button"
           onClick={() => setOpen((current) => !current)}
