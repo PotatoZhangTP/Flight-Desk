@@ -15,6 +15,14 @@ challenge.completedMessage|Challenge completed! Great flight, Captain!|挑战完
 challenge.completionError|Unable to update challenge completion.|无法更新挑战完成状态。
 challenge.flownBefore|Flown Before|曾飞过
 memorial.start|Start|开始
+memorial.importSimbrief|Import To SimBrief|导入 SimBrief
+memorial.addFlight|Add To My Flights|添加到我的航班
+memorial.added|Added To My Flights|已添加到我的航班
+memorial.savedPlanned|Saved to My Flights as Planned.|已保存到我的航班，状态为计划中。
+memorial.savedCompleted|Saved to My Flights as Completed.|已保存到我的航班，状态为已完成。
+memorial.flightSaveError|Unable to save this memorial flight. Your changes could not be confirmed; please retry.|无法确认纪念航班是否保存成功，请重试。
+memorial.flightLoadError|Unable to load this memorial flight's saved status.|无法加载此纪念航班的保存状态。
+memorial.migrationRequired|The Memorial Flight linking migration needs to be applied before saving.|保存前需要执行纪念航班关联增量迁移。
 memorial.type|Memorial Type|纪念类型
 memorial.typeAccident|Accident Memorial|空难纪念
 memorial.typeHistorical|Historical Anniversary|航空历史纪念
