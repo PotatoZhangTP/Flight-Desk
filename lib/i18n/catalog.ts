@@ -189,6 +189,7 @@ settings.flightPreferences|Flight Preferences|飞行偏好
 settings.flightPreferencesHelp|More flight preferences will appear here as they become available.|更多飞行偏好将在相关功能推出后显示。
 settings.dateFormat|Date Format|日期格式
 settings.distanceUnit|Distance Unit|距离单位
+flight.distance|Distance|距离
 settings.timeFormat|Time Format|时间格式
 settings.saved|Settings Saved.|设置已保存。
 settings.saveError|Settings Could Not Be Saved. Please Try Again.|设置无法保存，请重试。

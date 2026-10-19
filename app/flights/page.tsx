@@ -11,6 +11,8 @@ import { normalizeFlightNumber } from "@/lib/flight-number";
 import { normalizeFlightCategory, filterFlightCategory, flightPage } from "@/lib/flight-list-state";
 import { FlightArrival } from "@/components/flight-arrival";
 import { flightRelatedToCountry } from "@/lib/flight-country";
+import { airportCoordinateMap, flightDistanceKm } from "@/lib/flight-stats";
+import { formatDistance, normalizePreferences, type UserPreferences } from "@/lib/preferences";
 
 const sortable: Record<string, string> = {
   flight_date: "Date",
@@ -18,6 +20,7 @@ const sortable: Record<string, string> = {
   route: "Route",
   aircraft_type: "Aircraft",
   duration_minutes: "Duration",
+  distance_km: "Distance",
   status: "Status",
 };
 const hours = (value?: string) => {
@@ -202,6 +205,12 @@ export default async function AllFlightsPage({
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) redirect("/auth?next=/flights");
+  const { data: preferenceProfile } = await supabase
+    .from("profiles")
+    .select("distance_unit")
+    .eq("id", user.id)
+    .maybeSingle();
+  const distanceUnit = normalizePreferences({ distanceUnit: preferenceProfile?.distance_unit as UserPreferences["distanceUnit"] }).distanceUnit;
   const hrefFor = (extra: Record<string, string>) => {
     const params = new URLSearchParams(
       Object.entries(p).filter(([, value]) => value) as [string, string][],
@@ -354,7 +363,7 @@ export default async function AllFlightsPage({
   const result = { data: [] as FlightRow[], error: null as string | null };
   if (!invalid) {
     for (let offset = 0; ; offset += 1000) {
-      const batch = await query.order(sort === "duration_minutes" ? "flight_date" : sort, { ascending }).order("id", { ascending: true }).range(offset, offset + 999);
+      const batch = await query.order(sort === "duration_minutes" || sort === "distance_km" ? "flight_date" : sort, { ascending }).order("id", { ascending: true }).range(offset, offset + 999);
       if (batch.error) { result.error = batch.error.message; result.data = []; break; }
       result.data.push(...(batch.data || []));
       if (!batch.data || batch.data.length < 1000) break;
@@ -451,8 +460,19 @@ export default async function AllFlightsPage({
           );
         })
       : countryFiltered;
+  const coordinates = airportCoordinateMap([...catalog.values()].map((airport) => ({ icao_code: airport.icao, iata_code: airport.iata, ident: airport.ident, latitude: airport.latitude, longitude: airport.longitude })));
+  const distanceFor = (flight: FlightRow) => flightDistanceKm(flight, coordinates);
   const ordered =
-    sort === "duration_minutes"
+    sort === "distance_km"
+      ? [...durationFiltered].sort((left, right) => {
+          const leftDistance = distanceFor(left);
+          const rightDistance = distanceFor(right);
+          if (leftDistance == null && rightDistance == null) return left.id.localeCompare(right.id);
+          if (leftDistance == null) return 1;
+          if (rightDistance == null) return -1;
+          return (leftDistance - rightDistance) * (ascending ? 1 : -1) || left.id.localeCompare(right.id);
+        })
+      : sort === "duration_minutes"
       ? [...durationFiltered].sort((left, right) => {
           const leftDuration = effectiveDuration(left);
           const rightDuration = effectiveDuration(right);
@@ -569,6 +589,7 @@ export default async function AllFlightsPage({
                       <LocalizedDuration minutes={effectiveDuration(flight)!} />
                     )}
                   </td>
+                  <td>{distanceFor(flight) == null ? "—" : formatDistance(distanceFor(flight)!, distanceUnit)}</td>
                   <td>
                     <T
                       id={
