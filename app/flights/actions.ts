@@ -13,7 +13,10 @@ export async function createFlight(input: Record<string, unknown>) {
   if (normalized.error || !normalized.data) return { error: normalized.error || "Check the flight details." };
   const { error } = await supabase.from("flights").insert({ ...normalized.data, user_id: user.id });
   if (error) return { error: "Database request failed. Your flight was not saved. Please try again." };
-  revalidatePath("/dashboard"); revalidatePath("/profile");
+  // Achievement refresh is derived and idempotent; a temporary refresh failure
+  // must not roll back a successfully saved flight.
+  await supabase.rpc("refresh_my_achievements");
+  revalidatePath("/dashboard"); revalidatePath("/profile"); revalidatePath("/achievements");
   redirect("/dashboard?created=1");
 }
 
@@ -28,7 +31,8 @@ export async function updateFlight(id: string, input: Record<string, unknown>) {
     .eq("id", id).eq("user_id", user.id).select("id").maybeSingle();
   if (error) return { error: "Database request failed. Your changes were not saved. Please try again." };
   if (!data) return { error: "This flight is unavailable or you do not have permission to edit it." };
-  revalidatePath("/dashboard"); revalidatePath("/profile"); revalidatePath("/flights/" + id);
+  await supabase.rpc("refresh_my_achievements");
+  revalidatePath("/dashboard"); revalidatePath("/profile"); revalidatePath("/achievements"); revalidatePath("/flights/" + id);
   redirect("/flights/" + id + "?updated=1");
 }
 

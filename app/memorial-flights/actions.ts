@@ -24,7 +24,10 @@ export async function saveMemorialFlight(eventId: string, action: "plan" | "comp
   if (!user) return { error: "common.loginRequired" };
   const { data, error } = await supabase.rpc("save_memorial_flight", { p_event_id: eventId, p_action: action });
   if (error || !data?.length) return { error: error?.code === "PGRST202" ? "memorial.migrationRequired" : "memorial.flightSaveError" };
-  for (const path of ["/flights", "/dashboard", "/challenges"]) revalidatePath(path);
+  // Memorial completion may unlock First Memorial Flight and Heritage Keeper.
+  // The refresh function is idempotent and derives awards from persisted rows.
+  await supabase.rpc("refresh_my_achievements");
+  for (const path of ["/flights", "/dashboard", "/challenges", "/achievements"]) revalidatePath(path);
   revalidatePath("/memorial-flights/[eventKey]", "page");
   return { flightId: data[0].flight_id as string, status: data[0].status as string };
 }

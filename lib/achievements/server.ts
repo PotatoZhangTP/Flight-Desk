@@ -15,7 +15,9 @@ function asRecord(value: unknown): Record<string, unknown> { return value && typ
 function calculateProgress(definition: Omit<AchievementDefinition, "levels">, values: { completedFlights: number; actualMinutes: number; dailyChallenges: number; memorialFlights: number; challengeCategories: Set<string>; scheduledLongHaul: boolean }): number | null {
   switch (definition.unlock_rule_type) {
     case "completed_flight_count": return values.completedFlights;
-    case "actual_duration_minutes": return values.actualMinutes;
+    // Achievement thresholds for Time Aloft are intentionally stored in hours
+    // for display; actual flight durations are persisted in minutes.
+    case "actual_duration_minutes": return values.actualMinutes / 60;
     case "daily_challenge_count": return values.dailyChallenges;
     case "memorial_flight_count": return values.memorialFlights;
     case "first_completed_flight": return values.completedFlights ? 1 : 0;
