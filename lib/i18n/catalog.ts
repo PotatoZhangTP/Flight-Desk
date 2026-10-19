@@ -317,6 +317,33 @@ dashboard.previous|Previous|上一页
 dashboard.next|Next|下一页
 dashboard.achievements|Flight Achievements|飞行成就
 dashboard.achievementsHelp|Milestones from your completed journeys will appear here.|完成的旅程里程碑将在这里展示。
+achievements.kicker|Flight Desk Collection|Flight Desk 收藏室
+achievements.title|Flight Achievements|飞行成就
+achievements.subtitle|Every flight leaves a mark. Collect yours along the way.|每一次飞行都会留下印记，在旅程中收藏属于你的成就。
+achievements.unlocked|Badges Unlocked|已解锁徽章
+achievements.completionRate|Completion Rate|完成率
+achievements.latest|Latest Achievement|最近成就
+achievements.highestTier|Highest Tier Reached|最高等级
+achievements.none|None Yet|暂无
+achievements.featuredKicker|Featured Cabin|精选客舱
+achievements.featured|Your Achievement Windows|你的成就舷窗
+achievements.featuredHelp|A curated view of recent, highest-tier, and representative achievements.|集中展示最近获得、最高等级与代表性成就。
+achievements.categories|Achievement Categories|成就分类
+achievements.allCategories|All Categories|全部分类
+achievements.filters|Achievement Filters|成就筛选
+achievements.filter.all|All|全部
+achievements.filter.unlocked|Unlocked|已解锁
+achievements.filter.locked|Locked|未解锁
+achievements.filter.progressive|Progressive|成长型
+achievements.filter.standalone|Standalone|独立徽章
+achievements.unlockedState|Unlocked|已解锁
+achievements.lockedState|Locked|未解锁
+achievements.notStarted|Not Started|尚未开始
+achievements.maxTier|Highest Tier|最高等级
+achievements.condition|Unlock Condition|解锁条件
+achievements.emptyFilter|No achievements match this filter.|没有符合当前筛选条件的成就。
+achievements.setupRequired|Achievement data is not available yet. Run the Flight Achievements migration, then refresh this page.|成就数据暂不可用。请先执行 Flight Achievements Migration，然后刷新页面。
+common.close|Close|关闭
 dashboard.viewAllAchievements|View All Achievements|查看全部成就
 dashboard.reports|Flight Reports|飞行报告
 dashboard.reportsHelp|Review your flying by day, week, month, or year.|按日、周、月或年查看飞行记录。
