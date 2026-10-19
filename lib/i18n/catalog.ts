@@ -15,6 +15,11 @@ challenge.completedMessage|Challenge completed! Great flight, Captain!|挑战完
 challenge.completionError|Unable to update challenge completion.|无法更新挑战完成状态。
 challenge.flownBefore|Flown Before|曾飞过
 memorial.start|Start|开始
+memorial.week|Memorial Flight This Week|本周纪念航班
+memorial.weeks|Memorial Flights This Week|本周纪念航班
+memorial.exploreWeek|Explore this week's special flights.|探索本周特别航班
+memorial.remembering|Remembering|缅怀
+memorial.celebrating|Celebrating|庆祝
 memorial.importSimbrief|Import To SimBrief|导入 SimBrief
 memorial.addFlight|Add To My Flights|添加到我的航班
 memorial.added|Added To My Flights|已添加到我的航班

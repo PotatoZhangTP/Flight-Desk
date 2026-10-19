@@ -1,10 +1,10 @@
 import { useId } from "react";
-import { normalizeMemorialType } from "@/lib/memorial-presentation";
+import { normalizeDisplayTone } from "@/lib/memorial-presentation";
 
 /** Decorative, local SVG artwork; no images, requests, or animation. */
-export function MemorialArtwork({ type }: { type?: string | null }) {
+export function MemorialArtwork({ type, tone }: { type?: string | null; tone?: string | null }) {
   const id = useId().replace(/:/g, "");
-  const historical = normalizeMemorialType(type) === "historical_anniversary";
+  const historical = normalizeDisplayTone(tone, type) === "celebrating";
   return <svg aria-hidden="true" focusable="false" viewBox="0 0 160 190" className="block h-auto w-full" data-memorial-artwork={historical ? "emblem" : "candle"}>
     {historical ? <>
       <circle cx="80" cy="95" r="65" fill="#D5B36A" fillOpacity=".025" stroke="#D5B36A" strokeWidth="1.5" />

@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { siteAdminAccess } from "@/lib/admin/server";
-import { memorialTypes } from "@/lib/memorial-presentation";
+import { defaultDisplayTone, displayTones, memorialTypes } from "@/lib/memorial-presentation";
 
 export type MemorialResult = { error?: string; success?: string };
 const idPattern = /^[0-9a-f-]{36}$/i;
@@ -21,11 +21,12 @@ export async function saveMemorial(form: FormData): Promise<MemorialResult> {
   const publishStart = parseDate("publish_start_date");
   const publishEnd = parseDate("publish_end_date");
   const memorialType = String(form.get("memorial_type") ?? "accident_memorial");
+  const displayTone = String(form.get("display_tone") ?? defaultDisplayTone(memorialType));
   const messageEn = String(form.get("memorial_message_en") ?? "").trim();
   const messageZh = String(form.get("memorial_message_zh") ?? "").trim();
-  if (!memorialTypes.some(type => type === memorialType) || messageEn.length > 600 || messageZh.length > 600) return { error: "Check the memorial type and message length (600 characters maximum)." };
+  if (!memorialTypes.some(type => type === memorialType) || !displayTones.some(tone => tone === displayTone) || messageEn.length > 600 || messageZh.length > 600) return { error: "Check the memorial type, display tone and message length (600 characters maximum)." };
   const input = {
-    memorial_type: memorialType, memorial_message_en: messageEn || null, memorial_message_zh: messageZh || null,
+    memorial_type: memorialType, display_tone: displayTone, memorial_message_en: messageEn || null, memorial_message_zh: messageZh || null,
     event_key: String(form.get("event_key") ?? "").trim().toLowerCase(),
     title_en: String(form.get("title_en") ?? "").trim(), title_zh: String(form.get("title_zh") ?? "").trim(),
     description_en: String(form.get("description_en") ?? "").trim(), description_zh: String(form.get("description_zh") ?? "").trim(),

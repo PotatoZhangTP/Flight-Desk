@@ -3,7 +3,7 @@ import { useState, type FormEvent } from "react";
 import { AirportPicker } from "@/components/airport-picker";
 import type { Airport } from "@/lib/airports";
 import { T } from "@/components/i18n";
-import { normalizeMemorialType, type MemorialPresentation } from "@/lib/memorial-presentation";
+import { defaultDisplayTone, normalizeDisplayTone, normalizeMemorialType, type MemorialPresentation } from "@/lib/memorial-presentation";
 import {
   saveMemorial,
   deleteMemorial,
@@ -81,6 +81,8 @@ function MemorialForm({
   );
   const [saving, setSaving] = useState(false);
   const [status, setStatus] = useState("");
+  const [memorialType, setMemorialType] = useState(normalizeMemorialType(event?.memorial_type));
+  const [displayTone, setDisplayTone] = useState(normalizeDisplayTone(event?.display_tone, event?.memorial_type));
   async function submit(eventObject: FormEvent<HTMLFormElement>) {
     eventObject.preventDefault();
     if (saving) return;
@@ -136,6 +138,9 @@ function MemorialForm({
         event.publish_day,
       )
     : "";
+  const defaultMessage = memorialType === "historical_anniversary"
+    ? "Commemorating a milestone in aviation history."
+    : "In remembrance of the X people aboard.";
   return (
     <form
       onSubmit={submit}
@@ -156,14 +161,21 @@ function MemorialForm({
       <div className="mt-5 grid gap-5 md:grid-cols-2">
         <label className="text-sm font-semibold text-muted">
           <T id="memorial.type" />
-          <select name="memorial_type" defaultValue={normalizeMemorialType(event?.memorial_type)} className={input}>
+          <select name="memorial_type" value={memorialType} onChange={e => { const next = normalizeMemorialType(e.target.value); setMemorialType(next); setDisplayTone(defaultDisplayTone(next)); onDirty(true); }} className={input}>
             <option value="accident_memorial"><T id="memorial.typeAccident" /></option>
             <option value="historical_anniversary"><T id="memorial.typeHistorical" /></option>
           </select>
         </label>
+        <label className="text-sm font-semibold text-muted">
+          <T source="Display Tone" />
+          <select name="display_tone" value={displayTone} onChange={e => { setDisplayTone(normalizeDisplayTone(e.target.value, memorialType)); onDirty(true); }} className={input}>
+            <option value="remembering"><T source="Remembering" /></option>
+            <option value="celebrating"><T source="Celebrating" /></option>
+          </select>
+        </label>
         <label className="text-sm font-semibold text-muted md:col-span-2">
           <T id="memorial.messageEn" />
-          <textarea name="memorial_message_en" defaultValue={event?.memorial_message_en || ""} className={input} rows={2} maxLength={600} />
+          <textarea name="memorial_message_en" defaultValue={event?.memorial_message_en || (mode === "add" ? defaultMessage : "")} className={input} rows={2} maxLength={600} />
           <span className="mt-1 block text-xs font-normal"><T id="memorial.messageHelp" /></span>
         </label>
         <label className="text-sm font-semibold text-muted md:col-span-2">

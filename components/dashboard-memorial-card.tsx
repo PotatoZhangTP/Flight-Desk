@@ -16,6 +16,6 @@ export function DashboardMemorialCard({ event }: { event: Memorial }) {
       <p className="mt-2 break-words text-sm font-medium leading-6 text-[#eee5d2]">{event.departure_iata || event.departure_icao} <span className="text-[#d5b36a]">→</span> {event.arrival_iata || event.arrival_icao}{event.suggested_aircraft ? ` · ${event.suggested_aircraft}` : ""}</p>
       {message && <p className="mt-2 whitespace-pre-line break-words text-sm leading-relaxed text-white/70">{message}</p>}
     </div>
-    <div className="pointer-events-none mx-auto w-full max-w-[144px] select-none"><MemorialArtwork type={event.memorial_type} /></div>
+    <div className="pointer-events-none mx-auto w-full max-w-[144px] select-none"><MemorialArtwork type={event.memorial_type} tone={event.display_tone} /></div>
   </Link>;
 }

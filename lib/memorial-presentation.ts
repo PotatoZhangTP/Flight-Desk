@@ -1,15 +1,26 @@
 export const memorialTypes = ["accident_memorial", "historical_anniversary"] as const;
 export type MemorialType = typeof memorialTypes[number];
+export const displayTones = ["remembering", "celebrating"] as const;
+export type DisplayTone = typeof displayTones[number];
 
 export type MemorialPresentation = {
   memorial_type?: string | null;
   memorial_message_en?: string | null;
   memorial_message_zh?: string | null;
+  display_tone?: string | null;
 };
 
 // Legacy records have no classification; keep their quiet remembrance treatment.
 export function normalizeMemorialType(value: unknown): MemorialType {
   return value === "historical_anniversary" ? value : "accident_memorial";
+}
+
+export function defaultDisplayTone(type: unknown): DisplayTone {
+  return normalizeMemorialType(type) === "historical_anniversary" ? "celebrating" : "remembering";
+}
+
+export function normalizeDisplayTone(value: unknown, type?: unknown): DisplayTone {
+  return displayTones.includes(value as DisplayTone) ? value as DisplayTone : defaultDisplayTone(type);
 }
 
 export function memorialCardCopy(event: MemorialPresentation & {
