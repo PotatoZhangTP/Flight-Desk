@@ -1,15 +1,16 @@
 "use client";
 
 import { createPortal } from "react-dom";
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import Link from "@/components/navigation-link";
 import { LocalizedDate, T } from "@/components/i18n";
 import { CountryFlag } from "@/components/country-flag";
 import { normalizeCountryCode } from "@/lib/country-codes";
 import { createClient } from "@/lib/supabase/browser";
+import { passportVisits, type CountryVisits, type PassportFlight } from "@/lib/passport-visits";
 import { defaultPassportCover } from "@/lib/passport-design";
 
-type Flight = { id: string; flight_date: string; departure_country_code?: string | null; arrival_country_code?: string | null };
+type Flight = PassportFlight;
 type Stamp = { code: string; first: string; latest: string; visits: number; flights: number; rotation: number; tone: string; shape: string; size: string; line: string; motif: string; layout: string };
 type Props = { displayName?: string | null; avatarUrl?: string | null; passportNumber?: number | null; memberSince: string; userId: string; flights: Flight[]; totalFlights: number; countries: number; minutes: number; passportCoverBackground?: string | null; passportTitleColor?: string | null; passportBrandColor?: string | null; passportTitleFont?: string | null; passportCoverTexture?: string | null; passportCoverTextureColor?: string | null; passportInnerBackground?: string | null; passportInnerTitleColor?: string | null; passportInnerFont?: string | null; passportInnerTexture?: string | null; passportInnerTextureColor?: string | null; passportInnerPageNumberColor?: string | null };
 type Phase = "closed" | "opening" | "open" | "turning-forward" | "turning-backward" | "closing" | "back-cover" | "book-flipping-front";
@@ -71,19 +72,13 @@ const stampSlotLayouts: Record<number, Array<Array<[number, number]>>> = {
   5: [[[25, 24], [70, 27], [49, 49], [27, 75], [73, 72]], [[50, 22], [25, 43], [74, 41], [34, 75], [68, 74]], [[27, 27], [66, 24], [73, 57], [51, 76], [25, 67]]],
 };
 
-function makeStamps(flights: Flight[]) {
-  const stamps = new Map<string, Stamp>();
-  for (const flight of [...flights].sort((a, b) => a.flight_date.localeCompare(b.flight_date))) for (const countryCode of [flight.departure_country_code, flight.arrival_country_code]) {
-    if (!countryCode) continue;
-    const code = normalizeCountryCode(countryCode), existing = stamps.get(code), seed = hash(code);
-    if (!existing) {
-      const shape = ["stamp-circle", "stamp-square", "stamp-rounded", "stamp-hex", "stamp-octagon", "stamp-ellipse", "stamp-oblong", "stamp-triangle"][seed % 8];
-      const constrainedShape = ["stamp-triangle", "stamp-hex", "stamp-octagon", "stamp-ellipse", "stamp-oblong"].includes(shape);
-      stamps.set(code, { code, first: flight.flight_date, latest: flight.flight_date, visits: 1, flights: 1, rotation: seed % 17 - 8, tone: ["stamp-red", "stamp-blue", "stamp-green", "stamp-purple", "stamp-slate", "stamp-brown", "stamp-brass", "stamp-teal", "stamp-mauve"][seed % 9], shape, size: constrainedShape || seed % 3 === 2 ? "stamp-large" : "stamp-medium", line: ["stamp-single", "stamp-double", "stamp-dashed", "stamp-heavy", "stamp-notched"][seed % 5], motif: stampMotifs[(seed * 7) % stampMotifs.length], layout: `stamp-layout-${seed % 4}` });
-    }
-    else { existing.latest = flight.flight_date; existing.flights += 1; if (existing.latest !== existing.first) existing.visits += 1; }
-  }
-  return [...stamps.values()];
+function makeStamps(visits: ReadonlyMap<string, CountryVisits>) {
+  return [...visits.values()].sort((a, b) => a.first.localeCompare(b.first) || a.code.localeCompare(b.code)).map((visit): Stamp => {
+    const code = visit.code, seed = hash(code);
+    const shape = ["stamp-circle", "stamp-square", "stamp-rounded", "stamp-hex", "stamp-octagon", "stamp-ellipse", "stamp-oblong", "stamp-triangle"][seed % 8];
+    const constrainedShape = ["stamp-triangle", "stamp-hex", "stamp-octagon", "stamp-ellipse", "stamp-oblong"].includes(shape);
+    return { code, first: visit.first, latest: visit.latest, visits: visit.count, flights: visit.relatedFlightIds.length, rotation: seed % 17 - 8, tone: ["stamp-red", "stamp-blue", "stamp-green", "stamp-purple", "stamp-slate", "stamp-brown", "stamp-brass", "stamp-teal", "stamp-mauve"][seed % 9], shape, size: constrainedShape || seed % 3 === 2 ? "stamp-large" : "stamp-medium", line: ["stamp-single", "stamp-double", "stamp-dashed", "stamp-heavy", "stamp-notched"][seed % 5], motif: stampMotifs[(seed * 7) % stampMotifs.length], layout: `stamp-layout-${seed % 4}` };
+  });
 }
 
 export function AviationPassport({ displayName, avatarUrl, passportNumber, memberSince, userId, flights, totalFlights, countries, minutes, passportCoverBackground, passportTitleColor, passportBrandColor, passportTitleFont, passportCoverTexture, passportCoverTextureColor, passportInnerBackground, passportInnerTitleColor, passportInnerFont, passportInnerTexture, passportInnerTextureColor, passportInnerPageNumberColor }: Props) {
@@ -130,20 +125,10 @@ export function AviationPassport({ displayName, avatarUrl, passportNumber, membe
     return () => document.removeEventListener("keydown", onKeyDown);
   }, [resetConfirm]);
   useEffect(() => { if (!resetConfirm) resetButtonRef.current?.focus(); }, [resetConfirm]);
-  const stamps = useMemo(() => makeStamps(flights), [flights]);
-  const countryVisits = useMemo(() => {
-    const visits = new Map<string, { count: number; first: string | null; latest: string | null }>();
-    for (const flight of flights) {
-      const code = normalizeCountryCode(flight.arrival_country_code);
-      if (!/^[A-Z]{2}$/.test(code)) continue;
-      const current = visits.get(code) ?? { count: 0, first: null, latest: null };
-      current.count += 1;
-      if (!current.first || flight.flight_date < current.first) current.first = flight.flight_date;
-      if (!current.latest || flight.flight_date > current.latest) current.latest = flight.flight_date;
-      visits.set(code, current);
-    }
-    return visits;
-  }, [flights]);
+  const countryVisits = useMemo(() => passportVisits(flights), [flights]);
+  const stamps = useMemo(() => makeStamps(countryVisits), [countryVisits]);
+  const closeCountry = useCallback(() => setSelected(null), []);
+  useEffect(() => { if (selected && !countryVisits.has(selected.code)) setSelected(null); }, [countryVisits, selected]);
   const [cover, metal] = [coverColor, titleColor];
   const stampPages = useMemo(() => {
     const pages: Stamp[][] = [];
@@ -200,11 +185,13 @@ export function AviationPassport({ displayName, avatarUrl, passportNumber, membe
   };
 
   const turnForward = () => {
+    if (selected) return;
     if (phase !== "open" || turnedSheetCount < 1 || turnedSheetCount > physicalSheetCount) return;
     setTurningSheetIndex(turnedSheetCount - 1);
     setPhase("turning-forward");
   };
   const turnBackward = () => {
+    if (selected) return;
     if (phase !== "open" || turnedSheetCount <= 1) return;
     setTurningSheetIndex(turnedSheetCount - 2);
     setPhase("turning-backward");
@@ -282,6 +269,7 @@ export function AviationPassport({ displayName, avatarUrl, passportNumber, membe
   const coverFace = <><span className="passport-cover-brand"><PassportBrand color={brandColor} /></span><span className="passport-kicker" style={{ color: titleColor, fontFamily: titleFontStacks[titleFont] || titleFontStacks.Georgia }}>AVIATION<br />PASSPORT</span></>;
 
   const handleBookClick = (event: React.MouseEvent<HTMLDivElement>) => {
+    if (selected) { event.preventDefault(); event.stopPropagation(); setSelected(null); return; }
     if (phase === "closed") { setPhase("opening"); return; }
     if (phase === "back-cover") {
       setTurningSheetIndex(physicalSheetCount - 1);
@@ -336,7 +324,7 @@ export function AviationPassport({ displayName, avatarUrl, passportNumber, membe
       </div>
       <div className="passport-spine-v2" />
     </div></div></div>
-    {selected && typeof document !== "undefined" && createPortal(<CountryPopup boundaryRef={root} stamp={selected} stats={countryVisits.get(selected.code)} onClose={() => setSelected(null)} />, document.body)}
+    {selected && countryVisits.has(selected.code) && typeof document !== "undefined" && createPortal(<CountryPopup boundaryRef={root} stamp={selected} stats={countryVisits.get(selected.code)} onClose={closeCountry} />, document.body)}
   </section>;
 }
 
@@ -348,8 +336,27 @@ function ColorField({ label, value, onChange }: { label: string; value: string; 
 function CountryPopup({ boundaryRef, stamp, stats, onClose }: { boundaryRef: React.RefObject<HTMLElement | null>; stamp: Stamp; stats?: { count: number; first: string | null; latest: string | null }; onClose: () => void }) {
   const popupRef = useRef<HTMLDivElement>(null);
   const [position, setPosition] = useState<React.CSSProperties>({ visibility: "hidden" });
-  useLayoutEffect(() => { const reposition = () => { const boundary = boundaryRef.current?.getBoundingClientRect(); const popup = popupRef.current?.getBoundingClientRect(); if (!boundary || !popup) return; const width = Math.max(180, Math.min(320, boundary.width - 24)); const left = Math.max(boundary.left + 12, Math.min(boundary.right - width - 12, boundary.left + (boundary.width - width) / 2)); const minTop = Math.max(12, boundary.top + 12); const maxTop = Math.min(boundary.bottom - popup.height - 12, window.innerHeight - popup.height - 12); const top = maxTop >= minTop ? Math.min(Math.max((boundary.top + boundary.bottom - popup.height) / 2, minTop), maxTop) : minTop; setPosition({ position: "fixed", left, top, width, transform: "none", visibility: "visible" }); }; reposition(); window.addEventListener("resize", reposition); window.addEventListener("scroll", reposition, true); return () => { window.removeEventListener("resize", reposition); window.removeEventListener("scroll", reposition, true); }; }, [boundaryRef]);
-  useEffect(() => { const close = (event: KeyboardEvent) => { if (event.key === "Escape") onClose(); }; document.addEventListener("keydown", close); return () => document.removeEventListener("keydown", close); }, [onClose]);
+  useLayoutEffect(() => { const reposition = () => { const boundary = boundaryRef.current?.getBoundingClientRect(); const popup = popupRef.current?.getBoundingClientRect(); if (!boundary || !popup) return; const width = Math.max(0, Math.min(320, boundary.width - 24, window.innerWidth - 24)); const left = Math.max(12, Math.min(window.innerWidth - width - 12, boundary.left + (boundary.width - width) / 2)); const height = Math.min(popup.height, window.innerHeight - 24); const top = Math.max(12, Math.min(window.innerHeight - height - 12, (boundary.top + boundary.bottom - height) / 2)); setPosition({ position: "fixed", left, top, width, transform: "none", visibility: "visible" }); }; reposition(); window.addEventListener("resize", reposition); window.addEventListener("scroll", reposition, true); return () => { window.removeEventListener("resize", reposition); window.removeEventListener("scroll", reposition, true); }; }, [boundaryRef]);
+  useLayoutEffect(() => {
+    const previous = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const boundary = boundaryRef.current;
+    const wasInert = boundary?.inert ?? false;
+    if (boundary) boundary.inert = true;
+    popupRef.current?.querySelector<HTMLButtonElement>("button")?.focus();
+    function keyboard(event: KeyboardEvent) {
+      if (event.key === "Escape") { event.preventDefault(); event.stopImmediatePropagation(); onClose(); return; }
+      if (["ArrowLeft", "ArrowRight", "PageUp", "PageDown", "Home", "End"].includes(event.key)) { event.preventDefault(); event.stopImmediatePropagation(); return; }
+      if (event.key === "Tab") {
+        const controls = popupRef.current?.querySelectorAll<HTMLElement>("button, a[href]");
+        if (!controls?.length) return;
+        const first = controls[0], last = controls[controls.length - 1];
+        if (event.shiftKey && (document.activeElement === first || !popupRef.current?.contains(document.activeElement))) { event.preventDefault(); last.focus(); }
+        else if (!event.shiftKey && (document.activeElement === last || !popupRef.current?.contains(document.activeElement))) { event.preventDefault(); first.focus(); }
+      }
+    }
+    document.addEventListener("keydown", keyboard, true);
+    return () => { document.removeEventListener("keydown", keyboard, true); if (boundary) boundary.inert = wasInert; if (previous?.isConnected) previous.focus({ preventScroll: true }); };
+  }, [boundaryRef, onClose]);
   const code = normalizeCountryCode(stamp.code);
-  return <div ref={popupRef} style={position} className="passport-country-popover" role="dialog" aria-modal="false" onPointerDown={(event) => event.stopPropagation()}><button type="button" aria-label="Close" onClick={onClose}>×</button><div className="passport-country-popover__heading"><CountryFlag code={code} /><h3>{countryName(code)}</h3></div><div className="passport-country-popover__stat"><span><T id="passport.totalVisits" /></span><strong>{stats?.count ?? 0}</strong></div><dl><div><dt><T id="passport.firstVisit" /></dt><dd>{stats?.first ? <LocalizedDate value={stats.first} /> : "—"}</dd></div><div><dt><T id="passport.latestVisit" /></dt><dd>{stats?.latest ? <LocalizedDate value={stats.latest} /> : "—"}</dd></div></dl><Link className="passport-country-popover__link" href={`/flights?destinationCountry=${encodeURIComponent(code)}&status=completed`} onClick={onClose}><T id="passport.relatedFlights" /> <span aria-hidden="true">→</span></Link></div>;
+  return <div className="passport-country-modal-overlay" onPointerDown={event => event.stopPropagation()} onClick={event => { event.stopPropagation(); if (event.target === event.currentTarget) onClose(); }}><div ref={popupRef} style={position} className="passport-country-popover" role="dialog" aria-modal="true" aria-labelledby="passport-country-title" onPointerDown={(event) => event.stopPropagation()} onClick={event => event.stopPropagation()}><button type="button" aria-label="Close" onClick={onClose}>×</button><div className="passport-country-popover__heading"><CountryFlag code={code} /><h3 id="passport-country-title">{countryName(code)}</h3></div><div className="passport-country-popover__stat"><span><T id="passport.totalVisits" /></span><strong>{stats?.count ?? stamp.visits}</strong></div><dl><div><dt><T id="passport.firstVisit" /></dt><dd>{(stats?.first || stamp.first) ? <LocalizedDate value={stats?.first || stamp.first} /> : "—"}</dd></div><div><dt><T id="passport.latestVisit" /></dt><dd>{(stats?.latest || stamp.latest) ? <LocalizedDate value={stats?.latest || stamp.latest} /> : "—"}</dd></div></dl><Link className="passport-country-popover__link" href={`/flights?destinationCountry=${encodeURIComponent(code)}&status=completed`} onClick={onClose}><T id="passport.relatedFlights" /> <span aria-hidden="true">→</span></Link></div></div>;
 }

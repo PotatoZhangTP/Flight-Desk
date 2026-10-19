@@ -83,7 +83,8 @@
 .flight-airport-popup__flights strong { font-size: 1.1rem; }
 .passport-stamp-flag { cursor: pointer; border-radius: 4px; transition: transform 150ms ease, opacity 150ms ease; }
 .passport-stamp-flag:hover, .passport-stamp-flag:focus-visible { transform: scale(1.08); opacity: .82; outline: 2px solid currentColor; outline-offset: 3px; }
-.passport-country-popover { position: fixed; z-index: 1000; top: 50%; left: 50%; width: min(320px, calc(100vw - 32px)); transform: translate(-50%, -50%); border: 1px solid var(--line-strong); border-radius: 14px; background: var(--surface); color: var(--ink); box-shadow: 0 12px 28px rgb(32 27 51 / 14%); }
+.passport-country-modal-overlay { position: fixed; inset: 0; z-index: 1000; background: transparent; isolation: isolate; }
+.passport-country-popover { position: fixed; z-index: 1001; top: 50%; left: 50%; width: min(320px, calc(100vw - 32px)); max-height: calc(100dvh - 24px); overflow-y: auto; transform: translate(-50%, -50%); border: 1px solid var(--line-strong); border-radius: 14px; background: var(--surface); color: var(--ink); box-shadow: 0 12px 28px rgb(32 27 51 / 14%); }
 .passport-country-popover > button { position: absolute; top: 5px; right: 5px; width: 40px; height: 40px; border-radius: 999px; color: var(--muted); font-size: 22px; line-height: 1; }
 .passport-country-popover > button:hover { background: var(--brand-soft); color: var(--brand); }
 .passport-country-popover__heading { display: flex; align-items: center; gap: 12px; padding: 18px 52px 14px 16px; }

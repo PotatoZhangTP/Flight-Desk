@@ -10,6 +10,7 @@ import { createClient } from "@/lib/supabase/server";
 import { normalizeFlightNumber } from "@/lib/flight-number";
 import { normalizeFlightCategory, filterFlightCategory, flightPage } from "@/lib/flight-list-state";
 import { FlightArrival } from "@/components/flight-arrival";
+import { flightRelatedToCountry } from "@/lib/flight-country";
 
 const sortable: Record<string, string> = {
   flight_date: "Date",
@@ -145,11 +146,7 @@ function mergeAirportCandidates(...groups: Airport[][]) {
   );
 }
 function flightMatchesCountry(flight: FlightRow, country: string, catalog: Map<string, Airport>) {
-  if (!country) return true;
-  return (["departure", "arrival"] as const).some((side) => {
-    const codes = [flight[`${side}_airport_icao`], flight[`${side}_airport_iata`], flight[`${side}_airport`]].map(normal);
-    return codes.some((code) => normal(catalog.get(code)?.countryCode) === country) || normal(flight[`${side}_country_code`]) === country;
-  });
+  return flightRelatedToCountry(flight, country, catalog);
 }
 
 function parseExact(value?: string) {
