@@ -334,6 +334,8 @@ dashboard.activityCalendarHelp|Your completed flight activity will appear here.|
 dashboard.feedback|Feedback|反馈
 dashboard.feedbackHelp|Help us improve Flight Desk by sharing your feedback.|分享反馈，帮助我们改进 Flight Desk。
 dashboard.sendFeedback|Send Feedback|发送反馈
+dashboard.newFeatureSuggest|New Feature Suggest|新功能建议
+dashboard.bugReport|Bug Report|问题反馈
 dashboard.noActivity|Complete a flight to start building your activity calendar.|完成一次航班后即可生成活动日历。
 map.viewFull|View Full Map|查看完整地图
 map.subtitle|Explore your completed journeys across the world.|探索你在世界各地完成的飞行旅程。
