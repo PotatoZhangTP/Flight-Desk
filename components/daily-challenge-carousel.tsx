@@ -87,7 +87,7 @@ function ChallengeRow({
 }
 
 export function DailyChallengeCarousel() {
-  const { preferences } = useLanguage();
+  const { locale, preferences } = useLanguage();
   const [data, setData] = useState<{
     challenges: Challenge[];
     memorials: ApiMemorial[];
@@ -151,7 +151,7 @@ export function DailyChallengeCarousel() {
         <div className="space-y-2">
           {memorials.length > 0 && <button type="button" onClick={() => selectPage("memorial")} className="flex w-full items-center gap-3 rounded-xl border border-[#d5b36a]/45 bg-[#f4ead3] px-3 py-2.5 text-left transition hover:border-[#d5b36a] hover:bg-[#efe1bf] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#d5b36a]">
             <span className="w-9 shrink-0"><MemorialArtwork type={memorials.length === 1 ? memorials[0].memorial_type : null} tone={memorials.length === 1 ? memorials[0].display_tone : null} /></span>
-            <span className="min-w-0 flex-1"><span className="block text-[10px] font-bold uppercase tracking-wider text-[#80632b]">{memorials.length === 1 ? <T source="Memorial Flight This Week" /> : <T source="Memorial Flights This Week" />}</span><span className="block truncate text-sm font-bold text-[#3e3322]">{memorials.length === 1 ? memorials[0].title_en : <T source="Explore this week's special flights." />}</span></span>
+            <span className="min-w-0 flex-1"><span className="block text-[10px] font-bold uppercase tracking-wider text-[#80632b]">{memorials.length === 1 ? <T source="Memorial Flight This Week" /> : <T source="Memorial Flights This Week" />}</span><span className="block truncate text-sm font-bold text-[#3e3322]">{memorials.length === 1 ? (locale === "zh-CN" ? memorials[0].title_zh || memorials[0].title_en : memorials[0].title_en || memorials[0].title_zh) : <T source="Explore this week's special flights." />}</span></span>
             <span aria-hidden="true" className="shrink-0 text-xl text-[#80632b]">→</span>
           </button>}
           {status === "loading" && !data.challenges.length && (
