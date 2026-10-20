@@ -9,27 +9,46 @@ import type { AchievementCabin, AchievementItem } from "@/lib/achievements/serve
 function label(item: { name_en: string; name_zh: string; description_en: string; description_zh: string }, zh: boolean) { return { name: zh ? item.name_zh : item.name_en, description: zh ? item.description_zh : item.description_en }; }
 
 export function AchievementCabin({ cabin }: { cabin: AchievementCabin }) {
-  const [category, setCategory] = useState("all"); const [flippedId, setFlippedId] = useState<string | null>(null); const [featuredIds, setFeaturedIds] = useState<string[]>([]); const [featuredOpen, setFeaturedOpen] = useState(true);
+  const [category, setCategory] = useState("all"); const [flippedId, setFlippedId] = useState<string | null>(null); const [featuredIds, setFeaturedIds] = useState<string[]>(() => cabin.featured.map(item => item.id)); const [featuredOpen, setFeaturedOpen] = useState(true); const [selectedFeaturedId, setSelectedFeaturedId] = useState<string | null>(null); const [featuredError, setFeaturedError] = useState<string | null>(null); const [featuredSaving, setFeaturedSaving] = useState(false);
   const { locale } = useLanguage(); const t = useText(); const zh = locale === "zh-CN";
   const visible = useMemo(() => cabin.items.filter(item => category === "all" || item.category_id === category), [cabin.items, category]);
   const categories = useMemo(() => achievementCategoryCatalog.map(config => cabin.categories.find(categoryItem => categoryItem.slug === config.slug) ?? { ...config, id: `placeholder-${config.slug}`, display_order: achievementCategoryCatalog.findIndex(item => item.slug === config.slug) + 1, icon_key: "achievement" }), [cabin.categories]);
   const selectedCategory = useMemo(() => category === "all" ? null : categories.find(item => item.id === category), [categories, category]);
   const featuredItems = useMemo(() => featuredIds.map(id => cabin.items.find(item => item.id === id) ?? null), [cabin.items, featuredIds]);
-  const addToFeatured = (item: AchievementItem) => setFeaturedIds(ids => ids.includes(item.id) || ids.length >= 5 ? ids : [...ids, item.id]);
-  const removeFromFeatured = (item: AchievementItem) => setFeaturedIds(ids => ids.filter(id => id !== item.id));
+  const saveFeaturedIds = async (nextIds: string[]) => {
+    const previousIds = featuredIds;
+    setFeaturedError(null);
+    setFeaturedIds(nextIds);
+    setFeaturedSaving(true);
+    try {
+      const response = await fetch("/api/achievements/featured", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ featuredDefinitionIds: nextIds }) });
+      if (!response.ok) throw new Error((await response.json().catch(() => null))?.error ?? "Could not save Featured Cabin.");
+      return true;
+    } catch (error) {
+      setFeaturedIds(previousIds);
+      setFeaturedError(error instanceof Error ? error.message : "Could not save Featured Cabin.");
+      return false;
+    } finally {
+      setFeaturedSaving(false);
+    }
+  };
+  const addToFeatured = (item: AchievementItem) => { if (!featuredIds.includes(item.id) && featuredIds.length < 5) void saveFeaturedIds([...featuredIds, item.id]); };
+  const removeFromFeatured = (item: AchievementItem) => { if (featuredIds.includes(item.id)) void saveFeaturedIds(featuredIds.filter(id => id !== item.id)); };
+  const removeSelectedFeatured = async (event: React.MouseEvent<HTMLButtonElement>) => { event.stopPropagation(); if (!selectedFeaturedId) return; const saved = await saveFeaturedIds(featuredIds.filter(id => id !== selectedFeaturedId)); if (saved) setSelectedFeaturedId(null); };
+  const toggleFeaturedOpen = (event: React.MouseEvent<HTMLButtonElement>) => { event.stopPropagation(); setFeaturedOpen(open => !open); setSelectedFeaturedId(null); };
   if (!cabin.ready) return <section className="mt-8 rounded-2xl border border-dashed border-line-strong bg-surface p-8 text-center text-muted"><T id="achievements.setupRequired" /></section>;
   return <div className="achievement-cabin pb-12">
     <section className="achievement-hero"><div className="achievement-hero-copy"><h1 className="text-4xl font-bold tracking-tight sm:text-5xl"><T id="achievements.title" /></h1></div><div className="achievement-summary-grid">{[["achievements.unlocked", String(cabin.unlockedCount)],["achievements.completionRate", `${cabin.completionRate}%`],["achievements.latest", cabin.latest ? label(cabin.latest, zh).name : t("achievements.none")],["achievements.highestTier", cabin.highestTier ? (zh ? cabin.highestTier.name_zh : cabin.highestTier.name_en) : t("achievements.none")]].map(([key,value]) => <div key={key} className="achievement-summary"><span><T id={key} /></span><strong>{value}</strong></div>)}</div></section>
-    <section className={`achievement-cabin-featured spotlight-card ${featuredOpen ? "" : "is-collapsed"}`}><div className="achievement-cabin-featured-header"><h2 className="text-2xl font-bold"><T source="Featured Cabin" /></h2><button type="button" className="achievement-cabin-toggle" onClick={() => setFeaturedOpen(open => !open)} aria-expanded={featuredOpen} aria-label={featuredOpen ? (zh ? "折叠 Featured Cabin" : "Collapse Featured Cabin") : (zh ? "展开 Featured Cabin" : "Expand Featured Cabin")}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true" className={featuredOpen ? "" : "is-collapsed"}><path d="m6 15 6-6 6 6" /></svg></button></div><div className={`achievement-window-row ${featuredOpen ? "" : "is-collapsed"}`} aria-hidden={!featuredOpen}>{Array.from({ length: 5 }, (_, index) => <FeaturedAchievementWindow key={index} index={index} label={t("achievements.featured")} item={featuredItems[index] ?? undefined} />)}</div></section>
+    <section className={`achievement-cabin-featured spotlight-card ${featuredOpen ? "" : "is-collapsed"}`} onClick={() => setSelectedFeaturedId(null)}><div className="achievement-cabin-featured-header"><h2 className="text-2xl font-bold"><T source="Featured Cabin" /></h2><div className="achievement-cabin-actions">{selectedFeaturedId && <button type="button" className="button-danger achievement-remove-featured" disabled={featuredSaving} onClick={removeSelectedFeatured}><T source="Remove from Featured" /></button>}<button type="button" className="achievement-cabin-toggle" onClick={toggleFeaturedOpen} aria-expanded={featuredOpen} aria-label={featuredOpen ? (zh ? "折叠 Featured Cabin" : "Collapse Featured Cabin") : (zh ? "展开 Featured Cabin" : "Expand Featured Cabin")}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true" className={featuredOpen ? "" : "is-collapsed"}><path d="m6 15 6-6 6 6" /></svg></button></div></div><div className={`achievement-window-row ${featuredOpen ? "" : "is-collapsed"}`} aria-hidden={!featuredOpen}>{Array.from({ length: 5 }, (_, index) => <FeaturedAchievementWindow key={index} index={index} label={t("achievements.featured")} item={featuredItems[index] ?? undefined} selected={featuredItems[index]?.id === selectedFeaturedId} onSelect={item => setSelectedFeaturedId(current => current === item.id ? null : item.id)} />)}</div>{featuredError && <p className="achievement-featured-error" role="alert">{featuredError}</p>}</section>
     <nav className="achievement-category-nav" aria-label={t("achievements.categories")}>{[{ id: "all", name_en: t("achievements.allCategories"), name_zh: t("achievements.allCategories") }, ...categories].map(item => { const count = item.id === "all" ? cabin.unlockedCount : cabin.items.filter(entry => entry.category_id === item.id && entry.unlocked).length; const total = item.id === "all" ? cabin.totalCount : cabin.items.filter(entry => entry.category_id === item.id).length; return <button key={item.id} type="button" onClick={() => setCategory(item.id)} className={category === item.id ? "is-active" : ""}><span>{zh ? item.name_zh : item.name_en}</span><small>{count} / {total}</small></button>; })}</nav>
     <section className="achievement-list">{selectedCategory && <p className="eyebrow achievement-list-title">{zh ? selectedCategory.name_zh : selectedCategory.name_en}</p>}{visible.length ? <div className="achievement-gallery">{visible.map(item => <AchievementCard key={item.id} item={item} zh={zh} flipped={flippedId === item.id} featured={featuredIds.includes(item.id)} featuredFull={featuredIds.length >= 5} onFlip={() => setFlippedId(current => current === item.id ? null : item.id)} onAddToFeatured={() => addToFeatured(item)} onRemoveFromFeatured={() => removeFromFeatured(item)} />)}</div> : <div className="rounded-2xl border border-dashed border-line p-8 text-center text-muted"><T id="achievements.emptyFilter" /></div>}</section>
   </div>;
 }
 
-function FeaturedAchievementWindow({ index, label: windowLabel, item }: { index: number; label: string; item?: AchievementItem }) {
+function FeaturedAchievementWindow({ index, label: windowLabel, item, selected, onSelect }: { index: number; label: string; item?: AchievementItem; selected: boolean; onSelect: (item: AchievementItem) => void }) {
   if (item) {
     const copy = `${item.name_en} — ${item.unlocked ? "Unlocked" : "Locked"}`;
-    return <button type="button" className="achievement-window" title={copy}><AchievementBadge item={item} compact /><span className="sr-only">{copy}</span></button>;
+    return <button type="button" className={`achievement-window ${selected ? "is-selected" : ""}`} title={copy} aria-pressed={selected} onClick={event => { event.stopPropagation(); onSelect(item); }}><AchievementBadge item={item} compact /><span className="sr-only">{copy}</span></button>;
   }
   return <div className="achievement-window achievement-window-placeholder" role="img" aria-label={`${windowLabel} ${index + 1}`}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.45" aria-hidden="true"><path d="m3 13.5 18-3.5-7.2 4.2-1.8 5.3-1.5-.2.4-5.5-6.5.8Z" /><path d="M12 5v4" /></svg></div>;
 }
