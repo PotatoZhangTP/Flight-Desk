@@ -56,7 +56,7 @@ function AchievementCard({ item, zh, flipped, featured, featuredFull, onFlip, on
       <div className="achievement-card-face achievement-card-back" onClick={onFlip}>
         <div>
           <h3>{copy.name}</h3>
-          <p className="achievement-tier">{level ? (zh ? level.name_zh : level.name_en) : <T id="achievements.notStarted" />}</p>
+          {level && <p className="achievement-tier">{zh ? level.name_zh : level.name_en}</p>}
         </div>
         <div className="achievement-progress">
           <div className="achievement-progress-label"><span>{value} / {target} {formatAchievementUnit(item.progress.unit, target, zh)}</span><span>{progress}%</span></div>
