@@ -63,8 +63,8 @@ common.started|Get Started|开始使用
 common.dashboard|Dashboard|飞行概览
 common.settings|Settings|设置
 common.profile|My Profile|个人资料
-common.openLogbook|Login|登录
-common.openLogbookLower|Login|登录
+common.openLogbook|Register / Login|注册 / 登录
+common.openLogbookLower|Register / Login|注册 / 登录
 common.explore|Explore Flight Desk|探索 Flight Desk
 common.soon|Coming Soon|即将上线
 common.next|Coming Next|后续上线
