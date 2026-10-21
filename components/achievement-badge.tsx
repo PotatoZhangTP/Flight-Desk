@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import type { AchievementItem } from "@/lib/achievements/server";
 import type { CSSProperties } from "react";
 import { useState } from "react";
@@ -17,10 +18,10 @@ function BadgeGlyph({ iconKey }: { iconKey: string }) {
   return <><path d="m3 13.5 18-3.5-7.2 4.2-1.8 5.3-1.5-.2.4-5.5-6.5.8Z" /><path d="M12 5v4" /></>;
 }
 
-export function AchievementBadge({ item, compact = false }: { item: AchievementItem; compact?: boolean }) {
+export function AchievementBadge({ item, compact = false, eager = false }: { item: AchievementItem; compact?: boolean; eager?: boolean }) {
   const [imageFailed, setImageFailed] = useState(false);
   const tier = achievementTierFor(item);
   const color = tier ? tierColor[tier] : "#8b8a98";
   const imageSrc = imageFailed ? null : achievementBadgeAsset(item);
-  return <div className={`achievement-badge ${imageSrc ? "achievement-badge-image" : ""} ${item.unlocked ? "achievement-badge-unlocked" : "achievement-badge-locked"} ${compact ? "achievement-badge-compact" : ""}`} style={{ "--achievement-metal": color } as CSSProperties} aria-hidden="true">{imageSrc ? <img src={imageSrc} alt="" className="achievement-badge-art" onError={() => setImageFailed(true)} /> : <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.55"><BadgeGlyph iconKey={item.icon_key} /></svg>}</div>;
+  return <div className={`achievement-badge ${imageSrc ? "achievement-badge-image" : ""} ${item.unlocked ? "achievement-badge-unlocked" : "achievement-badge-locked"} ${compact ? "achievement-badge-compact" : ""}`} style={{ "--achievement-metal": color } as CSSProperties} aria-hidden="true">{imageSrc ? <Image src={imageSrc} alt="" width={660} height={660} sizes={compact ? "80px" : "96px"} quality={90} loading={eager ? "eager" : "lazy"} fetchPriority={eager ? "high" : "auto"} className="achievement-badge-art" onError={() => setImageFailed(true)} /> : <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.55"><BadgeGlyph iconKey={item.icon_key} /></svg>}</div>;
 }
