@@ -604,6 +604,20 @@ landing.mapPreview|Interactive globe preview|互动地球预览
 landing.passportPreview|Aviation passport preview|航空护照预览
 landing.achievementsTitle|Earn Your Own Achievements|赢得属于你的飞行成就
 landing.badgePlaceholder|Achievement badge preview slot|成就徽章预览位置
+pricing.eyebrow|Simple pricing|简单透明的价格
+pricing.title|Everything is free right now.|目前全部功能免费。
+pricing.intro|Explore every available Flight Desk feature without a subscription or payment details.|无需订阅或填写付款信息，即可体验 Flight Desk 当前所有功能。
+pricing.currentPlan|Current plan|当前方案
+pricing.free|Free|免费
+pricing.foreverForNow|All available features included|包含当前全部功能
+pricing.included|Everything you need to keep your aviation story together.|完整记录并探索你的航空旅程。
+pricing.noPayment|No subscription. No payment details required.|无需订阅，也无需提供付款信息。
+pricing.logging|Flight logging and history|航班记录与历史
+pricing.map|Interactive Flight Map|互动 Flight Map
+pricing.passport|Aviation Passport|航空护照
+pricing.achievements|Flight Achievements|飞行成就
+pricing.challenges|Daily and Memorial Flights|每日挑战与纪念航班
+pricing.preferences|Personal settings and units|个性化设置与单位
 landing.statistics|Flight Statistics|飞行统计
 landing.statisticsHelp|Discover insights and statistics from your personal flight history.|从个人飞行历史中发现数据与洞察。
 landing.import|Excel Import|Excel 导入

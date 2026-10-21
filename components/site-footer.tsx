@@ -19,8 +19,8 @@ export function SiteFooter({ copy = landingDefaults }: { copy?: LandingCopy }) {
       {footerGroups.map(group => <nav key={group.title} aria-label={t("common.footerNav", { group: t(group.title) })}>
         <h2 className="font-bold text-ink"><T source={group.title} /></h2>
         <ul className="mt-2">{group.links.map(label => <li key={label}>
-          {label === "Features" || label === "Get Started"
-            ? <Link href={label === "Features" ? "/#features" : "/dashboard"} className="rounded text-muted transition hover:text-brand focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand"><T source={label} /></Link>
+          {label === "Features" || label === "Get Started" || label === "Pricing"
+            ? <Link href={label === "Features" ? "/#features" : label === "Pricing" ? "/pricing" : "/dashboard"} className="rounded text-muted transition hover:text-brand focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand"><T source={label} /></Link>
             : <UpcomingButton className="cursor-pointer rounded text-muted transition hover:text-brand focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand"><T source={label} /></UpcomingButton>}
         </li>)}</ul>
       </nav>)}

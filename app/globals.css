@@ -160,7 +160,8 @@ body { margin: 0; background: var(--cream); color: var(--ink); font-family: Aria
 }
 @media (max-width: 639px) {
   .site-header-controls { width: 100%; gap: 8px; }
-  .site-header-controls > a { width: auto; flex: 1; min-width: 0; padding-inline: 10px; }
+  .site-header-controls { justify-content: flex-end; }
+  .site-header-controls > a { width: auto; flex: 0 0 auto; min-width: 7rem; padding-inline: 18px; }
   .site-header-controls > div:has(> a[href="/admin"]) { flex-wrap: wrap; justify-content: flex-end; width: 100%; }
 }
 @media (prefers-reduced-motion: reduce) {
