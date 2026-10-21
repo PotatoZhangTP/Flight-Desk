@@ -1,5 +1,9 @@
+"use client";
+
 import type { AchievementItem } from "@/lib/achievements/server";
 import type { CSSProperties } from "react";
+import { useState } from "react";
+import { achievementBadgeAsset, achievementTierFor } from "@/lib/achievements/badge-assets";
 
 const tierColor: Record<string, string> = { bronze: "#b77645", silver: "#9ba8b5", gold: "#d5b36a", platinum: "#b7b8d7" };
 
@@ -14,7 +18,9 @@ function BadgeGlyph({ iconKey }: { iconKey: string }) {
 }
 
 export function AchievementBadge({ item, compact = false }: { item: AchievementItem; compact?: boolean }) {
-  const tier = item.unlocked?.achievement_level_id ? item.levels.find(level => level.id === item.unlocked?.achievement_level_id)?.level_key : item.progress.level?.level_key;
+  const [imageFailed, setImageFailed] = useState(false);
+  const tier = achievementTierFor(item);
   const color = tier ? tierColor[tier] : "#8b8a98";
-  return <div className={`achievement-badge ${item.unlocked ? "achievement-badge-unlocked" : "achievement-badge-locked"} ${compact ? "achievement-badge-compact" : ""}`} style={{ "--achievement-metal": color } as CSSProperties} aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.55"><BadgeGlyph iconKey={item.icon_key} /></svg></div>;
+  const imageSrc = imageFailed ? null : achievementBadgeAsset(item);
+  return <div className={`achievement-badge ${imageSrc ? "achievement-badge-image" : ""} ${item.unlocked ? "achievement-badge-unlocked" : "achievement-badge-locked"} ${compact ? "achievement-badge-compact" : ""}`} style={{ "--achievement-metal": color } as CSSProperties} aria-hidden="true">{imageSrc ? <img src={imageSrc} alt="" className="achievement-badge-art" onError={() => setImageFailed(true)} /> : <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.55"><BadgeGlyph iconKey={item.icon_key} /></svg>}</div>;
 }
