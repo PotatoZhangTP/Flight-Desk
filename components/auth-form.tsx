@@ -10,10 +10,10 @@ import { signUpWithEmail } from "@/app/auth/actions";
 import { AsyncButton } from "./async-button";
 import { useAsyncOperation } from "./use-async-operation";
 
-export function AuthForm({ initialError = "" }: { initialError?: string }) {
+export function AuthForm({ initialError = "", initialMode = "login" }: { initialError?: string; initialMode?: "login" | "signup" }) {
   const t = useText();
   const router = useRouter();
-  const [mode, setMode] = useState<"login" | "signup">("login");
+  const [mode, setMode] = useState<"login" | "signup">(initialMode);
   const [email, setEmail] = useState(""); const [password, setPassword] = useState(""); const [showPassword, setShowPassword] = useState(false);
   const [message, setMessage] = useState(""); const [error, setError] = useState(initialError);
   const { busy, run } = useAsyncOperation();
