@@ -24,7 +24,7 @@ export function LanguageProvider({ initialLocale, overrides: initialOverrides, a
     let live = true;
     const controller = new AbortController();
     async function reload() {
-      if (document.visibilityState === "hidden") return;
+      if (document.visibilityState === "hidden" || document.documentElement.lang !== "zh-CN") return;
       try {
         const response = await fetch("/api/translations", { cache: "no-store", signal: controller.signal });
         if (!response.ok) return;
@@ -32,7 +32,7 @@ export function LanguageProvider({ initialLocale, overrides: initialOverrides, a
         if (live && body.ready && body.overrides && typeof body.overrides === "object") setOverrides(body.overrides);
       } catch { /* Keep the last known dictionary and user edits on network failure. */ }
     }
-    const interval = setInterval(reload, 30000);
+    const interval = setInterval(reload, 300000);
     window.addEventListener("focus", reload); window.addEventListener("flightdesk-translations-updated", reload);
     document.addEventListener("visibilitychange", reload);
     function storage(event: StorageEvent) { if (event.key === localeCookie && (event.newValue === "en" || event.newValue === "zh-CN")) setLocale(normalizeLocale(event.newValue)); }

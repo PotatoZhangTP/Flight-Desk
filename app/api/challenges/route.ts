@@ -8,19 +8,20 @@ export const revalidate = 0;
 
 const utcDate = () => new Date().toISOString().slice(0, 10);
 
-export async function GET() {
+export async function GET(request: Request) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   const date = utcDate();
+  const readSignal = () => AbortSignal.any([request.signal, AbortSignal.timeout(5000)]);
 
   // Reading today's records must not depend on the optional server-side
   // generation credentials. This matters for previews, where the cron has
   // already generated the data but SUPABASE_SERVICE_ROLE_KEY may not exist.
   const [{ data: initialChallenges, error: initialChallengeError }, { data: memorials, error: memorialError }, { data: completions, error: completionError }] = await Promise.all([
-    supabase.from("daily_challenges").select("*").eq("challenge_date", date).order("category"),
-    supabase.from("memorial_events").select("*").eq("enabled", true),
-    supabase.from("daily_challenge_completions").select("category").eq("challenge_date", date),
+    supabase.from("daily_challenges").select("*").eq("challenge_date", date).order("category").abortSignal(readSignal()),
+    supabase.from("memorial_events").select("*").eq("enabled", true).abortSignal(readSignal()),
+    supabase.from("daily_challenge_completions").select("category").eq("challenge_date", date).abortSignal(readSignal()),
   ]);
 
   let challenges = initialChallenges ?? [];
@@ -31,13 +32,9 @@ export async function GET() {
   if (!initialChallengeError && challenges.length < 4) {
     try {
       const generator = createServiceClient();
-      let ensureError: { message?: string } | null = null;
-      for (const delay of [0, 5000, 15000]) {
-        if (delay) await new Promise(resolve => setTimeout(resolve, delay));
-        const result = await generator.rpc("ensure_daily_challenges", { p_date: date });
-        ensureError = result.error;
-        if (!ensureError) break;
-      }
+      const { error: ensureError } = await generator
+        .rpc("ensure_daily_challenges", { p_date: date })
+        .abortSignal(readSignal());
 
       if (ensureError) {
         generationError = ensureError.message || "Today's challenges could not be generated.";
@@ -46,7 +43,8 @@ export async function GET() {
           .from("daily_challenges")
           .select("*")
           .eq("challenge_date", date)
-          .order("category");
+          .order("category")
+          .abortSignal(readSignal());
         if (generatedChallengeError) generationError = generatedChallengeError.message;
         else challenges = generatedChallenges ?? [];
       }
@@ -59,7 +57,8 @@ export async function GET() {
     .from("flights")
     .select("departure_airport_icao,arrival_airport_icao,departure_airport_iata,arrival_airport_iata")
     .eq("user_id", user.id)
-    .eq("status", "completed");
+    .eq("status", "completed")
+    .abortSignal(readSignal());
 
   const today = new Date(`${date}T00:00:00Z`);
   const memorialInWeek = (memorials ?? []).filter(event => { const start = event.publish_start_date ? new Date(`${event.publish_start_date}T00:00:00Z`) : new Date(Date.UTC(event.publish_year, event.publish_month - 1, event.publish_day)); const end = event.publish_end_date ? new Date(`${event.publish_end_date}T23:59:59Z`) : start; if (!event.recurring) return today >= start && today <= end; const year = today.getUTCFullYear(); const startThisYear = new Date(Date.UTC(year, start.getUTCMonth(), start.getUTCDate())); const endThisYear = new Date(Date.UTC(year, end.getUTCMonth(), end.getUTCDate(), 23, 59, 59)); return startThisYear <= endThisYear ? today >= startThisYear && today <= endThisYear : today >= startThisYear || today <= endThisYear; });

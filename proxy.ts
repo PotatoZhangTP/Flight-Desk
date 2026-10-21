@@ -3,6 +3,10 @@ import { NextResponse, type NextRequest } from "next/server";
 
 export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request });
+  // Anonymous public requests have no session to refresh. Skipping the remote
+  // Auth lookup keeps Landing, Pricing, Roadmap, and public API requests fast.
+  const hasAuthCookie = request.cookies.getAll().some(({ name }) => name.startsWith("sb-") && name.includes("-auth-token"));
+  if (!hasAuthCookie) return response;
   const supabase = createServerClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!, {
     cookies: {
       getAll: () => request.cookies.getAll(),

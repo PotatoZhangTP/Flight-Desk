@@ -19,22 +19,32 @@ function calculateProgress(definition: Omit<AchievementDefinition, "levels">, co
   }
 }
 
-export async function readAchievementCabin(supabase: SupabaseClient, userId: string): Promise<AchievementCabin> {
-  await supabase.rpc("refresh_my_achievements");
-  const [categoriesResult, definitionsResult, levelsResult, unlockedResult, flightsResult, featuredPreferencesResult] = await Promise.all([
-    supabase.from("achievement_categories").select("id,slug,name_en,name_zh,description_en,description_zh,display_order,icon_key").order("display_order"),
-    supabase.from("achievement_definitions").select("id,slug,category_id,name_en,name_zh,description_en,description_zh,badge_type,icon_key,unlock_rule_type,unlock_rule_config,display_order").order("display_order"),
-    supabase.from("achievement_levels").select("id,achievement_definition_id,level_key,level_order,threshold_value,threshold_unit,name_en,name_zh").order("level_order"),
-    supabase.from("user_achievements").select("achievement_definition_id,achievement_level_id,unlocked_at").eq("user_id", userId).order("unlocked_at", { ascending: false }),
-    supabase.from("flights").select("id").eq("user_id", userId).eq("status", "completed"),
-    supabase.from("user_achievement_featured_preferences").select("featured_definition_ids").eq("user_id", userId).maybeSingle(),
+export async function readAchievementCabin(
+  supabase: SupabaseClient,
+  userId: string,
+  options: { completedFlightCount?: number } = {},
+): Promise<AchievementCabin> {
+  const timeout = () => AbortSignal.timeout(8000);
+  const completedFlightsPromise = options.completedFlightCount === undefined
+    ? supabase.from("flights").select("id", { count: "exact", head: true }).eq("user_id", userId).eq("status", "completed").abortSignal(timeout())
+    : Promise.resolve({ count: options.completedFlightCount, error: null });
+  const refreshPromise = supabase.rpc("refresh_my_achievements").abortSignal(timeout());
+  const [categoriesResult, definitionsResult, levelsResult, flightsResult, featuredPreferencesResult] = await Promise.all([
+    supabase.from("achievement_categories").select("id,slug,name_en,name_zh,description_en,description_zh,display_order,icon_key").order("display_order").abortSignal(timeout()),
+    supabase.from("achievement_definitions").select("id,slug,category_id,name_en,name_zh,description_en,description_zh,badge_type,icon_key,unlock_rule_type,unlock_rule_config,display_order").order("display_order").abortSignal(timeout()),
+    supabase.from("achievement_levels").select("id,achievement_definition_id,level_key,level_order,threshold_value,threshold_unit,name_en,name_zh").order("level_order").abortSignal(timeout()),
+    completedFlightsPromise,
+    supabase.from("user_achievement_featured_preferences").select("featured_definition_ids").eq("user_id", userId).abortSignal(timeout()).maybeSingle(),
   ]);
+  try { await refreshPromise; } catch { /* The collection can still render from existing unlock rows. */ }
+  const unlockedResult = await supabase.from("user_achievements").select("achievement_definition_id,achievement_level_id,unlocked_at").eq("user_id", userId).order("unlocked_at", { ascending: false }).abortSignal(timeout());
   if (categoriesResult.error || definitionsResult.error || levelsResult.error || unlockedResult.error) return { ready: false, categories: [], items: [], featured: [], unlockedCount: 0, totalCount: 0, completionRate: 0, latest: null, highestTier: null };
 
-  const completedFlightCount = flightsResult.data?.length ?? 0;
+  const completedFlightCount = flightsResult.count ?? options.completedFlightCount ?? 0;
+  const levelRows = (levelsResult.data ?? []) as AchievementLevel[];
   const levelsByDefinition = new Map<string, AchievementLevel[]>();
-  for (const level of (levelsResult.data ?? []) as AchievementLevel[]) levelsByDefinition.set(level.achievement_definition_id, [...(levelsByDefinition.get(level.achievement_definition_id) ?? []), level]);
-  const levelById = new Map((levelsResult.data ?? [] as AchievementLevel[]).map(level => [level.id, level]));
+  for (const level of levelRows) levelsByDefinition.set(level.achievement_definition_id, [...(levelsByDefinition.get(level.achievement_definition_id) ?? []), level]);
+  const levelById = new Map(levelRows.map(level => [level.id, level]));
   const unlockedByDefinition = new Map<string, UserAchievement>();
   for (const item of (unlockedResult.data ?? []) as UserAchievement[]) {
     const current = unlockedByDefinition.get(item.achievement_definition_id);

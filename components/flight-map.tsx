@@ -26,7 +26,8 @@ export function FlightMap({ data, compact = false, defaultMode, persistMode = tr
     let instance: MapLibreMap | null = null;
     let airportPopup: maplibregl.Popup | null = null;
     let resizeObserver: ResizeObserver | null = null;
-    const cleanup = () => { airportPopup?.remove(); airportPopup = null; resizeObserver?.disconnect(); resizeObserver = null; if (instance) { instance.remove(); instance = null; } map.current = null; };
+    let loadTimer: ReturnType<typeof setTimeout> | null = null;
+    const cleanup = () => { if (loadTimer) clearTimeout(loadTimer); loadTimer = null; airportPopup?.remove(); airportPopup = null; resizeObserver?.disconnect(); resizeObserver = null; if (instance) { instance.remove(); instance = null; } map.current = null; };
     const fail = (stage: string, exception: unknown) => {
       console.error(`[Flight Map] ${stage} failed`, exception);
       if (live) { cleanup(); setReady(false); setError(exception instanceof Error ? exception.message : `Flight Map ${stage} failed.`); }
@@ -35,10 +36,13 @@ export function FlightMap({ data, compact = false, defaultMode, persistMode = tr
     try {
       instance = new maplibregl.Map({ container: target, style: styleUrl, center: data.initialCenter ?? [0, 20], zoom: 1.3, renderWorldCopies: false, attributionControl: false });
       map.current = instance;
+      loadTimer = setTimeout(() => fail("style loading", new Error("The map style did not load in time.")), 10000);
       resizeObserver = typeof ResizeObserver !== "undefined" ? new ResizeObserver(() => instance?.resize()) : null;
       resizeObserver?.observe(target);
       instance.on("load", () => {
         if (!live || !instance) return;
+        if (loadTimer) clearTimeout(loadTimer);
+        loadTimer = null;
         try {
           instance.setProjection({ type: mode === "3d" ? "globe" : "mercator" });
           instance.addSource("flight-routes", { type: "geojson", data: data.routes });

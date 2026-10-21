@@ -4,7 +4,7 @@ import {
   MemorialFlightDetail,
   type MemorialFlightDetailEvent,
 } from "@/components/memorial-flight-detail";
-import { createClient } from "@/lib/supabase/server";
+import { requestAuth } from "@/lib/auth/server";
 
 export const dynamic = "force-dynamic";
 
@@ -39,10 +39,7 @@ export default async function MemorialFlightPage({
 }: {
   params: Promise<{ eventKey: string }>;
 }) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { supabase, user } = await requestAuth();
   if (!user)
     redirect(
       `/auth?next=/memorial-flights/${encodeURIComponent((await params).eventKey)}`,

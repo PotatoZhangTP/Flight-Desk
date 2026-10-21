@@ -6,7 +6,7 @@ import { UserMenu } from "@/components/user-menu";
 import { DeleteFlightForm } from "@/components/delete-flight-form";
 import { AllFlightsFilters } from "@/components/all-flights-filters";
 import { airportFromRow, type Airport } from "@/lib/airports";
-import { createClient } from "@/lib/supabase/server";
+import { requestAuth } from "@/lib/auth/server";
 import { normalizeFlightNumber } from "@/lib/flight-number";
 import { normalizeFlightCategory, filterFlightCategory, flightPage } from "@/lib/flight-list-state";
 import { FlightArrival } from "@/components/flight-arrival";
@@ -200,10 +200,7 @@ export default async function AllFlightsPage({
   const p = await searchParams;
   const page = Math.max(1, Number(p.page) || 1);
   const size = 20;
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { supabase, user } = await requestAuth();
   if (!user) redirect("/auth?next=/flights");
   const { data: preferenceProfile } = await supabase
     .from("profiles")
@@ -223,21 +220,6 @@ export default async function AllFlightsPage({
     const value = params.toString();
     return `/flights${value ? `?${value}` : ""}`;
   };
-  const { data: countryRows } = await supabase
-    .from("airports")
-    .select("country_code,country_name")
-    .not("country_code", "is", null)
-    .not("country_name", "is", null);
-  const countryOptions = [
-    ...new Map(
-      (countryRows || []).map((row) => [
-        String(row.country_code).toUpperCase(),
-        String(row.country_name),
-      ]),
-    ).entries(),
-  ]
-    .map(([code, name]) => ({ code, name }))
-    .sort((left, right) => left.name.localeCompare(right.name));
   const userAirportRows: AirportSnapshot[] = [];
   for (let offset = 0; ; offset += 1000) {
     const { data: batch } = await supabase
@@ -299,6 +281,15 @@ export default async function AllFlightsPage({
       .filter(Boolean)
       .forEach((code) => catalog.set(normal(code), airport));
   });
+  const countryOptions = [
+    ...new Map(
+      [...catalog.values()]
+        .filter(airport => airport.countryCode && airport.countryName)
+        .map(airport => [String(airport.countryCode).toUpperCase(), String(airport.countryName)]),
+    ).entries(),
+  ]
+    .map(([code, name]) => ({ code, name }))
+    .sort((left, right) => left.name.localeCompare(right.name));
   const departureAirports = buildAirportCandidates(
     userAirportRows,
     "departure",

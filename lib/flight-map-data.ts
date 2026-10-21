@@ -2,7 +2,18 @@ import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { airportCoordinateMap, airportLookupKey, type FlightStatRow } from "@/lib/flight-stats";
 
-type MapFlight = FlightStatRow & { id: string; flight_number?: string | null; flight_date?: string | null; created_at?: string | null };
+export type MapFlight = FlightStatRow & { id: string; flight_number?: string | null; flight_date?: string | null; created_at?: string | null };
+export type MapAirportRow = {
+  name?: string | null;
+  municipality?: string | null;
+  country_code?: string | null;
+  country_name?: string | null;
+  icao_code?: string | null;
+  iata_code?: string | null;
+  ident?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+};
 export type FlightMapData = { routes: GeoJSON.FeatureCollection; airports: GeoJSON.FeatureCollection; skipped: number; completedFlights: number; initialCenter?: [number, number] };
 
 function greatCircle(from: [number, number], to: [number, number]): [number, number][][] {
@@ -20,8 +31,12 @@ export async function getFlightMapData(supabase: SupabaseClient, userId: string)
   const rows = (flights ?? []) as MapFlight[];
   const codes = [...new Set(rows.flatMap(row => [row.departure_airport_icao, row.arrival_airport_icao, row.departure_airport_iata, row.arrival_airport_iata, row.departure_airport, row.arrival_airport]).filter((code): code is string => Boolean(code)).map(code => code.trim().toUpperCase()))];
   const [{ data: icao }, { data: iata }, { data: ident }] = codes.length ? await Promise.all([supabase.from("airports").select("name,municipality,country_code,country_name,icao_code,iata_code,ident,latitude,longitude").in("icao_code", codes), supabase.from("airports").select("name,municipality,country_code,country_name,icao_code,iata_code,ident,latitude,longitude").in("iata_code", codes), supabase.from("airports").select("name,municipality,country_code,country_name,icao_code,iata_code,ident,latitude,longitude").in("ident", codes)]) : [{ data: [] }, { data: [] }, { data: [] }];
-  const airportRows = [...(icao ?? []), ...(iata ?? []), ...(ident ?? [])]; const coordinates = airportCoordinateMap(airportRows); const details = new Map<string, { name: string; municipality: string | null; countryCode: string | null; countryName: string | null; icao: string | null; iata: string | null }>();
-  for (const row of airportRows) for (const key of [row.icao_code, row.iata_code, row.ident]) if (key) details.set(key.toUpperCase(), { name: row.name ?? key, municipality: row.municipality ?? null, countryCode: row.country_code ?? null, countryName: row.country_name ?? null, icao: row.icao_code, iata: row.iata_code });
+  return buildFlightMapData(rows, [...(icao ?? []), ...(iata ?? []), ...(ident ?? [])]);
+}
+
+export function buildFlightMapData(rows: MapFlight[], airportRows: MapAirportRow[]): FlightMapData {
+  const coordinates = airportCoordinateMap(airportRows); const details = new Map<string, { name: string; municipality: string | null; countryCode: string | null; countryName: string | null; icao: string | null; iata: string | null }>();
+  for (const row of airportRows) for (const key of [row.icao_code, row.iata_code, row.ident]) if (key) details.set(key.toUpperCase(), { name: row.name ?? key, municipality: row.municipality ?? null, countryCode: row.country_code ?? null, countryName: row.country_name ?? null, icao: row.icao_code ?? null, iata: row.iata_code ?? null });
   const airportCounts = new Map<string, number>(); const routeMap = new Map<string, { from: string; to: string; count: number; ids: string[] }>(); let skipped = 0;
   for (const row of rows) { const from = airportLookupKey(row, "departure"); const to = airportLookupKey(row, "arrival"); if (!from || !to || !coordinates.has(from) || !coordinates.has(to)) { skipped++; continue; } airportCounts.set(from, (airportCounts.get(from) ?? 0) + 1); if (to !== from) airportCounts.set(to, (airportCounts.get(to) ?? 0) + 1); const key = [from, to].sort().join("|"); const route = routeMap.get(key) ?? { from, to, count: 0, ids: [] }; route.count++; route.ids.push(row.id); routeMap.set(key, route); }
   const airportFeatures: GeoJSON.Feature[] = [...airportCounts].map(([code, count]) => { const d = details.get(code); const c = coordinates.get(code)!; return { type: "Feature", geometry: { type: "Point", coordinates: [c.longitude, c.latitude] }, properties: { code, name: d?.name ?? code, municipality: d?.municipality ?? "", countryCode: d?.countryCode ?? "", countryName: d?.countryName ?? "", icao: d?.icao ?? code, iata: d?.iata ?? "", count } }; });

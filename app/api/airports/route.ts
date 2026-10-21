@@ -7,6 +7,8 @@ export const dynamic = "force-dynamic";
 export async function GET(request: Request) {
   const query = new URL(request.url).searchParams.get("q")?.trim() || "";
   const headers = { "Cache-Control": "no-store" };
+  // Successful airport reference results are public and identical for all users.
+  const successHeaders = { "Cache-Control": "public, s-maxage=300, stale-while-revalidate=3600" };
   if (query.length > 80 || /[\u0000-\u001f\u007f]/.test(query)) return Response.json({ error: "Use a search between 2 and 80 characters." }, { status: 400, headers });
   if (query.length < 2 || !/[\p{L}\p{N}]/u.test(query)) return Response.json({ airports: [] }, { headers });
   // Whitelisted categories only: never expose upstream messages, headers or values.
@@ -40,7 +42,7 @@ export async function GET(request: Request) {
     }
     stage = "response";
     if (!Array.isArray(data)) return unavailable("AIRPORT_RESPONSE_INVALID");
-    return Response.json({ airports: data.slice(0, 12).map(airportFromRow) }, { headers });
+    return Response.json({ airports: data.slice(0, 12).map(airportFromRow) }, { headers: successHeaders });
   } catch (error) {
     if (error instanceof AirportConfigError) return unavailable(error.diagnosticCode);
     return unavailable(stage === "response" ? "AIRPORT_RESPONSE_INVALID" : "AIRPORT_CONNECTION_FAILED");

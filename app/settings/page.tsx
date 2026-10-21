@@ -10,13 +10,12 @@ import { LanguageSelector } from "@/components/language-selector";
 import { AppearanceSettings } from "@/components/theme-controls";
 import { UserMenu } from "@/components/user-menu";
 import { DashboardSpotlight } from "@/components/dashboard-spotlight";
-import { createClient } from "@/lib/supabase/server";
+import { requestAuth } from "@/lib/auth/server";
 import { FullSettingsPreferences } from "@/components/full-settings";
 import { SettingsSections } from "@/components/settings-sections";
 
 export default async function SettingsPage({ searchParams }: { searchParams: Promise<{ section?: string }> }) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const { supabase, user } = await requestAuth();
   if (!user) redirect("/auth?next=/settings");
   const { data: profile } = await supabase.from("profiles").select("display_name,avatar_url,bio").eq("id", user.id).maybeSingle();
   const displayName = profile?.display_name?.trim() || user.email?.split("@")[0] || "Pilot";

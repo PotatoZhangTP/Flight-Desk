@@ -27,7 +27,10 @@ function useDailyChallenges(initial?: ChallengeData) {
   const load = useCallback(async (date: string) => {
     setUpdating(true);
     try {
-      const response = await fetch(`/api/challenges?date=${date}`, { cache: "no-store" });
+      const response = await fetch(`/api/challenges?date=${date}`, {
+        cache: "no-store",
+        signal: AbortSignal.timeout(8000),
+      });
       if (!response.ok) throw new Error();
       const next = await response.json();
       setData({ challenges: next.challenges || [], memorials: next.memorials || [], completedCategories: next.completedCategories || [], flownCategories: next.flownCategories || [] });

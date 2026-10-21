@@ -11,8 +11,23 @@ import { LandingProductShowcase } from "@/components/landing-product-showcase";
 import { LandingAchievementsShowcase } from "@/components/landing-achievements-showcase";
 import { publishedRoadmap } from "@/lib/roadmap/server";
 import { publishedLandingCopy } from "@/lib/content/server";
+import { Suspense } from "react";
 
 export const dynamic = "force-dynamic";
+
+async function LandingRoadmap({ copy }: { copy: Awaited<ReturnType<typeof publishedLandingCopy>> }) {
+  const { items, failed } = await publishedRoadmap();
+  return <RoadmapSummary items={items} failed={failed} copy={copy} />;
+}
+
+function LandingRoadmapFallback() {
+  return <section className="site-container landing-section" aria-label="Roadmap loading">
+    <div className="mx-auto h-10 w-56 rounded-xl skeleton-shimmer" />
+    <div className="mt-7 grid gap-4 sm:grid-cols-3">
+      {[0, 1, 2].map(item => <div key={item} className="h-32 rounded-2xl border border-line skeleton-shimmer" />)}
+    </div>
+  </section>;
+}
 
 const features = [
   {
@@ -55,7 +70,7 @@ const features = [
 ];
 
 export default async function HomePage() {
-  const [{ items, failed }, copy] = await Promise.all([publishedRoadmap(), publishedLandingCopy()]);
+  const copy = await publishedLandingCopy();
   return <div className="landing-page min-h-screen bg-page text-ink"><SiteHeader /><main>
     <section aria-labelledby="hero-title" className="site-container landing-hero text-center">
       <p className="eyebrow whitespace-pre-line"><CmsText id="content.heroEyebrow" source={copy["landing.hero.eyebrow"]} /></p>
@@ -85,7 +100,7 @@ export default async function HomePage() {
       </div>
       {/* Fixed static product image, independent of the live Add Flight form. */}
       <figure data-product-preview className="landing-preview mx-auto mt-6 w-full overflow-hidden rounded-2xl border border-line bg-surface shadow-sm shadow-ink/5">
-        <Image src="/images/add-flight-preview.webp" alt="Add Flight product preview showing the flight ticket and empty journey detail fields." width={1024} height={800} sizes="(min-width: 1088px) 1024px, (min-width: 640px) calc(100vw - 64px), calc(100vw - 32px)" className="h-auto w-full" unoptimized />
+        <Image src="/images/add-flight-preview.webp" alt="Add Flight product preview showing the flight ticket and empty journey detail fields." width={1024} height={800} sizes="(min-width: 1088px) 1024px, (min-width: 640px) calc(100vw - 64px), calc(100vw - 32px)" className="h-auto w-full" />
         <figcaption className="border-t border-line px-5 py-3 text-center text-xs leading-5 text-muted"><T id="landing.previewCaption" /></figcaption>
       </figure>
     </section>
@@ -93,6 +108,6 @@ export default async function HomePage() {
     <LandingProductShowcase />
     <LandingAchievementsShowcase />
 
-    <RoadmapSummary items={items} failed={failed} copy={copy} />
+    <Suspense fallback={<LandingRoadmapFallback />}><LandingRoadmap copy={copy} /></Suspense>
   </main><SiteFooter copy={copy} /></div>;
 }

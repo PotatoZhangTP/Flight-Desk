@@ -29,7 +29,7 @@ export function RoadmapContentScope({ items, children }: { items: RoadmapItem[];
       } catch { /* English/last loaded manual copy remains available offline. */ }
       finally { busy = false; }
     }
-    void reload(); const timer = setInterval(reload, 20000);
+    const timer = setInterval(reload, 300000);
     window.addEventListener("focus", reload); document.addEventListener("visibilitychange", reload);
     return () => { controller.abort(); clearInterval(timer); window.removeEventListener("focus", reload); document.removeEventListener("visibilitychange", reload); };
   }, [ids, locale]);

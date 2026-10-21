@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import Link from "@/components/navigation-link";
-import { createClient } from "@/lib/supabase/server";
+import { requestAuth } from "@/lib/auth/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { SiteHeader } from "@/components/site-header";
 import { DailyChallengePage, type Challenge, type Memorial } from "@/components/daily-challenge";
@@ -8,13 +8,15 @@ import { flownChallengeCategories } from "@/lib/daily-challenge-flight-status";
 
 export const dynamic = "force-dynamic";
 export default async function ChallengesPage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const { supabase, user } = await requestAuth();
   if (!user) redirect("/auth?next=/challenges");
   const date = new Date().toISOString().slice(0, 10);
   let generator;
   try { generator = createServiceClient(); } catch { generator = null; }
-  if (generator) await generator.rpc("ensure_daily_challenges", { p_date: date });
+  if (generator) {
+    try { await generator.rpc("ensure_daily_challenges", { p_date: date }).abortSignal(AbortSignal.timeout(5000)); }
+    catch { /* Existing daily records can still be displayed. */ }
+  }
   const [{ data: challenges }, { data: memorials }, { data: completions }, { data: flownFlights }] = await Promise.all([
     supabase.from("daily_challenges").select("*").eq("challenge_date", date).order("category"),
     supabase.from("memorial_events").select("*").eq("enabled", true),

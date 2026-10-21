@@ -1,18 +1,20 @@
 import "server-only";
 import { cache } from "react";
 import { cookies } from "next/headers";
-import { createClient } from "@/lib/supabase/server";
+import { unstable_cache } from "next/cache";
+import { requestAuth } from "@/lib/auth/server";
+import { createPublicClient } from "@/lib/supabase/public";
 import { byKey, localeCookie, normalizeLocale, type Locale } from "./catalog";
 import { validTranslation } from "./validation";
 import { defaultPreferences, normalizePreferences, type UserPreferences } from "@/lib/preferences";
 
-export async function publishedOverrides() {
+const readPublishedOverrides = unstable_cache(async () => {
   try {
-    const supabase = await createClient();
+    const supabase = createPublicClient();
     const { data, error } = await supabase.from("translation_overrides")
       .select("translation_key,translation_text,source_hash,version")
       .eq("locale", "zh-CN").eq("is_published", true)
-      .abortSignal(AbortSignal.timeout(3000));
+      .abortSignal(AbortSignal.timeout(1200));
     if (error) return { ready: false, overrides: {} as Record<string, string> };
     const overrides: Record<string, string> = {};
     for (const row of data ?? []) {
@@ -20,7 +22,9 @@ export async function publishedOverrides() {
     }
     return { ready: true, overrides };
   } catch { return { ready: false, overrides: {} as Record<string, string> }; }
-}
+}, ["published-translation-overrides-v1"], { revalidate: 60 });
+
+export async function publishedOverrides() { return readPublishedOverrides(); }
 
 export const languageSnapshot = cache(async () => {
   const cookie = (await cookies()).get(localeCookie)?.value;
@@ -28,8 +32,7 @@ export const languageSnapshot = cache(async () => {
   let accountReady = false;
   let preferences: UserPreferences = defaultPreferences;
   try {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const { supabase, user } = await requestAuth();
     if (user) {
       const { data, error } = await supabase.from("profiles").select("preferred_locale,date_format,distance_unit,time_format").eq("id", user.id).maybeSingle();
       accountReady = !error;

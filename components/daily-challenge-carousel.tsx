@@ -90,7 +90,10 @@ export function DailyChallengeCarousel() {
     setStatus("loading");
     setError(null);
     try {
-      const response = await fetch("/api/challenges", { cache: "no-store" });
+      const response = await fetch("/api/challenges", {
+        cache: "no-store",
+        signal: AbortSignal.timeout(8000),
+      });
       const next = await response.json().catch(() => null);
       if (!response.ok || !next)
         throw new Error(

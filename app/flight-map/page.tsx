@@ -4,12 +4,11 @@ import { Brand } from "@/components/brand";
 import { UserMenu } from "@/components/user-menu";
 import { T } from "@/components/i18n";
 import { FlightMap } from "@/components/flight-map";
-import { createClient } from "@/lib/supabase/server";
+import { requestAuth } from "@/lib/auth/server";
 import { getFlightMapData } from "@/lib/flight-map-data";
 
 export default async function FlightMapPage() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const { supabase, user } = await requestAuth();
   if (!user) redirect("/auth?next=/flight-map");
   let data; let error = false;
   try { data = await getFlightMapData(supabase, user.id); } catch { error = true; }

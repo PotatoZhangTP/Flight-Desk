@@ -79,7 +79,7 @@ export function LandingProductShowcase() {
     <h2 id="explore-flight-desk-title" className="text-center text-3xl font-bold tracking-tight sm:text-4xl"><T id="landing.exploreTitle" /></h2>
     <div className="landing-experience-grid mt-7">
       <article className="landing-experience-card spotlight-card">
-        <div className="mb-4"><h3 className="text-xl font-bold"><T id="landing.map" /></h3><p className="mt-1 text-sm leading-6 text-muted"><T id="landing.exploreMapHelp" /></p></div>
+        <p className="mb-4 text-sm leading-6 text-muted"><T id="landing.exploreMapHelp" /></p>
         <div className="landing-map-demo">{active ? <DemoMap data={demoMapData} compact defaultMode="3d" persistMode={false} /> : <ShowcaseLoading labelId="landing.mapPreview" />}</div>
       </article>
       <article className="landing-experience-card landing-passport-card spotlight-card">

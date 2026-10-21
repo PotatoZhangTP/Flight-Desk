@@ -1,7 +1,6 @@
 "use client";
 
 import { createContext, useCallback, useContext, useState, type ReactNode } from "react";
-import { PageLoadingScreen } from "./page-loading-screen";
 
 const NavigationContext = createContext<(id: string, pending: boolean) => void>(() => {});
 const NavigationPendingContext = createContext(false);
@@ -20,7 +19,7 @@ export function NavigationFeedback({ children }: { children: ReactNode }) {
   }, []);
   const pending = !!active.size;
   return <NavigationContext.Provider value={track}><NavigationPendingContext.Provider value={pending}>
-    <div inert={pending} aria-busy={pending}>{children}</div>
-    {pending && <PageLoadingScreen />}
+    <div aria-busy={pending}>{children}</div>
+    {pending && <div className="navigation-progress" role="status" aria-label="Loading page"><span /></div>}
   </NavigationPendingContext.Provider></NavigationContext.Provider>;
 }
