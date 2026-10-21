@@ -2,9 +2,9 @@ import { AchievementsModule } from "@/components/dashboard-v2-modules";
 import { readAchievementCabin } from "@/lib/achievements/server";
 import { createClient } from "@/lib/supabase/server";
 
-export async function DashboardAchievements({ userId, completedFlightCount }: { userId: string; completedFlightCount: number }) {
+export async function DashboardAchievements({ userId }: { userId: string }) {
   const supabase = await createClient();
-  const cabin = await readAchievementCabin(supabase, userId, { completedFlightCount });
+  const cabin = await readAchievementCabin(supabase, userId);
   return <AchievementsModule cabin={cabin} />;
 }
 

@@ -7,58 +7,74 @@ export type UserAchievement = { achievement_definition_id: string; achievement_l
 export type AchievementProgress = { value: number | null; unit: string | null; level: AchievementLevel | null; nextLevel: AchievementLevel | null; isMaxLevel: boolean };
 export type AchievementItem = AchievementDefinition & { unlocked: UserAchievement | null; progress: AchievementProgress };
 export type AchievementCabin = { ready: boolean; categories: AchievementCategory[]; items: AchievementItem[]; featured: AchievementItem[]; unlockedCount: number; totalCount: number; completionRate: number; latest: AchievementItem | null; highestTier: AchievementLevel | null };
+type AchievementMetricRow = { metric_type: string; metric_value: number | string | null };
 
 const fallbackSlugs = ["frequent-flyer"];
 
 function asRecord(value: unknown): Record<string, unknown> { return value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : {}; }
 
-function calculateProgress(definition: Omit<AchievementDefinition, "levels">, completedFlights: number): number | null {
-  switch (definition.unlock_rule_type) {
-    case "completed_flight_count": return completedFlights;
-    default: return null;
-  }
+function calculateProgress(definition: Omit<AchievementDefinition, "levels">, metrics: Map<string, number>): number | null {
+  return metrics.get(definition.unlock_rule_type) ?? null;
 }
 
 export async function readAchievementCabin(
   supabase: SupabaseClient,
   userId: string,
-  options: { completedFlightCount?: number } = {},
 ): Promise<AchievementCabin> {
   const timeout = () => AbortSignal.timeout(8000);
-  const completedFlightsPromise = options.completedFlightCount === undefined
-    ? supabase.from("flights").select("id", { count: "exact", head: true }).eq("user_id", userId).eq("status", "completed").abortSignal(timeout())
-    : Promise.resolve({ count: options.completedFlightCount, error: null });
-  const refreshPromise = supabase.rpc("refresh_my_achievements").abortSignal(timeout());
-  const [categoriesResult, definitionsResult, levelsResult, flightsResult, featuredPreferencesResult] = await Promise.all([
+  const [categoriesResult, definitionsResult, levelsResult, metricsResult, featuredPreferencesResult, initialUnlockedResult] = await Promise.all([
     supabase.from("achievement_categories").select("id,slug,name_en,name_zh,description_en,description_zh,display_order,icon_key").order("display_order").abortSignal(timeout()),
     supabase.from("achievement_definitions").select("id,slug,category_id,name_en,name_zh,description_en,description_zh,badge_type,icon_key,unlock_rule_type,unlock_rule_config,display_order").order("display_order").abortSignal(timeout()),
     supabase.from("achievement_levels").select("id,achievement_definition_id,level_key,level_order,threshold_value,threshold_unit,name_en,name_zh").order("level_order").abortSignal(timeout()),
-    completedFlightsPromise,
+    supabase.rpc("get_my_achievement_progress").abortSignal(timeout()),
     supabase.from("user_achievement_featured_preferences").select("featured_definition_ids").eq("user_id", userId).abortSignal(timeout()).maybeSingle(),
+    supabase.from("user_achievements").select("achievement_definition_id,achievement_level_id,unlocked_at").eq("user_id", userId).order("unlocked_at", { ascending: false }).abortSignal(timeout()),
   ]);
-  try { await refreshPromise; } catch { /* The collection can still render from existing unlock rows. */ }
-  const unlockedResult = await supabase.from("user_achievements").select("achievement_definition_id,achievement_level_id,unlocked_at").eq("user_id", userId).order("unlocked_at", { ascending: false }).abortSignal(timeout());
-  if (categoriesResult.error || definitionsResult.error || levelsResult.error || unlockedResult.error) return { ready: false, categories: [], items: [], featured: [], unlockedCount: 0, totalCount: 0, completionRate: 0, latest: null, highestTier: null };
+  if (categoriesResult.error || definitionsResult.error || levelsResult.error || metricsResult.error || initialUnlockedResult.error) return { ready: false, categories: [], items: [], featured: [], unlockedCount: 0, totalCount: 0, completionRate: 0, latest: null, highestTier: null };
 
-  const completedFlightCount = flightsResult.count ?? options.completedFlightCount ?? 0;
+  const metrics = new Map<string, number>();
+  for (const row of (metricsResult.data ?? []) as AchievementMetricRow[]) {
+    const value = Number(row.metric_value);
+    if (row.metric_type && Number.isFinite(value)) metrics.set(row.metric_type, value);
+  }
   const levelRows = (levelsResult.data ?? []) as AchievementLevel[];
   const levelsByDefinition = new Map<string, AchievementLevel[]>();
   for (const level of levelRows) levelsByDefinition.set(level.achievement_definition_id, [...(levelsByDefinition.get(level.achievement_definition_id) ?? []), level]);
   const levelById = new Map(levelRows.map(level => [level.id, level]));
-  const unlockedByDefinition = new Map<string, UserAchievement>();
-  for (const item of (unlockedResult.data ?? []) as UserAchievement[]) {
-    const current = unlockedByDefinition.get(item.achievement_definition_id);
-    const currentOrder = current?.achievement_level_id ? levelById.get(current.achievement_level_id)?.level_order ?? 0 : 0;
-    const nextOrder = item.achievement_level_id ? levelById.get(item.achievement_level_id)?.level_order ?? 0 : 0;
-    if (!current || nextOrder >= currentOrder) unlockedByDefinition.set(item.achievement_definition_id, item);
+  const definitions = (definitionsResult.data ?? []) as Omit<AchievementDefinition, "levels">[];
+  const buildItems = (awardRows: UserAchievement[]) => {
+    const awardsByDefinition = new Map<string, UserAchievement[]>();
+    for (const award of awardRows) awardsByDefinition.set(award.achievement_definition_id, [...(awardsByDefinition.get(award.achievement_definition_id) ?? []), award]);
+    return definitions.map(definition => {
+      const levels = (levelsByDefinition.get(definition.id) ?? []).sort((a, b) => a.level_order - b.level_order);
+      const value = calculateProgress(definition, metrics);
+      const level = value === null ? null : [...levels].reverse().find(item => value >= Number(item.threshold_value)) ?? null;
+      const nextLevel = value === null ? levels[0] ?? null : levels.find(item => value < Number(item.threshold_value)) ?? null;
+      const currentLevelOrder = level?.level_order ?? 0;
+      const unlocked = (awardsByDefinition.get(definition.id) ?? [])
+        .filter(award => (award.achievement_level_id ? levelById.get(award.achievement_level_id)?.level_order ?? 0 : 0) <= currentLevelOrder)
+        .sort((left, right) => {
+          const leftOrder = left.achievement_level_id ? levelById.get(left.achievement_level_id)?.level_order ?? 0 : 0;
+          const rightOrder = right.achievement_level_id ? levelById.get(right.achievement_level_id)?.level_order ?? 0 : 0;
+          return rightOrder - leftOrder;
+        })[0] ?? null;
+      return { ...definition, unlock_rule_config: asRecord(definition.unlock_rule_config), levels, unlocked, progress: { value, unit: levels[0]?.threshold_unit ?? null, level, nextLevel, isMaxLevel: Boolean(level && !nextLevel) } };
+    });
+  };
+  let awardRows = (initialUnlockedResult.data ?? []) as UserAchievement[];
+  let items: AchievementItem[] = buildItems(awardRows);
+  const awardedLevelIds = new Set(awardRows.map(award => award.achievement_level_id).filter(Boolean));
+  const needsBackfill = items.some(item => item.progress.value !== null && item.levels.some(level => Number(level.threshold_value) <= item.progress.value! && !awardedLevelIds.has(level.id)));
+  if (needsBackfill) {
+    const refreshResult = await supabase.rpc("refresh_my_achievements").abortSignal(timeout());
+    if (!refreshResult.error) {
+      const refreshedAwards = await supabase.from("user_achievements").select("achievement_definition_id,achievement_level_id,unlocked_at").eq("user_id", userId).order("unlocked_at", { ascending: false }).abortSignal(timeout());
+      if (!refreshedAwards.error) {
+        awardRows = (refreshedAwards.data ?? []) as UserAchievement[];
+        items = buildItems(awardRows);
+      }
+    }
   }
-  const items: AchievementItem[] = ((definitionsResult.data ?? []) as Omit<AchievementDefinition, "levels">[]).map(definition => {
-    const levels = (levelsByDefinition.get(definition.id) ?? []).sort((a, b) => a.level_order - b.level_order);
-    const value = calculateProgress(definition, completedFlightCount);
-    const level = value === null ? null : [...levels].reverse().find(item => value >= Number(item.threshold_value)) ?? null;
-    const nextLevel = value === null ? levels[0] ?? null : levels.find(item => value < Number(item.threshold_value)) ?? null;
-    return { ...definition, unlock_rule_config: asRecord(definition.unlock_rule_config), levels, unlocked: unlockedByDefinition.get(definition.id) ?? null, progress: { value, unit: levels[0]?.threshold_unit ?? null, level, nextLevel, isMaxLevel: Boolean(level && !nextLevel) } };
-  });
   const unlockedItems = items.filter(item => item.unlocked).sort((a, b) => String(b.unlocked?.unlocked_at).localeCompare(String(a.unlocked?.unlocked_at)));
   const fallbackItems = fallbackSlugs.map(slug => items.find(item => item.slug === slug)).filter((item): item is AchievementItem => item !== undefined);
   const storedFeaturedIds = featuredPreferencesResult.error ? null : featuredPreferencesResult.data?.featured_definition_ids as string[] | undefined;

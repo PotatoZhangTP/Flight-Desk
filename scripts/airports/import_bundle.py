@@ -44,9 +44,9 @@ def load_bundle(bundle, scope, approved_hash, allow_issues=False):
         if key in seen:
             raise ValueError('Duplicate source identity')
         seen.add(key)
-    for code, (icao, country, zone) in EXPECTED.items():
+    for code, (icao, country, continent, zone) in EXPECTED.items():
         hits = [r for r in rows if r['iata_code'] == code and r['status'] == 'listed']
-        if len(hits) != 1 or (hits[0]['icao_code'], hits[0]['country_code'], hits[0]['timezone']) != (icao, country, zone):
+        if len(hits) != 1 or (hits[0]['icao_code'], hits[0]['country_code'], hits[0]['continent_code'], hits[0]['timezone']) != (icao, country, continent, zone):
             raise ValueError('Reference airport verification failed')
     return rows, manifest
 

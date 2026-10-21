@@ -13,6 +13,7 @@ import import_bundle
 def raw_row():
     return dict(id='42', ident='US-0042', name='Test Airfield', type='small_airport',
                 latitude_deg='40', longitude_deg='-73', iso_country='US',
+                continent='NA',
                 scheduled_service='no', icao_code='', iata_code='', gps_code='KXYZ',
                 local_code='42', municipality='Test', iso_region='US-NY')
 
@@ -47,6 +48,15 @@ class PipelineTests(unittest.TestCase):
         raw = raw_row()
         raw['type'] = 'closed'
         self.assertEqual(self.clean(raw)[0]['status'], 'closed')
+
+    def test_continent_comes_from_the_per_airport_source_field(self):
+        row, _ = self.clean()
+        self.assertEqual(row['continent_code'], 'NA')
+        for value in ('', 'XX', 'NORTH_AMERICA'):
+            raw = raw_row()
+            raw['continent'] = value
+            with self.assertRaises(ValueError):
+                self.clean(raw)
 
     def test_invalid_coords_are_null_and_never_timezone_guessed(self):
         for value in ('NaN', 'Infinity', '91', ''):

@@ -77,8 +77,11 @@ function AchievementCard({ item, zh, flipped, featured, featuredFull, onFlip, on
   const progress = target ? Math.min(100, Math.round((value / target) * 100)) : 0;
   const remaining = next ? Math.max(0, Number(next.threshold_value) - value) : 0;
   const unit = formatAchievementUnit(item.progress.unit, remaining || value, zh);
+  const displayValue = formatAchievementValue(value, item.progress.unit);
+  const displayTarget = formatAchievementValue(target, item.progress.unit);
+  const displayRemaining = formatAchievementValue(remaining, item.progress.unit);
   const progressCopy = next
-    ? (zh ? `距离下一等级还差 ${remaining} ${unit}` : `${remaining} more ${unit} to the next level`)
+    ? (zh ? `距离下一等级还差 ${displayRemaining} ${unit}` : `${displayRemaining} more ${unit} to the next level`)
     : (zh ? "已达到最高等级" : "Highest tier reached");
 
   return <article className={`achievement-card spotlight-card ${item.unlocked ? "is-unlocked" : "is-locked"} ${flipped ? "is-flipped" : ""}`}>
@@ -94,7 +97,7 @@ function AchievementCard({ item, zh, flipped, featured, featuredFull, onFlip, on
           {level && <p className="achievement-tier">{zh ? level.name_zh : level.name_en}</p>}
         </div>
         <div className="achievement-progress">
-          <div className="achievement-progress-label"><span>{value} / {target} {formatAchievementUnit(item.progress.unit, target, zh)}</span><span>{progress}%</span></div>
+          <div className="achievement-progress-label"><span>{displayValue} / {displayTarget} {formatAchievementUnit(item.progress.unit, target, zh)}</span><span>{progress}%</span></div>
           <div className="achievement-progress-track"><i style={{ width: `${progress}%` }} /></div>
           <p>{progressCopy}</p>
         </div>
@@ -124,8 +127,14 @@ function AchievementPreviewModal({ item, zh, dialogRef, onClose }: { item: Achie
 function formatAchievementUnit(unit: string | null | undefined, quantity: number, zh: boolean) {
   if (!unit) return "";
   if (zh) {
-    const zhUnits: Record<string, string> = { flights: "趟航班", countries: "个国家", routes: "条航线", airports: "座机场" };
+    const zhUnits: Record<string, string> = { flights: "趟航班", hours: "小时", km: "公里", countries: "个国家", airports: "座机场", continents: "个大洲", cities: "座城市", "aircraft types": "种机型", routes: "条航线", challenges: "次挑战", "memorial flights": "次纪念飞行" };
     return zhUnits[unit] ?? unit;
   }
   return quantity === 1 && unit.endsWith("s") ? unit.slice(0, -1) : unit;
+}
+
+function formatAchievementValue(value: number, unit: string | null | undefined) {
+  if (!Number.isFinite(value)) return "0";
+  if (unit === "hours") return Number.isInteger(value) ? String(value) : value.toFixed(1).replace(/\.0$/, "");
+  return String(Math.round(value));
 }

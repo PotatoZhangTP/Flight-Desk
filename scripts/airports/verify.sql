@@ -4,6 +4,7 @@ select version();
 select status, airport_type, count(*) as airports,
        count(*) filter (where iata_code is null) as without_iata,
        count(*) filter (where icao_code is null) as without_icao,
+       count(*) filter (where continent_code is null) as without_continent,
        count(*) filter (where timezone is null) as without_timezone,
        round(100.0 * count(timezone) / nullif(count(*), 0), 4) as timezone_match_percent
 from public.airports group by status, airport_type order by status, airport_type;
@@ -17,7 +18,7 @@ select source, source_id, count(*) from public.airports
 group by source, source_id having count(*) > 1;
 
 select ident, name, iata_code, icao_code, latitude, longitude,
-       country_code, airport_type, timezone, timezone_source, source_version
+       country_code, continent_code, airport_type, timezone, timezone_source, source_version
 from public.airports where iata_code in ('PEK','PKX','JFK','LHR','HND','LAX','KTM','ADL')
 order by iata_code;
 

@@ -20,19 +20,19 @@ HERE = Path(__file__).resolve().parent
 COLUMNS = (
     'source', 'source_id', 'source_version', 'ident', 'name', 'icao_code',
     'iata_code', 'gps_code', 'local_code', 'municipality', 'country_code',
-    'country_name', 'region_code', 'timezone', 'timezone_source', 'latitude',
+    'country_name', 'region_code', 'continent_code', 'timezone', 'timezone_source', 'latitude',
     'longitude', 'airport_type', 'scheduled_service', 'status',
 )
 TYPES = {'large_airport', 'medium_airport', 'small_airport', 'heliport',
          'seaplane_base', 'balloonport', 'closed'}
-EXPECTED = {'PEK': ('ZBAA', 'CN', 'Asia/Shanghai'),
-            'PKX': ('ZBAD', 'CN', 'Asia/Shanghai'),
-            'JFK': ('KJFK', 'US', 'America/New_York'),
-            'LHR': ('EGLL', 'GB', 'Europe/London'),
-            'HND': ('RJTT', 'JP', 'Asia/Tokyo'),
-            'LAX': ('KLAX', 'US', 'America/Los_Angeles'),
-            'KTM': ('VNKT', 'NP', 'Asia/Kathmandu'),
-            'ADL': ('YPAD', 'AU', 'Australia/Adelaide')}
+EXPECTED = {'PEK': ('ZBAA', 'CN', 'AS', 'Asia/Shanghai'),
+            'PKX': ('ZBAD', 'CN', 'AS', 'Asia/Shanghai'),
+            'JFK': ('KJFK', 'US', 'NA', 'America/New_York'),
+            'LHR': ('EGLL', 'GB', 'EU', 'Europe/London'),
+            'HND': ('RJTT', 'JP', 'AS', 'Asia/Tokyo'),
+            'LAX': ('KLAX', 'US', 'NA', 'America/Los_Angeles'),
+            'KTM': ('VNKT', 'NP', 'AS', 'Asia/Kathmandu'),
+            'ADL': ('YPAD', 'AU', 'OC', 'Australia/Adelaide')}
 
 
 def sha256(path):
@@ -135,6 +135,9 @@ def clean(raw, countries, revision):
     service = raw['scheduled_service'].strip()
     if service not in ('yes', 'no'):
         raise ValueError('invalid_scheduled_service')
+    continent = raw.get('continent', '').strip().upper()
+    if continent not in {'AF', 'AN', 'AS', 'EU', 'NA', 'OC', 'SA'}:
+        raise ValueError('invalid_continent')
     def code(field, pattern):
         value = raw.get(field, '').strip().upper() or None
         if value and not re.fullmatch(pattern, value):
@@ -157,6 +160,7 @@ def clean(raw, countries, revision):
                municipality=raw.get('municipality', '').strip() or None,
                country_code=country, country_name=countries[country],
                region_code=raw.get('iso_region', '').strip() or None,
+               continent_code=continent,
                timezone=None, timezone_source=None, latitude=lat, longitude=lon,
                airport_type=airport_type, scheduled_service=service == 'yes',
                status='closed' if airport_type == 'closed' else 'listed')
@@ -179,6 +183,8 @@ def validate_record(row):
     for field, pattern in [('icao_code', '[A-Z]{4}'), ('iata_code', '[A-Z]{3}'), ('country_code', '[A-Z]{2}')]:
         if row[field] is not None and not re.fullmatch(pattern, row[field]):
             raise ValueError('Invalid code')
+    if row['continent_code'] not in {'AF', 'AN', 'AS', 'EU', 'NA', 'OC', 'SA'}:
+        raise ValueError('Invalid continent code')
     if type(row['scheduled_service']) is not bool:
         raise ValueError('Invalid service flag')
     if row['status'] != ('closed' if row['airport_type'] == 'closed' else 'listed'):
@@ -199,8 +205,8 @@ def sample_rows(rows, size=24):
     if len(selected) != len(EXPECTED):
         raise ValueError('Missing or duplicate required sample airport')
     for r in selected:
-        icao, country, zone = EXPECTED[r['iata_code']]
-        if (r['icao_code'], r['country_code'], r['timezone']) != (icao, country, zone):
+        icao, country, continent, zone = EXPECTED[r['iata_code']]
+        if (r['icao_code'], r['country_code'], r['continent_code'], r['timezone']) != (icao, country, continent, zone):
             raise ValueError('Required sample airport failed reference checks')
     ids = {r['source_id'] for r in selected}
     for kind in ('small_airport', 'heliport', 'medium_airport', 'seaplane_base', 'balloonport', 'closed'):
@@ -271,7 +277,7 @@ def build(cache, output, lock, offline=False):
               'airport_types': dict(Counter(r['airport_type'] for r in rows)),
               'issue_counts': dict(Counter(i['reason'] for i in issues)),
               'duplicate_codes': duplicate_codes, 'sample_count': len(sample),
-              'reference_checks': {r['iata_code']: {'ident': r['ident'], 'timezone': r['timezone'],
+              'reference_checks': {r['iata_code']: {'ident': r['ident'], 'continent': r['continent_code'], 'timezone': r['timezone'],
                                    'latitude': r['latitude'], 'longitude': r['longitude']}
                                    for r in sample if r['iata_code'] in EXPECTED}}
     output.mkdir(parents=True)

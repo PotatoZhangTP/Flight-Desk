@@ -14,6 +14,10 @@ try {
   await db.exec('create role anon; create role authenticated; create role service_role bypassrls;');
   await db.exec("create table public.flights(sentinel text); insert into public.flights values('untouched');");
   await db.exec(readFileSync(new URL('../../supabase/migrations/20261015000400_create_airport_reference_catalog.sql', import.meta.url), 'utf8'));
+  // The Achievement expansion adds the reviewed OurAirports continent field.
+  // Keep this isolated airport importer test aligned without executing unrelated
+  // Achievement tables/functions in the PGlite fixture.
+  await db.exec("alter table public.airports add column continent_code text check (continent_code is null or continent_code in ('AF','AN','AS','EU','NA','OC','SA'))");
   const records = readFileSync(resolve(bundlePath, 'sample.jsonl'), 'utf8').trim().split('\n').map(JSON.parse);
   const code = 'import sys; sys.path.insert(0,"scripts/airports"); from import_bundle import upsert_sql; print(upsert_sql())';
   const upsert = execFileSync(pythonPath, ['-c', code], { encoding: 'utf8' });
