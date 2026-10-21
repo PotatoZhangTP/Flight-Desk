@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "@/components/navigation-link";
 import { MemorialArtwork } from "@/components/memorial-artwork";
 import { T, useLanguage, useText } from "@/components/i18n";
@@ -85,8 +85,8 @@ export function DailyChallengeCarousel() {
     "loading",
   );
   const [error, setError] = useState<string | null>(null);
-  const today = utcToday();
-  const load = async () => {
+  const [today, setToday] = useState(utcToday);
+  const load = useCallback(async () => {
     setStatus("loading");
     setError(null);
     try {
@@ -112,11 +112,29 @@ export function DailyChallengeCarousel() {
       );
       setStatus("error");
     }
-  };
+  }, []);
   useEffect(() => {
     void load();
-    return undefined; // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [today]);
+  }, [load, today]);
+  useEffect(() => {
+    let timer: ReturnType<typeof setTimeout>;
+    let disposed = false;
+    const refreshAtNextUtcDay = () => {
+      if (disposed) return;
+      const nextDate = utcToday();
+      setToday(current => current === nextDate ? current : nextDate);
+      const now = Date.now();
+      timer = setTimeout(refreshAtNextUtcDay, Math.max(1000, now + 86_400_000 - (now % 86_400_000) + 1000 - now));
+    };
+    const refreshWhenVisible = () => {
+      const nextDate = utcToday();
+      setToday(current => current === nextDate ? current : nextDate);
+    };
+    refreshAtNextUtcDay();
+    document.addEventListener("visibilitychange", refreshWhenVisible);
+    window.addEventListener("focus", refreshWhenVisible);
+    return () => { disposed = true; clearTimeout(timer); document.removeEventListener("visibilitychange", refreshWhenVisible); window.removeEventListener("focus", refreshWhenVisible); };
+  }, []);
   const memorials = useMemo(
     () => data.memorials.filter((event) => isPublished(event, today)),
     [data, today],

@@ -3,6 +3,9 @@ import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { flownChallengeCategories } from "@/lib/daily-challenge-flight-status";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 const utcDate = () => new Date().toISOString().slice(0, 10);
 
 export async function GET() {
@@ -72,5 +75,5 @@ export async function GET() {
       completions: completionError?.message || null,
       flights: flownFlightsError?.message || null,
     },
-  }, { headers: { "Cache-Control": "private, max-age=60" } });
+  }, { headers: { "Cache-Control": "private, no-store", Vary: "Cookie" } });
 }
