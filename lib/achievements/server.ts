@@ -17,6 +17,7 @@ export type AchievementCabin = {
   latest: AchievementItem | null;
   highestTier: AchievementLevel | null;
   loadError?: boolean;
+  loadErrorSource?: "categories" | "definitions" | "levels" | "metrics" | "user_achievements";
   refreshError?: boolean;
   hasFeaturedPreference?: boolean;
 };
@@ -24,9 +25,9 @@ type AchievementMetricRow = { metric_type: string; metric_value: number | string
 
 function asRecord(value: unknown): Record<string, unknown> { return value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : {}; }
 
-function logAchievementError(scope: string, error: { code?: string; message?: string } | null | undefined) {
+function logAchievementError(scope: string, error: { code?: string; message?: string; details?: string; hint?: string } | null | undefined) {
   if (!error) return;
-  console.error(`[achievements] ${scope} failed`, { code: error.code, message: error.message });
+  console.error(`[achievements] ${scope} failed`, { code: error.code, message: error.message, details: error.details, hint: error.hint });
 }
 
 function calculateProgress(definition: Omit<AchievementDefinition, "levels">, metrics: Map<string, number>): number | null {
@@ -54,7 +55,8 @@ export async function readAchievementCabin(
     logAchievementError("user achievements", initialUnlockedResult.error);
     // Do not turn a failed query into the normal empty state. The UI needs to
     // distinguish a database failure from a user with no unlocked badges.
-    return { ready: false, loadError: true, categories: [], items: [], featured: [], unlockedCount: 0, totalCount: 0, completionRate: 0, latest: null, highestTier: null };
+    const loadErrorSource = categoriesResult.error ? "categories" : definitionsResult.error ? "definitions" : levelsResult.error ? "levels" : metricsResult.error ? "metrics" : "user_achievements";
+    return { ready: false, loadError: true, loadErrorSource, categories: [], items: [], featured: [], unlockedCount: 0, totalCount: 0, completionRate: 0, latest: null, highestTier: null };
   }
 
   const metrics = new Map<string, number>();
