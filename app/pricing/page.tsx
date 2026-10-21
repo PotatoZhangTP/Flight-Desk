@@ -21,7 +21,7 @@ export default function PricingPage() {
     <main className="site-container py-10 sm:py-16 lg:py-20">
       <section aria-labelledby="pricing-title" className="px-1 text-center">
         <div className="mx-auto max-w-3xl">
-          <h1 id="pricing-title" className="text-balance text-4xl font-bold tracking-[-0.04em] sm:text-6xl"><T id="pricing.title" /></h1>
+          <h1 id="pricing-title" className="text-balance text-4xl font-bold tracking-[-0.04em] sm:text-6xl"><T id="pricing.titleStart" /><span className="text-brand"><T id="pricing.titleFree" /></span><T id="pricing.titleEnd" /></h1>
         </div>
 
         <article className="mx-auto mt-8 max-w-3xl overflow-hidden rounded-3xl border border-brand/25 bg-surface p-5 text-left shadow-2xl shadow-brand/10 sm:p-8">

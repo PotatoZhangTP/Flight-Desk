@@ -595,7 +595,7 @@ landing.passportHelp|Turn completed journeys into a personalized aviation passpo
 landing.mapCurrentHelp|Explore your routes, airports, and travel footprint on an interactive globe.|在互动地球上探索你的航线、机场与旅行足迹。
 landing.achievements|Flight Achievements|飞行成就
 landing.achievementsHelp|Unlock dedicated aviation badges and new tiers through your flying history.|通过飞行经历解锁专属航空徽章与更高等级。
-landing.exploreTitle|Explore Flight Desk|探索 Flight Desk
+landing.exploreTitle|See Flight Desk in Action|亲身体验 Flight Desk
 landing.exploreMapHelp|Drag, zoom, and explore a public demonstration of the Flight Map.|拖动并缩放，体验 Flight Map 的公开演示。
 landing.explorePassportHelp|Open the passport and turn its pages using privacy-safe demonstration data.|打开航空护照并翻页体验，演示数据不包含任何用户隐私。
 landing.loadingMap|Loading interactive globe…|正在加载互动地球…
@@ -604,7 +604,9 @@ landing.mapPreview|Interactive globe preview|互动地球预览
 landing.passportPreview|Aviation passport preview|航空护照预览
 landing.achievementsTitle|Earn Your Own Achievements|赢得属于你的飞行成就
 landing.badgePlaceholder|Achievement badge preview slot|成就徽章预览位置
-pricing.title|Everything is free right now.|目前全部功能免费。
+pricing.titleStart|Everything is |目前全部功能
+pricing.titleFree|FREE|免费
+pricing.titleEnd| right now.|。
 pricing.currentPlan|Current plan|当前方案
 pricing.free|Free|免费
 pricing.foreverForNow|All available features included|包含当前全部功能
