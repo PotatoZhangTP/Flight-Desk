@@ -63,8 +63,8 @@ common.started|Get Started|开始使用
 common.dashboard|Dashboard|飞行概览
 common.settings|Settings|设置
 common.profile|My Profile|个人资料
-common.openLogbook|Open Your Logbook|打开飞行日志
-common.openLogbookLower|Open Your Logbook|打开飞行日志
+common.openLogbook|Login|登录
+common.openLogbookLower|Login|登录
 common.explore|Explore Flight Desk|探索 Flight Desk
 common.soon|Coming Soon|即将上线
 common.next|Coming Next|后续上线
@@ -588,6 +588,22 @@ landing.logging|Flight Logging|记录航班
 landing.loggingHelp|Record your flights with essential journey details, including airports, dates, and aircraft information.|记录机场、日期和飞机信息，珍藏每次飞行的重要细节。
 landing.history|Flight History|飞行历史
 landing.historyHelp|Keep your flights organized and revisit your past journeys in one place.|有序整理航班，在一个地方重温过去的旅程。
+landing.simbrief|SimBrief Import|SimBrief 导入
+landing.simbriefHelp|Import a SimBrief flight plan into Flight Desk. Coming soon.|将 SimBrief 飞行计划导入 Flight Desk。即将上线。
+landing.passport|Aviation Passport|航空护照
+landing.passportHelp|Turn completed journeys into a personalized aviation passport filled with travel memories.|将完成的旅程收录进个性化航空护照，展示你的旅行足迹。
+landing.mapCurrentHelp|Explore your routes, airports, and travel footprint on an interactive globe.|在互动地球上探索你的航线、机场与旅行足迹。
+landing.achievements|Flight Achievements|飞行成就
+landing.achievementsHelp|Unlock dedicated aviation badges and new tiers through your flying history.|通过飞行经历解锁专属航空徽章与更高等级。
+landing.exploreTitle|Explore Flight Desk|探索 Flight Desk
+landing.exploreMapHelp|Drag, zoom, and explore a public demonstration of the Flight Map.|拖动并缩放，体验 Flight Map 的公开演示。
+landing.explorePassportHelp|Open the passport and turn its pages using privacy-safe demonstration data.|打开航空护照并翻页体验，演示数据不包含任何用户隐私。
+landing.loadingMap|Loading interactive globe…|正在加载互动地球…
+landing.loadingPassport|Loading aviation passport…|正在加载航空护照…
+landing.mapPreview|Interactive globe preview|互动地球预览
+landing.passportPreview|Aviation passport preview|航空护照预览
+landing.achievementsTitle|Earn Your Own Achievements|赢得属于你的飞行成就
+landing.badgePlaceholder|Achievement badge preview slot|成就徽章预览位置
 landing.statistics|Flight Statistics|飞行统计
 landing.statisticsHelp|Discover insights and statistics from your personal flight history.|从个人飞行历史中发现数据与洞察。
 landing.import|Excel Import|Excel 导入

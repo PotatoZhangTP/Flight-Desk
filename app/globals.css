@@ -106,6 +106,14 @@ body { margin: 0; background: var(--cream); color: var(--ink); font-family: Aria
 .landing-hero { padding-block: 48px 40px; }
 .landing-ticket { max-width: 960px; }
 .landing-preview { max-width: 1024px; }
+.landing-experience-grid { display: grid; gap: 20px; align-items: stretch; }
+.landing-experience-card { min-width: 0; overflow: hidden; border: 1px solid var(--line); border-radius: 1.5rem; background: var(--surface); padding: clamp(16px, 2vw, 24px); box-shadow: 0 4px 16px color-mix(in srgb, var(--ink) 5%, transparent); }
+.landing-map-demo { height: clamp(360px, 48vw, 500px); min-height: 0; }
+.landing-passport-card [data-passport-demo="true"] { border: 0; background: transparent; padding: 0; box-shadow: none; }
+.landing-passport-card [data-passport-demo="true"] > div:last-of-type { min-height: 360px; }
+.landing-achievement-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 132px)); justify-content: center; gap: 16px; }
+.landing-achievement-slot { display: grid; aspect-ratio: 1; place-items: center; overflow: hidden; border: 1px dashed var(--line-strong); border-radius: 1.5rem; background: color-mix(in srgb, var(--surface) 86%, var(--brand-soft)); color: color-mix(in srgb, var(--brand) 48%, var(--muted)); }
+.landing-achievement-slot svg { width: 62%; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 .feature-feed { display: grid; gap: 12px; }
 .feature-item { display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: 14px; padding: 16px; overflow-wrap: anywhere; }
 .site-footer nav { min-width: 0; }
@@ -143,9 +151,12 @@ body { margin: 0; background: var(--cream); color: var(--ink); font-family: Aria
   .feature-icon { margin-bottom: 12px; }
   .landing-roadmap-mobile { display: none; }
   .landing-roadmap-desktop { display: block; }
+  .landing-achievement-grid { grid-template-columns: repeat(5, minmax(0, 150px)); gap: clamp(14px, 2vw, 28px); }
 }
 @media (min-width: 1024px) {
   .feature-feed { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .landing-experience-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .landing-map-demo { height: 500px; }
 }
 @media (max-width: 639px) {
   .site-header-controls { width: 100%; gap: 8px; }
