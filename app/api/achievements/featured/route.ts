@@ -17,6 +17,10 @@ export async function PUT(request: Request) {
   if (ids.length) {
     const { data: definitions, error } = await supabase.from("achievement_definitions").select("id").in("id", ids).eq("is_active", true).eq("is_hidden", false);
     if (error || definitions?.length !== ids.length) return NextResponse.json({ error: "One or more achievements are unavailable." }, { status: 400 });
+    const { data: unlocked, error: unlockedError } = await supabase.from("user_achievements").select("achievement_definition_id").eq("user_id", user.id).in("achievement_definition_id", ids);
+    if (unlockedError || new Set((unlocked ?? []).map(row => row.achievement_definition_id)).size !== ids.length) {
+      return NextResponse.json({ error: "Only unlocked achievements can be featured." }, { status: 400 });
+    }
   }
 
   const { error } = await supabase.from("user_achievement_featured_preferences").upsert({

@@ -6,12 +6,28 @@ export type AchievementDefinition = { id: string; slug: string; category_id: str
 export type UserAchievement = { achievement_definition_id: string; achievement_level_id: string | null; unlocked_at: string };
 export type AchievementProgress = { value: number | null; unit: string | null; level: AchievementLevel | null; nextLevel: AchievementLevel | null; isMaxLevel: boolean };
 export type AchievementItem = AchievementDefinition & { unlocked: UserAchievement | null; progress: AchievementProgress };
-export type AchievementCabin = { ready: boolean; categories: AchievementCategory[]; items: AchievementItem[]; featured: AchievementItem[]; unlockedCount: number; totalCount: number; completionRate: number; latest: AchievementItem | null; highestTier: AchievementLevel | null };
+export type AchievementCabin = {
+  ready: boolean;
+  categories: AchievementCategory[];
+  items: AchievementItem[];
+  featured: AchievementItem[];
+  unlockedCount: number;
+  totalCount: number;
+  completionRate: number;
+  latest: AchievementItem | null;
+  highestTier: AchievementLevel | null;
+  loadError?: boolean;
+  refreshError?: boolean;
+  hasFeaturedPreference?: boolean;
+};
 type AchievementMetricRow = { metric_type: string; metric_value: number | string | null };
 
-const fallbackSlugs = ["frequent-flyer"];
-
 function asRecord(value: unknown): Record<string, unknown> { return value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : {}; }
+
+function logAchievementError(scope: string, error: { code?: string; message?: string } | null | undefined) {
+  if (!error) return;
+  console.error(`[achievements] ${scope} failed`, { code: error.code, message: error.message });
+}
 
 function calculateProgress(definition: Omit<AchievementDefinition, "levels">, metrics: Map<string, number>): number | null {
   return metrics.get(definition.unlock_rule_type) ?? null;
@@ -30,7 +46,16 @@ export async function readAchievementCabin(
     supabase.from("user_achievement_featured_preferences").select("featured_definition_ids").eq("user_id", userId).abortSignal(timeout()).maybeSingle(),
     supabase.from("user_achievements").select("achievement_definition_id,achievement_level_id,unlocked_at").eq("user_id", userId).order("unlocked_at", { ascending: false }).abortSignal(timeout()),
   ]);
-  if (categoriesResult.error || definitionsResult.error || levelsResult.error || metricsResult.error || initialUnlockedResult.error) return { ready: false, categories: [], items: [], featured: [], unlockedCount: 0, totalCount: 0, completionRate: 0, latest: null, highestTier: null };
+  if (categoriesResult.error || definitionsResult.error || levelsResult.error || metricsResult.error || initialUnlockedResult.error) {
+    logAchievementError("categories", categoriesResult.error);
+    logAchievementError("definitions", definitionsResult.error);
+    logAchievementError("levels", levelsResult.error);
+    logAchievementError("metrics", metricsResult.error);
+    logAchievementError("user achievements", initialUnlockedResult.error);
+    // Do not turn a failed query into the normal empty state. The UI needs to
+    // distinguish a database failure from a user with no unlocked badges.
+    return { ready: false, loadError: true, categories: [], items: [], featured: [], unlockedCount: 0, totalCount: 0, completionRate: 0, latest: null, highestTier: null };
+  }
 
   const metrics = new Map<string, number>();
   for (const row of (metricsResult.data ?? []) as AchievementMetricRow[]) {
@@ -63,24 +88,34 @@ export async function readAchievementCabin(
   };
   let awardRows = (initialUnlockedResult.data ?? []) as UserAchievement[];
   let items: AchievementItem[] = buildItems(awardRows);
+  let refreshError = false;
   const awardedLevelIds = new Set(awardRows.map(award => award.achievement_level_id).filter(Boolean));
   const needsBackfill = items.some(item => item.progress.value !== null && item.levels.some(level => Number(level.threshold_value) <= item.progress.value! && !awardedLevelIds.has(level.id)));
   if (needsBackfill) {
     const refreshResult = await supabase.rpc("refresh_my_achievements").abortSignal(timeout());
+    logAchievementError("refresh_my_achievements", refreshResult.error);
+    refreshError = Boolean(refreshResult.error);
     if (!refreshResult.error) {
       const refreshedAwards = await supabase.from("user_achievements").select("achievement_definition_id,achievement_level_id,unlocked_at").eq("user_id", userId).order("unlocked_at", { ascending: false }).abortSignal(timeout());
+      logAchievementError("refreshed user achievements", refreshedAwards.error);
       if (!refreshedAwards.error) {
         awardRows = (refreshedAwards.data ?? []) as UserAchievement[];
         items = buildItems(awardRows);
-      }
+      } else refreshError = true;
     }
   }
   const unlockedItems = items.filter(item => item.unlocked).sort((a, b) => String(b.unlocked?.unlocked_at).localeCompare(String(a.unlocked?.unlocked_at)));
-  const fallbackItems = fallbackSlugs.map(slug => items.find(item => item.slug === slug)).filter((item): item is AchievementItem => item !== undefined);
-  const storedFeaturedIds = featuredPreferencesResult.error ? null : featuredPreferencesResult.data?.featured_definition_ids as string[] | undefined;
+  logAchievementError("featured preferences", featuredPreferencesResult.error);
+  const storedFeaturedIds = Array.isArray(featuredPreferencesResult.data?.featured_definition_ids)
+    ? featuredPreferencesResult.data.featured_definition_ids as string[]
+    : [];
+  // A preference is only a placement request. It must never make a locked or
+  // stale definition appear as an earned badge. An empty/missing preference is
+  // intentionally rendered as empty Featured Cabin so the user gets guidance.
   const featured = storedFeaturedIds
-    ? storedFeaturedIds.map(id => items.find(item => item.id === id)).filter((item): item is AchievementItem => item !== undefined)
-    : [...unlockedItems, ...fallbackItems].filter((item, index, list) => list.findIndex(candidate => candidate.id === item.id) === index).slice(0, 5);
+    .map(id => items.find(item => item.id === id))
+    .filter((item): item is AchievementItem => Boolean(item?.unlocked))
+    .slice(0, 5);
   const highestTier = unlockedItems.flatMap(item => item.levels.filter(level => level.id === item.unlocked?.achievement_level_id)).sort((a, b) => b.level_order - a.level_order)[0] ?? null;
-  return { ready: true, categories: (categoriesResult.data ?? []) as AchievementCategory[], items, featured, unlockedCount: unlockedItems.length, totalCount: items.length, completionRate: items.length ? Math.round((unlockedItems.length / items.length) * 100) : 0, latest: unlockedItems[0] ?? null, highestTier };
+  return { ready: true, categories: (categoriesResult.data ?? []) as AchievementCategory[], items, featured, unlockedCount: unlockedItems.length, totalCount: items.length, completionRate: items.length ? Math.round((unlockedItems.length / items.length) * 100) : 0, latest: unlockedItems[0] ?? null, highestTier, refreshError, hasFeaturedPreference: Boolean(featuredPreferencesResult.data) };
 }
