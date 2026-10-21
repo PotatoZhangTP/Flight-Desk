@@ -115,7 +115,7 @@ function AchievementPreviewModal({ item, zh, dialogRef, onClose }: { item: Achie
     <div ref={dialogRef} className="achievement-preview-modal" role="dialog" aria-modal="true" aria-labelledby="achievement-preview-title" tabIndex={-1} onPointerDown={event => event.stopPropagation()}>
       <button type="button" className="achievement-preview-close" aria-label={zh ? "关闭预览" : "Close preview"} onClick={onClose}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" /></svg></button>
       <img src={imageSrc} alt={`${copy.name}${level ? ` — ${zh ? level.name_zh : level.name_en}` : ""}`} className="achievement-preview-image" />
-      <p id="achievement-preview-title" className="achievement-preview-caption">{copy.name}{level ? ` — ${zh ? level.name_zh : level.name_en}` : ""}</p>
+      <p id="achievement-preview-title" className="achievement-preview-caption">{level ? (zh ? level.name_zh : level.name_en) : copy.name}</p>
     </div>
   </div>;
 }
