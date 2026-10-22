@@ -3,7 +3,7 @@
 -- This script does not modify data, functions, grants, or RLS policies.
 
 SELECT
-  routine_specific_name,
+  specific_name,
   routine_schema,
   routine_name,
   data_type,
