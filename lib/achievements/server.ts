@@ -18,6 +18,7 @@ export type AchievementCabin = {
   highestTier: AchievementLevel | null;
   loadError?: boolean;
   loadErrorSource?: "categories" | "definitions" | "levels" | "metrics" | "user_achievements";
+  loadErrorCode?: string;
   refreshError?: boolean;
   hasFeaturedPreference?: boolean;
 };
@@ -56,7 +57,8 @@ export async function readAchievementCabin(
     // Do not turn a failed query into the normal empty state. The UI needs to
     // distinguish a database failure from a user with no unlocked badges.
     const loadErrorSource = categoriesResult.error ? "categories" : definitionsResult.error ? "definitions" : levelsResult.error ? "levels" : metricsResult.error ? "metrics" : "user_achievements";
-    return { ready: false, loadError: true, loadErrorSource, categories: [], items: [], featured: [], unlockedCount: 0, totalCount: 0, completionRate: 0, latest: null, highestTier: null };
+    const failedResult = categoriesResult.error || definitionsResult.error || levelsResult.error || metricsResult.error || initialUnlockedResult.error;
+    return { ready: false, loadError: true, loadErrorSource, loadErrorCode: failedResult?.code, categories: [], items: [], featured: [], unlockedCount: 0, totalCount: 0, completionRate: 0, latest: null, highestTier: null };
   }
 
   const metrics = new Map<string, number>();
