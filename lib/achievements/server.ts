@@ -40,6 +40,10 @@ export async function readAchievementCabin(
   userId: string,
 ): Promise<AchievementCabin> {
   const timeout = () => AbortSignal.timeout(8000);
+  // Ensure the server-side Supabase client has resolved the auth cookie before
+  // invoking the auth.uid()-scoped progress RPC. This avoids a transient
+  // 42501 when the Dashboard and Achievements page render in parallel.
+  await supabase.auth.getUser();
   const [categoriesResult, definitionsResult, levelsResult, metricsResult, featuredPreferencesResult, initialUnlockedResult] = await Promise.all([
     supabase.from("achievement_categories").select("id,slug,name_en,name_zh,description_en,description_zh,display_order,icon_key").order("display_order").abortSignal(timeout()),
     supabase.from("achievement_definitions").select("id,slug,category_id,name_en,name_zh,description_en,description_zh,badge_type,icon_key,unlock_rule_type,unlock_rule_config,display_order").order("display_order").abortSignal(timeout()),
