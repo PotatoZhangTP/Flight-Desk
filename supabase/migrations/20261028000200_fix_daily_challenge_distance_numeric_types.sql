@@ -66,7 +66,7 @@ BEGIN
                  arrival.name AS arrival_name,
                  pg_catalog.round(
                    6371.0088 * pg_catalog.acos(
-                     GREATEST(1.0::double precision, GREATEST(-1.0::double precision,
+                     LEAST(1.0::double precision, GREATEST(-1.0::double precision,
                        pg_catalog.sin(pg_catalog.radians(departure.latitude)) * pg_catalog.sin(pg_catalog.radians(arrival.latitude))
                        + pg_catalog.cos(pg_catalog.radians(departure.latitude)) * pg_catalog.cos(pg_catalog.radians(arrival.latitude))
                        * pg_catalog.cos(pg_catalog.radians(arrival.longitude - departure.longitude))
@@ -87,6 +87,7 @@ BEGIN
                  END AS suggested_aircraft
           FROM pair_distances AS pair
           WHERE public.daily_challenge_category_for_distance(pair.distance_km) = $2
+            AND pair.distance_km > 0
             -- A→B and B→A are the same exploration pair for rotation rules.
             AND NOT EXISTS (
               SELECT 1
