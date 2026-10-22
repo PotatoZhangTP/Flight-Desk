@@ -585,3 +585,15 @@ table tbody td:last-child a:hover { background: var(--brand-soft); }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
 }
+/* Compact progressive-achievement display-level selector. */
+.achievement-display-level { margin-top: 1rem; }
+.achievement-display-level-title { margin-bottom: .55rem; color: var(--muted); font-size: .72rem; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; }
+.achievement-display-level-grid { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: .35rem; }
+.achievement-display-level-option { min-width: 0; border: 1px solid currentColor; border-radius: .7rem; background: var(--surface); padding: .5rem .15rem; font-size: .68rem; font-weight: 700; transition: box-shadow 160ms ease, background-color 160ms ease, opacity 160ms ease; }
+.achievement-display-level-option:hover:not(:disabled) { box-shadow: 0 0 0 2px color-mix(in srgb, currentColor 22%, transparent), 0 0 14px color-mix(in srgb, currentColor 28%, transparent); }
+.achievement-display-level-option.is-selected { box-shadow: 0 0 0 2px color-mix(in srgb, currentColor 28%, transparent), 0 0 16px color-mix(in srgb, currentColor 32%, transparent); }
+.achievement-display-level-option.is-locked { cursor: not-allowed; opacity: .28; }
+.achievement-display-level-option.tier-bronze { color: #B8825A; }
+.achievement-display-level-option.tier-silver { color: #AEB8C4; }
+.achievement-display-level-option.tier-gold { color: #E4C77B; }
+.achievement-display-level-option.tier-platinum { color: #6B5386; }

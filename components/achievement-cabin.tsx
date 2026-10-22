@@ -6,25 +6,26 @@ import { T, useLanguage, useText } from "@/components/i18n";
 import { AchievementBadge } from "@/components/achievement-badge";
 import { achievementBadgeAsset, achievementTierFor } from "@/lib/achievements/badge-assets";
 import { achievementCategoryCatalog } from "@/lib/achievements/categories";
-import type { AchievementCabin, AchievementItem } from "@/lib/achievements/server";
+import type { AchievementCabin, AchievementItem, AchievementLevel } from "@/lib/achievements/server";
 
 function label(item: { name_en: string; name_zh: string; description_en: string; description_zh: string }, zh: boolean) { return { name: zh ? item.name_zh : item.name_en, description: zh ? item.description_zh : item.description_en }; }
 
 export function AchievementCabin({ cabin }: { cabin: AchievementCabin }) {
+  const [displayLevels, setDisplayLevels] = useState<Record<string, string>>(() => Object.fromEntries(cabin.featured.filter(item => item.displayLevelKey).map(item => [item.id, item.displayLevelKey as string])));
   const [category, setCategory] = useState("all"); const [flippedId, setFlippedId] = useState<string | null>(null); const [featuredIds, setFeaturedIds] = useState<string[]>(() => cabin.featured.map(item => item.id)); const [featuredOpen, setFeaturedOpen] = useState(true); const [selectedFeaturedId, setSelectedFeaturedId] = useState<string | null>(null); const [featuredError, setFeaturedError] = useState<string | null>(null); const [featuredSaving, setFeaturedSaving] = useState(false); const [previewItem, setPreviewItem] = useState<AchievementItem | null>(null);
   const previewTriggerRef = useRef<HTMLButtonElement | null>(null); const previewDialogRef = useRef<HTMLDivElement | null>(null);
   const { locale } = useLanguage(); const t = useText(); const zh = locale === "zh-CN";
-  const visible = useMemo(() => cabin.items.filter(item => category === "all" || item.category_id === category), [cabin.items, category]);
+  const visible = useMemo(() => cabin.items.filter(item => category === "all" || item.category_id === category).map(item => displayLevels[item.id] ? { ...item, displayLevelKey: displayLevels[item.id] as AchievementLevel["level_key"] } : item), [cabin.items, category, displayLevels]);
   const categories = useMemo(() => achievementCategoryCatalog.map(config => cabin.categories.find(categoryItem => categoryItem.slug === config.slug) ?? { ...config, id: `placeholder-${config.slug}`, display_order: achievementCategoryCatalog.findIndex(item => item.slug === config.slug) + 1, icon_key: "achievement" }), [cabin.categories]);
   const selectedCategory = useMemo(() => category === "all" ? null : categories.find(item => item.id === category), [categories, category]);
   const featuredItems = useMemo(() => featuredIds.map(id => cabin.items.find(item => item.id === id) ?? null), [cabin.items, featuredIds]);
-  const saveFeaturedIds = async (nextIds: string[]) => {
+  const saveFeaturedIds = async (nextIds: string[], nextDisplayLevels = displayLevels) => {
     const previousIds = featuredIds;
     setFeaturedError(null);
     setFeaturedIds(nextIds);
     setFeaturedSaving(true);
     try {
-      const response = await fetch("/api/achievements/featured", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ featuredDefinitionIds: nextIds }) });
+      const response = await fetch("/api/achievements/featured", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ featuredDefinitionIds: nextIds, displayLevelKeys: Object.fromEntries(Object.entries(nextDisplayLevels).filter(([id]) => nextIds.includes(id))) }) });
       if (!response.ok) throw new Error((await response.json().catch(() => null))?.error ?? "Could not save Featured Cabin.");
       return true;
     } catch (error) {
@@ -35,6 +36,7 @@ export function AchievementCabin({ cabin }: { cabin: AchievementCabin }) {
       setFeaturedSaving(false);
     }
   };
+  const chooseDisplayLevel = (item: AchievementItem, levelKey: AchievementLevel["level_key"]) => { const next = { ...displayLevels, [item.id]: levelKey }; setDisplayLevels(next); void saveFeaturedIds(featuredIds, next); };
   const addToFeatured = (item: AchievementItem) => { if (!featuredIds.includes(item.id) && featuredIds.length < 5) void saveFeaturedIds([...featuredIds, item.id]); };
   const removeFromFeatured = (item: AchievementItem) => { if (featuredIds.includes(item.id)) void saveFeaturedIds(featuredIds.filter(id => id !== item.id)); };
   const removeSelectedFeatured = async (event: React.MouseEvent<HTMLButtonElement>) => { event.stopPropagation(); if (!selectedFeaturedId) return; const saved = await saveFeaturedIds(featuredIds.filter(id => id !== selectedFeaturedId)); if (saved) setSelectedFeaturedId(null); };
@@ -55,7 +57,7 @@ export function AchievementCabin({ cabin }: { cabin: AchievementCabin }) {
     <section className="achievement-hero"><div className="achievement-hero-copy"><h1 className="text-4xl font-bold tracking-tight sm:text-5xl"><T id="achievements.title" /></h1></div><div className="achievement-summary-grid">{[["achievements.unlocked", String(cabin.unlockedCount)],["achievements.completionRate", `${cabin.completionRate}%`],["achievements.latest", cabin.latest ? label(cabin.latest, zh).name : t("achievements.none")],["achievements.highestTier", cabin.highestTier ? (zh ? cabin.highestTier.name_zh : cabin.highestTier.name_en) : t("achievements.none")]].map(([key,value]) => <div key={key} className="achievement-summary"><span><T id={key} /></span><strong>{value}</strong></div>)}</div></section>
     <section className={`achievement-cabin-featured spotlight-card ${featuredOpen ? "" : "is-collapsed"}`} onClick={() => setSelectedFeaturedId(null)}><div className="achievement-cabin-featured-header"><h2 className="text-2xl font-bold"><T source="Featured Cabin" /></h2><div className="achievement-cabin-actions">{selectedFeaturedId && <button type="button" className="button-danger achievement-remove-featured" disabled={featuredSaving} onClick={removeSelectedFeatured}><T source="Remove from Featured" /></button>}<button type="button" className="achievement-cabin-toggle" onClick={toggleFeaturedOpen} aria-expanded={featuredOpen} aria-label={featuredOpen ? (zh ? "折叠 Featured Cabin" : "Collapse Featured Cabin") : (zh ? "展开 Featured Cabin" : "Expand Featured Cabin")}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true" className={featuredOpen ? "" : "is-collapsed"}><path d="m6 15 6-6 6 6" /></svg></button></div></div><div className={`achievement-window-row ${featuredOpen ? "" : "is-collapsed"}`} aria-hidden={!featuredOpen}>{Array.from({ length: 5 }, (_, index) => <FeaturedAchievementWindow key={index} index={index} label={t("achievements.featured")} item={featuredItems[index] ?? undefined} selected={featuredItems[index]?.id === selectedFeaturedId} onSelect={item => setSelectedFeaturedId(current => current === item.id ? null : item.id)} />)}</div>{featuredError && <p className="achievement-featured-error" role="alert">{featuredError}</p>}</section>
     <nav className="achievement-category-nav" aria-label={t("achievements.categories")}>{[{ id: "all", name_en: t("achievements.allCategories"), name_zh: t("achievements.allCategories") }, ...categories].map(item => { const count = item.id === "all" ? cabin.unlockedCount : cabin.items.filter(entry => entry.category_id === item.id && entry.unlocked).length; const total = item.id === "all" ? cabin.totalCount : cabin.items.filter(entry => entry.category_id === item.id).length; return <button key={item.id} type="button" onClick={() => setCategory(item.id)} className={category === item.id ? "is-active" : ""}><span>{zh ? item.name_zh : item.name_en}</span><small>{count} / {total}</small></button>; })}</nav>
-    <section className="achievement-list">{selectedCategory && <p className="eyebrow achievement-list-title">{zh ? selectedCategory.name_zh : selectedCategory.name_en}</p>}{visible.length ? <div className="achievement-gallery">{visible.map(item => <AchievementCard key={item.id} item={item} zh={zh} flipped={flippedId === item.id} featured={featuredIds.includes(item.id)} featuredFull={featuredIds.length >= 5} onFlip={() => setFlippedId(current => current === item.id ? null : item.id)} onAddToFeatured={() => addToFeatured(item)} onRemoveFromFeatured={() => removeFromFeatured(item)} onPreview={openPreview} />)}</div> : <div className="rounded-2xl border border-dashed border-line p-8 text-center text-muted"><T id="achievements.emptyFilter" /></div>}</section>
+    <section className="achievement-list">{selectedCategory && <p className="eyebrow achievement-list-title">{zh ? selectedCategory.name_zh : selectedCategory.name_en}</p>}{visible.length ? <div className="achievement-gallery">{visible.map(item => <AchievementCard key={item.id} item={item} zh={zh} flipped={flippedId === item.id} featured={featuredIds.includes(item.id)} featuredFull={featuredIds.length >= 5} onFlip={() => setFlippedId(current => current === item.id ? null : item.id)} onAddToFeatured={() => addToFeatured(item)} onRemoveFromFeatured={() => removeFromFeatured(item)} onChooseDisplayLevel={levelKey => chooseDisplayLevel(item, levelKey)} onPreview={openPreview} />)}</div> : <div className="rounded-2xl border border-dashed border-line p-8 text-center text-muted"><T id="achievements.emptyFilter" /></div>}</section>
     {previewItem && <AchievementPreviewModal item={previewItem} zh={zh} dialogRef={previewDialogRef} onClose={closePreview} />}
   </div>;
 }
@@ -68,7 +70,7 @@ function FeaturedAchievementWindow({ index, label: windowLabel, item, selected, 
   return <div className="achievement-window achievement-window-placeholder" role="img" aria-label={`${windowLabel} ${index + 1}`}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.45" aria-hidden="true"><path d="m3 13.5 18-3.5-7.2 4.2-1.8 5.3-1.5-.2.4-5.5-6.5.8Z" /><path d="M12 5v4" /></svg></div>;
 }
 
-function AchievementCard({ item, zh, flipped, featured, featuredFull, onFlip, onAddToFeatured, onRemoveFromFeatured, onPreview }: { item: AchievementItem; zh: boolean; flipped: boolean; featured: boolean; featuredFull: boolean; onFlip: () => void; onAddToFeatured: () => void; onRemoveFromFeatured: () => void; onPreview: (item: AchievementItem, trigger: HTMLButtonElement) => void }) {
+function AchievementCard({ item, zh, flipped, featured, featuredFull, onFlip, onAddToFeatured, onRemoveFromFeatured, onChooseDisplayLevel, onPreview }: { item: AchievementItem; zh: boolean; flipped: boolean; featured: boolean; featuredFull: boolean; onFlip: () => void; onAddToFeatured: () => void; onRemoveFromFeatured: () => void; onChooseDisplayLevel: (levelKey: AchievementLevel["level_key"]) => void; onPreview: (item: AchievementItem, trigger: HTMLButtonElement) => void }) {
   const copy = label(item, zh);
   const level = item.unlocked?.achievement_level_id ? item.levels.find(entry => entry.id === item.unlocked?.achievement_level_id) : item.progress.level;
   const next = item.progress.nextLevel;
@@ -96,11 +98,7 @@ function AchievementCard({ item, zh, flipped, featured, featuredFull, onFlip, on
           <h3>{copy.name}</h3>
           {level && <p className="achievement-tier">{achievementLevelLabel(level.level_key, zh)}</p>}
         </div>
-        <div className="achievement-progress">
-          <div className="achievement-progress-label"><span>{displayValue} / {displayTarget} {formatAchievementUnit(item.progress.unit, target, zh)}</span><span>{progress}%</span></div>
-          <div className="achievement-progress-track"><i style={{ width: `${progress}%` }} /></div>
-          <p>{progressCopy}</p>
-        </div>
+        {item.badge_type === "progressive" ? <div className="achievement-display-level"><p className="achievement-display-level-title">Choose Display Level</p><div className="achievement-display-level-grid">{item.levels.map(levelOption => { const unlocked = Boolean(item.progress.level && levelOption.level_order <= item.progress.level.level_order); const selected = (item.displayLevelKey ?? item.progress.level?.level_key) === levelOption.level_key; return <button key={levelOption.id} type="button" disabled={!unlocked} className={`achievement-display-level-option tier-${levelOption.level_key} ${selected ? "is-selected" : ""} ${unlocked ? "" : "is-locked"}`} onClick={event => { event.stopPropagation(); onChooseDisplayLevel(levelOption.level_key); }}>{levelOption.level_key === "platinum" ? "Purple" : levelOption.level_key[0].toUpperCase() + levelOption.level_key.slice(1)}</button>; })}</div></div> : <div className="achievement-progress"><p>{progressCopy}</p></div>}
         <button type="button" className={`${featured ? "button-danger" : "button-primary"} achievement-feature-button`} disabled={!featured && featuredFull} onClick={event => { event.stopPropagation(); if (featured) onRemoveFromFeatured(); else onAddToFeatured(); }}>
           <T source={featured ? "Remove from Featured" : "Add to Featured"} />
         </button>

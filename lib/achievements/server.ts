@@ -5,7 +5,7 @@ export type AchievementLevel = { id: string; achievement_definition_id: string; 
 export type AchievementDefinition = { id: string; slug: string; category_id: string; name_en: string; name_zh: string; description_en: string; description_zh: string; badge_type: "progressive" | "standalone"; icon_key: string; unlock_rule_type: string; unlock_rule_config: Record<string, unknown>; display_order: number; levels: AchievementLevel[] };
 export type UserAchievement = { achievement_definition_id: string; achievement_level_id: string | null; unlocked_at: string };
 export type AchievementProgress = { value: number | null; unit: string | null; level: AchievementLevel | null; nextLevel: AchievementLevel | null; isMaxLevel: boolean };
-export type AchievementItem = AchievementDefinition & { unlocked: UserAchievement | null; progress: AchievementProgress };
+export type AchievementItem = AchievementDefinition & { unlocked: UserAchievement | null; progress: AchievementProgress; displayLevelKey?: AchievementLevel["level_key"] };
 export type AchievementCabin = {
   ready: boolean;
   categories: AchievementCategory[];
@@ -50,7 +50,7 @@ export async function readAchievementCabin(
     supabase.from("achievement_definitions").select("id,slug,category_id,name_en,name_zh,description_en,description_zh,badge_type,icon_key,unlock_rule_type,unlock_rule_config,display_order").order("display_order").abortSignal(timeout()),
     supabase.from("achievement_levels").select("id,achievement_definition_id,level_key,level_order,threshold_value,threshold_unit,name_en,name_zh").order("level_order").abortSignal(timeout()),
     supabase.rpc("get_my_achievement_progress").abortSignal(metricsTimeout()),
-    supabase.from("user_achievement_featured_preferences").select("featured_definition_ids").eq("user_id", userId).abortSignal(timeout()).maybeSingle(),
+    supabase.from("user_achievement_featured_preferences").select("featured_definition_ids,display_level_keys").eq("user_id", userId).abortSignal(timeout()).maybeSingle(),
     supabase.from("user_achievements").select("achievement_definition_id,achievement_level_id,unlocked_at").eq("user_id", userId).order("unlocked_at", { ascending: false }).abortSignal(timeout()),
   ]);
   if (categoriesResult.error || definitionsResult.error || levelsResult.error || metricsResult.error || initialUnlockedResult.error) {
@@ -121,9 +121,17 @@ export async function readAchievementCabin(
   // A preference is only a placement request. It must never make a locked or
   // stale definition appear as an earned badge. An empty/missing preference is
   // intentionally rendered as empty Featured Cabin so the user gets guidance.
+  const storedDisplayLevels = featuredPreferencesResult.data?.display_level_keys && typeof featuredPreferencesResult.data.display_level_keys === "object" && !Array.isArray(featuredPreferencesResult.data.display_level_keys)
+    ? featuredPreferencesResult.data.display_level_keys as Record<string, AchievementLevel["level_key"]>
+    : {};
   const featured = storedFeaturedIds
-    .map(id => items.find(item => item.id === id))
-    .filter((item): item is AchievementItem => Boolean(item?.unlocked))
+    .map(id => {
+      const item = items.find(entry => entry.id === id);
+      if (!item?.unlocked) return undefined;
+      const selected = item.levels.find(level => level.level_key === storedDisplayLevels[id] && level.level_order <= (item.progress.level?.level_order ?? 0));
+      return selected ? { ...item, displayLevelKey: selected.level_key } : item;
+    })
+    .filter((item): item is AchievementItem => Boolean(item))
     .slice(0, 5);
   const highestTier = unlockedItems.flatMap(item => item.levels.filter(level => level.id === item.unlocked?.achievement_level_id)).sort((a, b) => b.level_order - a.level_order)[0] ?? null;
   return { ready: true, categories: (categoriesResult.data ?? []) as AchievementCategory[], items, featured, unlockedCount: unlockedItems.length, totalCount: items.length, completionRate: items.length ? Math.round((unlockedItems.length / items.length) * 100) : 0, latest: unlockedItems[0] ?? null, highestTier, refreshError, hasFeaturedPreference: Boolean(featuredPreferencesResult.data) };

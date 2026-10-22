@@ -50,6 +50,7 @@ export function achievementAssetTierFor(levelKey: AchievementLevel["level_key"])
 }
 
 export function achievementTierFor(item: AchievementItem) {
+  if (item.displayLevelKey) return item.displayLevelKey;
   return item.unlocked?.achievement_level_id
     ? item.levels.find(level => level.id === item.unlocked?.achievement_level_id)?.level_key
     : item.progress.level?.level_key;
