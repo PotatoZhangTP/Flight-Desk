@@ -31,7 +31,16 @@ export async function GET(request: Request) {
   // The date is calculated on the server, never accepted from the browser.
   if (!initialChallengeError && challenges.length < 4) {
     try {
-      const generator = createServiceClient();
+      // Production normally uses the service role for the one global write.
+      // Preview deployments may intentionally omit that secret; the fallback
+      // uses the authenticated client and the narrowly-scoped database grant
+      // for ensure_daily_challenges(current UTC date).
+      let generator;
+      try {
+        generator = createServiceClient();
+      } catch {
+        generator = supabase;
+      }
       const { error: ensureError } = await generator
         .rpc("ensure_daily_challenges", { p_date: date })
         .abortSignal(readSignal());
