@@ -124,6 +124,10 @@ export async function readAchievementCabin(
   const storedDisplayLevels = featuredPreferencesResult.data?.display_level_keys && typeof featuredPreferencesResult.data.display_level_keys === "object" && !Array.isArray(featuredPreferencesResult.data.display_level_keys)
     ? featuredPreferencesResult.data.display_level_keys as Record<string, AchievementLevel["level_key"]>
     : {};
+  items = items.map(item => {
+    const selected = item.levels.find(level => level.level_key === storedDisplayLevels[item.id] && level.level_order <= (item.progress.level?.level_order ?? 0));
+    return selected ? { ...item, displayLevelKey: selected.level_key } : item;
+  });
   const featured = storedFeaturedIds
     .map(id => {
       const item = items.find(entry => entry.id === id);
