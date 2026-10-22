@@ -40,6 +40,7 @@ export async function readAchievementCabin(
   userId: string,
 ): Promise<AchievementCabin> {
   const timeout = () => AbortSignal.timeout(8000);
+  const metricsTimeout = () => AbortSignal.timeout(30000);
   // Ensure the server-side Supabase client has resolved the auth cookie before
   // invoking the auth.uid()-scoped progress RPC. This avoids a transient
   // 42501 when the Dashboard and Achievements page render in parallel.
@@ -48,7 +49,7 @@ export async function readAchievementCabin(
     supabase.from("achievement_categories").select("id,slug,name_en,name_zh,description_en,description_zh,display_order,icon_key").order("display_order").abortSignal(timeout()),
     supabase.from("achievement_definitions").select("id,slug,category_id,name_en,name_zh,description_en,description_zh,badge_type,icon_key,unlock_rule_type,unlock_rule_config,display_order").order("display_order").abortSignal(timeout()),
     supabase.from("achievement_levels").select("id,achievement_definition_id,level_key,level_order,threshold_value,threshold_unit,name_en,name_zh").order("level_order").abortSignal(timeout()),
-    supabase.rpc("get_my_achievement_progress").abortSignal(timeout()),
+    supabase.rpc("get_my_achievement_progress").abortSignal(metricsTimeout()),
     supabase.from("user_achievement_featured_preferences").select("featured_definition_ids").eq("user_id", userId).abortSignal(timeout()).maybeSingle(),
     supabase.from("user_achievements").select("achievement_definition_id,achievement_level_id,unlocked_at").eq("user_id", userId).order("unlocked_at", { ascending: false }).abortSignal(timeout()),
   ]);
