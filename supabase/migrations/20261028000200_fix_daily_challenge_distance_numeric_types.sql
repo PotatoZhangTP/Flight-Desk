@@ -78,7 +78,7 @@ BEGIN
           WHERE departure.id <> arrival.id
         ), eligible AS (
           SELECT pair.*,
-                 pg_catalog.greatest(45, pg_catalog.ceil(pair.distance_km / 780.0 * 60 + 35)::integer) AS estimated_minutes,
+                 GREATEST(45, pg_catalog.ceil(pair.distance_km / 780.0 * 60 + 35)::integer) AS estimated_minutes,
                  CASE
                    WHEN pair.distance_km > 7000 THEN 'A350'
                    WHEN pair.distance_km > 3000 THEN 'B787'
@@ -94,8 +94,8 @@ BEGIN
               WHERE previous.challenge_date BETWEEN $1 - 30 AND $1 - 1
                 AND pg_catalog.least(previous.departure_icao, previous.arrival_icao)
                     = pg_catalog.least(pair.departure_icao, pair.arrival_icao)
-                AND pg_catalog.greatest(previous.departure_icao, previous.arrival_icao)
-                    = pg_catalog.greatest(pair.departure_icao, pair.arrival_icao)
+                AND GREATEST(previous.departure_icao, previous.arrival_icao)
+                    = GREATEST(pair.departure_icao, pair.arrival_icao)
             )
             AND NOT EXISTS (
               SELECT 1
@@ -103,8 +103,8 @@ BEGIN
               WHERE today.challenge_date = $1
                 AND pg_catalog.least(today.departure_icao, today.arrival_icao)
                     = pg_catalog.least(pair.departure_icao, pair.arrival_icao)
-                AND pg_catalog.greatest(today.departure_icao, today.arrival_icao)
-                    = pg_catalog.greatest(pair.departure_icao, pair.arrival_icao)
+                AND GREATEST(today.departure_icao, today.arrival_icao)
+                    = GREATEST(pair.departure_icao, pair.arrival_icao)
             )
         )
         SELECT eligible.*
@@ -164,8 +164,8 @@ BEGIN
           WHERE previous.challenge_date BETWEEN p_date - 30 AND p_date - 1
             AND pg_catalog.least(previous.departure_icao, previous.arrival_icao)
                 = pg_catalog.least(route.departure_icao, route.arrival_icao)
-            AND pg_catalog.greatest(previous.departure_icao, previous.arrival_icao)
-                = pg_catalog.greatest(route.departure_icao, route.arrival_icao)
+            AND GREATEST(previous.departure_icao, previous.arrival_icao)
+                = GREATEST(route.departure_icao, route.arrival_icao)
         )
       ORDER BY pg_catalog.md5(category_name || ':' || p_date::text || ':' || route.id::text), route.id
       LIMIT 1;
