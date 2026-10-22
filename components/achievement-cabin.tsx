@@ -60,7 +60,14 @@ export function AchievementCabin({ cabin }: { cabin: AchievementCabin }) {
   const toggleFeaturedOpen = (event: React.MouseEvent<HTMLButtonElement>) => { event.stopPropagation(); setFeaturedOpen(open => !open); setSelectedFeaturedId(null); };
   const openPreview = (item: AchievementItem, trigger: HTMLButtonElement) => { previewTriggerRef.current = trigger; setPreviewItem(item); };
   const closePreview = () => setPreviewItem(null);
-  useEffect(() => { if (!guidance) return; const close = (event: KeyboardEvent) => { if (event.key === "Escape") setGuidance(null); }; window.addEventListener("keydown", close); return () => window.removeEventListener("keydown", close); }, [guidance]);
+  useEffect(() => {
+    if (!guidance) return;
+    const previousOverflow = document.body.style.overflow;
+    const close = (event: KeyboardEvent) => { if (event.key === "Escape") setGuidance(null); };
+    document.body.style.overflow = "hidden";
+    window.addEventListener("keydown", close);
+    return () => { document.body.style.overflow = previousOverflow; window.removeEventListener("keydown", close); };
+  }, [guidance]);
   useEffect(() => {
     if (!previewItem) return;
     const previousOverflow = document.body.style.overflow;
@@ -77,7 +84,7 @@ export function AchievementCabin({ cabin }: { cabin: AchievementCabin }) {
     <nav className="achievement-category-nav" aria-label={t("achievements.categories")}>{[{ id: "all", name_en: t("achievements.allCategories"), name_zh: t("achievements.allCategories") }, ...categories].map(item => { const count = item.id === "all" ? cabin.unlockedCount : cabin.items.filter(entry => entry.category_id === item.id && entry.unlocked).length; const total = item.id === "all" ? cabin.totalCount : cabin.items.filter(entry => entry.category_id === item.id).length; return <button key={item.id} type="button" onClick={() => setCategory(item.id)} className={category === item.id ? "is-active" : ""}><span>{zh ? item.name_zh : item.name_en}</span><small>{count} / {total}</small></button>; })}</nav>
     <section className="achievement-list">{selectedCategory && <p className="eyebrow achievement-list-title">{zh ? selectedCategory.name_zh : selectedCategory.name_en}</p>}{visible.length ? <div className="achievement-gallery">{visible.map(item => <AchievementCard key={item.id} item={item} zh={zh} flipped={flippedId === item.id} featured={featuredIds.includes(item.id)} featuredFull={featuredIds.length >= 5} onFlip={() => setFlippedId(current => current === item.id ? null : item.id)} onAddToFeatured={() => addToFeatured(item)} onRemoveFromFeatured={() => removeFromFeatured(item)} onChooseDisplayLevel={levelKey => chooseDisplayLevel(item, levelKey)} onPreview={openPreview} onShowGuidance={(level) => setGuidance({ item, level })} />)}</div> : <div className="rounded-2xl border border-dashed border-line p-8 text-center text-muted"><T id="achievements.emptyFilter" /></div>}</section>
     {previewItem && <AchievementPreviewModal item={previewItem} zh={zh} dialogRef={previewDialogRef} onClose={closePreview} />}
-    {guidance && <AchievementGuidanceModal item={guidance.item} level={guidance.level} zh={zh} onClose={() => setGuidance(null)} />}
+    {guidance && <AchievementGuidanceModal item={guidance.item} zh={zh} onClose={() => setGuidance(null)} />}
   </div>;
 }
 
@@ -142,11 +149,11 @@ function AchievementPreviewModal({ item, zh, dialogRef, onClose }: { item: Achie
   </div>;
 }
 
-function AchievementGuidanceModal({ item, level, zh, onClose }: { item: AchievementItem; level: AchievementLevel; zh: boolean; onClose: () => void }) {
+function AchievementGuidanceModal({ item, zh, onClose }: { item: AchievementItem; zh: boolean; onClose: () => void }) {
   const copy = label(item, zh);
-  const title = level.level_key === "platinum" ? (zh ? "紫色" : "Purple") : (zh ? level.name_zh : level.name_en);
-  const text = (zh ? level.guidance_zh : level.guidance_en)?.trim() || (zh ? level.guidance_en : level.guidance_zh)?.trim() || (zh ? "暂未添加该等级的解锁说明。" : "No unlock guidance has been added yet.");
-  return <div className="achievement-guidance-backdrop" role="presentation" onPointerDown={event => { if (event.target === event.currentTarget) onClose(); }}><div className="achievement-guidance-modal" role="dialog" aria-modal="true" aria-labelledby="achievement-guidance-title" onPointerDown={event => event.stopPropagation()}><button type="button" className="achievement-guidance-close" aria-label={zh ? "关闭" : "Close"} onClick={onClose}>×</button><p className="eyebrow">{copy.name}</p><h2 id="achievement-guidance-title">{copy.name} — {title}</h2><p className="achievement-guidance-text">{text}</p></div></div>;
+  const guidanceLevel = item.levels.find(level => level.guidance_en?.trim() || level.guidance_zh?.trim());
+  const text = (zh ? guidanceLevel?.guidance_zh : guidanceLevel?.guidance_en)?.trim() || (zh ? guidanceLevel?.guidance_en : guidanceLevel?.guidance_zh)?.trim() || (zh ? "暂未添加该成就的说明。" : "No unlock guidance has been added yet.");
+  return <div className="achievement-guidance-backdrop" role="presentation" onPointerDown={event => { if (event.target === event.currentTarget) onClose(); }}><div className="achievement-guidance-modal" role="dialog" aria-modal="true" aria-labelledby="achievement-guidance-title" onPointerDown={event => event.stopPropagation()}><button type="button" className="achievement-guidance-close" aria-label={zh ? "关闭" : "Close"} onClick={onClose}>×</button><h2 id="achievement-guidance-title">{copy.name}</h2><p className="achievement-guidance-text">{text}</p></div></div>;
 }
 
 function formatAchievementUnit(unit: string | null | undefined, quantity: number, zh: boolean) {
