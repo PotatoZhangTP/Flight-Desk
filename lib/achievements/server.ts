@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 export type AchievementCategory = { id: string; slug: string; name_en: string; name_zh: string; description_en: string; description_zh: string; display_order: number; icon_key: string };
-export type AchievementLevel = { id: string; achievement_definition_id: string; level_key: "bronze" | "silver" | "gold" | "platinum"; level_order: number; threshold_value: number; threshold_unit: string; name_en: string; name_zh: string };
+export type AchievementLevel = { id: string; achievement_definition_id: string; level_key: "bronze" | "silver" | "gold" | "platinum"; level_order: number; threshold_value: number; threshold_unit: string; name_en: string; name_zh: string; guidance_en?: string; guidance_zh?: string };
 export type AchievementDefinition = { id: string; slug: string; category_id: string; name_en: string; name_zh: string; description_en: string; description_zh: string; badge_type: "progressive" | "standalone"; icon_key: string; unlock_rule_type: string; unlock_rule_config: Record<string, unknown>; display_order: number; levels: AchievementLevel[] };
 export type UserAchievement = { achievement_definition_id: string; achievement_level_id: string | null; unlocked_at: string };
 export type AchievementProgress = { value: number | null; unit: string | null; level: AchievementLevel | null; nextLevel: AchievementLevel | null; isMaxLevel: boolean };
@@ -45,10 +45,11 @@ export async function readAchievementCabin(
   // invoking the auth.uid()-scoped progress RPC. This avoids a transient
   // 42501 when the Dashboard and Achievements page render in parallel.
   await supabase.auth.getUser();
-  const [categoriesResult, definitionsResult, levelsResult, metricsResult, featuredPreferencesResult, initialUnlockedResult] = await Promise.all([
+  const [categoriesResult, definitionsResult, levelsResult, guidanceResult, metricsResult, featuredPreferencesResult, initialUnlockedResult] = await Promise.all([
     supabase.from("achievement_categories").select("id,slug,name_en,name_zh,description_en,description_zh,display_order,icon_key").order("display_order").abortSignal(timeout()),
     supabase.from("achievement_definitions").select("id,slug,category_id,name_en,name_zh,description_en,description_zh,badge_type,icon_key,unlock_rule_type,unlock_rule_config,display_order").order("display_order").abortSignal(timeout()),
     supabase.from("achievement_levels").select("id,achievement_definition_id,level_key,level_order,threshold_value,threshold_unit,name_en,name_zh").order("level_order").abortSignal(timeout()),
+    supabase.from("achievement_level_guidance").select("achievement_level_id,guidance_en,guidance_zh").abortSignal(timeout()),
     supabase.rpc("get_my_achievement_progress").abortSignal(metricsTimeout()),
     supabase.from("user_achievement_featured_preferences").select("featured_definition_ids,display_level_keys").eq("user_id", userId).abortSignal(timeout()).maybeSingle(),
     supabase.from("user_achievements").select("achievement_definition_id,achievement_level_id,unlocked_at").eq("user_id", userId).order("unlocked_at", { ascending: false }).abortSignal(timeout()),
@@ -72,6 +73,8 @@ export async function readAchievementCabin(
     if (row.metric_type && Number.isFinite(value)) metrics.set(row.metric_type, value);
   }
   const levelRows = (levelsResult.data ?? []) as AchievementLevel[];
+  const guidanceByLevel = new Map((guidanceResult.data ?? []).map(row => [row.achievement_level_id, row]));
+  for (const level of levelRows) { const guidance = guidanceByLevel.get(level.id); if (guidance) { level.guidance_en = guidance.guidance_en; level.guidance_zh = guidance.guidance_zh; } }
   const levelsByDefinition = new Map<string, AchievementLevel[]>();
   for (const level of levelRows) levelsByDefinition.set(level.achievement_definition_id, [...(levelsByDefinition.get(level.achievement_definition_id) ?? []), level]);
   const levelById = new Map(levelRows.map(level => [level.id, level]));
