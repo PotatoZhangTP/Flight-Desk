@@ -74,7 +74,15 @@ export async function readAchievementCabin(
   }
   const levelRows = (levelsResult.data ?? []) as AchievementLevel[];
   const guidanceByLevel = new Map((guidanceResult.data ?? []).map(row => [row.achievement_level_id, row]));
-  for (const level of levelRows) { const guidance = guidanceByLevel.get(level.id); if (guidance) { level.guidance_en = guidance.guidance_en; level.guidance_zh = guidance.guidance_zh; } }
+  const guidanceByDefinition = new Map<string, { guidance_en: string; guidance_zh: string }>();
+  const guidanceOrder = new Map<string, number>();
+  for (const level of levelRows) {
+    const guidance = guidanceByLevel.get(level.id);
+    if (!guidance) continue;
+    const current = guidanceByDefinition.get(level.achievement_definition_id);
+    if ((!current || level.level_order >= (guidanceOrder.get(level.achievement_definition_id) ?? -1)) && (guidance.guidance_en.trim() || guidance.guidance_zh.trim())) { guidanceByDefinition.set(level.achievement_definition_id, { guidance_en: guidance.guidance_en, guidance_zh: guidance.guidance_zh }); guidanceOrder.set(level.achievement_definition_id, level.level_order); }
+  }
+  for (const level of levelRows) { const guidance = guidanceByDefinition.get(level.achievement_definition_id); if (guidance) { level.guidance_en = guidance.guidance_en; level.guidance_zh = guidance.guidance_zh; } }
   const levelsByDefinition = new Map<string, AchievementLevel[]>();
   for (const level of levelRows) levelsByDefinition.set(level.achievement_definition_id, [...(levelsByDefinition.get(level.achievement_definition_id) ?? []), level]);
   const levelById = new Map(levelRows.map(level => [level.id, level]));
