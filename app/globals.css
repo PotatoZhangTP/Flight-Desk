@@ -597,3 +597,6 @@ table tbody td:last-child a:hover { background: var(--brand-soft); }
 .achievement-display-level-option.tier-silver { color: #AEB8C4; }
 .achievement-display-level-option.tier-gold { color: #E4C77B; }
 .achievement-display-level-option.tier-platinum { color: #6B5386; }
+.achievement-window > .achievement-badge { width: 78%; }
+.achievement-dashboard-placeholder { color: color-mix(in srgb, var(--muted) 55%, transparent); }
+.achievement-dashboard-placeholder svg { width: 34%; height: 34%; }
