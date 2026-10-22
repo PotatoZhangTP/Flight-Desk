@@ -94,7 +94,7 @@ function AchievementCard({ item, zh, flipped, featured, featuredFull, onFlip, on
         {achievementBadgeAsset(item) && <button type="button" className="achievement-preview-expand" aria-label={zh ? `放大预览 ${copy.name}` : `Expand preview for ${copy.name}`} title={zh ? "放大预览" : "Expand preview"} onClick={event => { event.stopPropagation(); onPreview(item, event.currentTarget); }}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="M8 3H3v5M16 3h5v5M21 16v5h-5M3 16v5h5" /></svg></button>}
         <div>
           <h3>{copy.name}</h3>
-          {level && <p className="achievement-tier">{zh ? level.name_zh : level.name_en}</p>}
+          {level && <p className="achievement-tier">{achievementLevelLabel(level.level_key, zh)}</p>}
         </div>
         <div className="achievement-progress">
           <div className="achievement-progress-label"><span>{displayValue} / {displayTarget} {formatAchievementUnit(item.progress.unit, target, zh)}</span><span>{progress}%</span></div>
@@ -131,6 +131,11 @@ function formatAchievementUnit(unit: string | null | undefined, quantity: number
     return zhUnits[unit] ?? unit;
   }
   return quantity === 1 && unit.endsWith("s") ? unit.slice(0, -1) : unit;
+}
+
+function achievementLevelLabel(levelKey: AchievementItem["levels"][number]["level_key"], zh: boolean) {
+  if (zh) return ({ bronze: "铜", silver: "银", gold: "金", platinum: "紫" }[levelKey]);
+  return ({ bronze: "Bronze", silver: "Silver", gold: "Gold", platinum: "Purple" }[levelKey]);
 }
 
 function formatAchievementValue(value: number, unit: string | null | undefined) {
