@@ -18,7 +18,11 @@ export function AchievementCabin({ cabin }: { cabin: AchievementCabin }) {
   const visible = useMemo(() => cabin.items.filter(item => category === "all" || item.category_id === category).map(item => displayLevels[item.id] ? { ...item, displayLevelKey: displayLevels[item.id] as AchievementLevel["level_key"] } : item), [cabin.items, category, displayLevels]);
   const categories = useMemo(() => achievementCategoryCatalog.map(config => cabin.categories.find(categoryItem => categoryItem.slug === config.slug) ?? { ...config, id: `placeholder-${config.slug}`, display_order: achievementCategoryCatalog.findIndex(item => item.slug === config.slug) + 1, icon_key: "achievement" }), [cabin.categories]);
   const selectedCategory = useMemo(() => category === "all" ? null : categories.find(item => item.id === category), [categories, category]);
-  const featuredItems = useMemo(() => featuredIds.map(id => cabin.items.find(item => item.id === id) ?? null), [cabin.items, featuredIds]);
+  const featuredItems = useMemo(() => featuredIds.map(id => {
+    const item = cabin.items.find(entry => entry.id === id);
+    const displayLevelKey = displayLevels[id] as AchievementLevel["level_key"] | undefined;
+    return item && displayLevelKey ? { ...item, displayLevelKey } : item ?? null;
+  }), [cabin.items, featuredIds, displayLevels]);
   const saveFeaturedIds = async (nextIds: string[], nextDisplayLevels = displayLevels) => {
     const previousIds = featuredIds;
     setFeaturedError(null);
