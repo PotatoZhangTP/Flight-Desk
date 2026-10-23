@@ -45,6 +45,10 @@ export async function readAchievementCabin(
   // invoking the auth.uid()-scoped progress RPC. This avoids a transient
   // 42501 when the Dashboard and Achievements page render in parallel.
   await supabase.auth.getUser();
+  // Reconcile before reading the gallery so revocations and downgrades caused
+  // by edits/deletes are visible immediately, even after a cold page load.
+  const lifecycleRefresh = await supabase.rpc("refresh_my_achievements").abortSignal(timeout());
+  logAchievementError("lifecycle refresh", lifecycleRefresh.error);
   const [categoriesResult, definitionsResult, levelsResult, guidanceResult, metricsResult, featuredPreferencesResult, initialUnlockedResult] = await Promise.all([
     supabase.from("achievement_categories").select("id,slug,name_en,name_zh,description_en,description_zh,display_order,icon_key").order("display_order").abortSignal(timeout()),
     supabase.from("achievement_definitions").select("id,slug,category_id,name_en,name_zh,description_en,description_zh,badge_type,icon_key,unlock_rule_type,unlock_rule_config,display_order").order("display_order").abortSignal(timeout()),

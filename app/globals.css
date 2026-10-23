@@ -624,3 +624,31 @@ table tbody td:last-child a:hover { background: var(--brand-soft); }
 .achievement-window-placeholder-icon { display: block; width: 32px; height: 32px; max-width: 32px; max-height: 32px; flex: 0 0 32px; color: color-mix(in srgb, var(--muted) 55%, transparent); }
 .achievement-dashboard-placeholder { color: color-mix(in srgb, var(--muted) 55%, transparent); }
 .achievement-dashboard-placeholder svg { display: block; width: 34%; height: 34%; max-width: 2rem; max-height: 2rem; }
+.notification-unread-dot { position: absolute; right: .35rem; top: .3rem; width: .45rem; height: .45rem; border-radius: 9999px; background: #d34f62; box-shadow: 0 0 0 2px var(--surface); }
+.notifications-popover { position: absolute; right: 0; top: calc(100% + .65rem); z-index: 80; width: min(22rem, calc(100vw - 2rem)); overflow: hidden; border: 1px solid var(--line); border-radius: 1rem; background: var(--elevated); box-shadow: 0 18px 45px color-mix(in srgb, var(--ink) 18%, transparent); }
+.achievement-notification-toast { position: fixed; right: 1.25rem; top: 5.5rem; z-index: 140; display: flex; width: min(23rem, calc(100vw - 2rem)); flex-direction: column; gap: .25rem; border: 1px solid color-mix(in srgb, var(--brand) 45%, var(--line)); border-radius: 1rem; background: var(--elevated); padding: 1rem 1.1rem; text-align: left; color: var(--ink); box-shadow: 0 12px 35px color-mix(in srgb, var(--brand) 18%, transparent); animation: notification-toast-in 220ms ease-out; }
+.achievement-notification-toast strong { color: var(--brand); font-size: .8rem; }
+.achievement-notification-toast span { font-size: .9rem; font-weight: 700; }
+.notifications-popover-header { display: flex; align-items: center; justify-content: space-between; gap: .75rem; border-bottom: 1px solid var(--line); padding: .9rem 1rem; color: var(--ink); }
+.notifications-popover-header button, .notifications-view-link { color: var(--brand); font-size: .75rem; font-weight: 700; }
+.notifications-list { max-height: 22rem; overflow-y: auto; }
+.notification-item { display: flex; width: 100%; gap: .7rem; padding: .8rem 1rem; text-align: left; color: var(--muted); transition: background-color 140ms ease; }
+.notification-item:hover, .notification-item.is-unread { background: var(--brand-soft); }
+.notification-item img, .notification-item-glyph { width: 2.75rem; height: 2.75rem; flex: 0 0 2.75rem; object-fit: contain; }
+.notification-item-glyph { display: grid; place-items: center; border-radius: 9999px; background: var(--brand-soft); color: var(--brand); }
+.notification-item > span:last-child { display: flex; min-width: 0; flex-direction: column; gap: .12rem; }
+.notification-item strong { color: var(--ink); font-size: .75rem; }
+.notification-item span span { color: var(--ink); font-size: .85rem; font-weight: 700; }
+.notification-item small { font-size: .68rem; color: var(--subtle); }
+.notifications-empty { padding: 1.25rem 1rem; color: var(--muted); font-size: .85rem; }
+.notifications-view-link { display: block; border-top: 1px solid var(--line); padding: .8rem 1rem; text-align: center; }
+.achievement-reveal-backdrop { position: fixed; inset: 0; z-index: 150; display: grid; place-items: center; padding: 1rem; background: color-mix(in srgb, #101326 72%, transparent); }
+.achievement-reveal-modal { position: relative; width: min(28rem, 100%); overflow: hidden; border: 1px solid color-mix(in srgb, #E4C77B 45%, var(--brand)); border-radius: 1.5rem; background: #171427; padding: 2.5rem 2rem 2rem; text-align: center; color: #fff; box-shadow: 0 0 45px color-mix(in srgb, var(--brand) 32%, transparent), 0 24px 70px #0008; animation: achievement-reveal-in 260ms ease-out; }
+.achievement-reveal-close { position: absolute; right: .8rem; top: .7rem; width: 2rem; height: 2rem; border-radius: 9999px; color: #fff; font-size: 1.5rem; line-height: 1; }
+.achievement-reveal-kicker { color: #E4C77B; font-size: .72rem; font-weight: 800; letter-spacing: .16em; }
+.achievement-reveal-modal h2 { margin-top: .55rem; font-size: 1.55rem; }
+.achievement-reveal-badge { display: block; width: 14rem; height: 14rem; margin: .75rem auto; object-fit: contain; animation: achievement-reveal-badge 2.2s ease-out both; }
+.achievement-reveal-level { margin-bottom: 1.25rem; color: #E4C77B; font-weight: 800; }
+@keyframes achievement-reveal-in { from { opacity: 0; transform: translateY(10px) scale(.96); } to { opacity: 1; transform: translateY(0) scale(1); } }
+@keyframes achievement-reveal-badge { from { opacity: 0; transform: scale(.68); filter: brightness(.35); } 45% { opacity: 1; filter: brightness(1.35); } to { transform: scale(1); filter: brightness(1); } }
+@keyframes notification-toast-in { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
