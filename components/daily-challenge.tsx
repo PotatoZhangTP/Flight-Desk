@@ -122,25 +122,18 @@ export function DailyChallengePage({ initial, selected }: { initial: ChallengeDa
     const wasCompleted = completedCategories.includes(challenge.category);
     setSavingCategory(challenge.category); setNotice(null);
     const client = createClient();
-    const { data: { user }, error: userError } = await client.auth.getUser();
-    if (userError || !user) {
-      console.error("[daily-challenge] unable to resolve the signed-in user", {
-        code: userError?.code,
-        message: userError?.message,
-      });
-      setNotice(t("Unable to update challenge completion."));
-      setSavingCategory(null);
-      return;
-    }
-    const result = wasCompleted
-      ? await client.from("daily_challenge_completions").delete().eq("user_id", user.id).eq("challenge_date", challenge.challenge_date).eq("category", challenge.category)
-      : await client.from("daily_challenge_completions").insert({ user_id: user.id, challenge_date: challenge.challenge_date, category: challenge.category });
-    if (result.error) {
+    const { data, error: resultError } = await client.rpc("toggle_daily_challenge_completion", {
+      p_challenge_date: challenge.challenge_date,
+      p_category: challenge.category,
+    });
+    const result = Array.isArray(data) ? data[0] : data;
+    const error = resultError;
+    if (error) {
       console.error("[daily-challenge] completion update failed", {
-        code: result.error.code,
-        message: result.error.message,
-        details: result.error.details,
-        hint: result.error.hint,
+        code: error.code,
+        message: error.message,
+        details: error.details,
+        hint: error.hint,
         challengeDate: challenge.challenge_date,
         category: challenge.category,
         action: wasCompleted ? "delete" : "insert",
@@ -159,7 +152,7 @@ export function DailyChallengePage({ initial, selected }: { initial: ChallengeDa
           hint: refresh.error.hint,
         });
       }
-      if (wasCompleted) {
+      if (result?.completed === false || wasCompleted) {
         setCompletedCategories(categories => categories.filter(category => category !== challenge.category));
       }
       else {
