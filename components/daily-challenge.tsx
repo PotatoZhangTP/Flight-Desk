@@ -122,14 +122,47 @@ export function DailyChallengePage({ initial, selected }: { initial: ChallengeDa
     const wasCompleted = completedCategories.includes(challenge.category);
     setSavingCategory(challenge.category); setNotice(null);
     const client = createClient();
+    const { data: { user }, error: userError } = await client.auth.getUser();
+    if (userError || !user) {
+      if (process.env.NODE_ENV !== "production") {
+        console.error("[daily-challenge] unable to resolve the signed-in user", {
+          code: userError?.code,
+          message: userError?.message,
+        });
+      }
+      setNotice(t("Unable to update challenge completion."));
+      setSavingCategory(null);
+      return;
+    }
     const result = wasCompleted
-      ? await client.from("daily_challenge_completions").delete().eq("challenge_date", challenge.challenge_date).eq("category", challenge.category)
-      : await client.from("daily_challenge_completions").insert({ challenge_date: challenge.challenge_date, category: challenge.category });
-    if (result.error) setNotice(t("Unable to update challenge completion."));
+      ? await client.from("daily_challenge_completions").delete().eq("user_id", user.id).eq("challenge_date", challenge.challenge_date).eq("category", challenge.category)
+      : await client.from("daily_challenge_completions").insert({ user_id: user.id, challenge_date: challenge.challenge_date, category: challenge.category });
+    if (result.error) {
+      if (process.env.NODE_ENV !== "production") {
+        console.error("[daily-challenge] completion update failed", {
+          code: result.error.code,
+          message: result.error.message,
+          details: result.error.details,
+          hint: result.error.hint,
+          challengeDate: challenge.challenge_date,
+          category: challenge.category,
+          action: wasCompleted ? "delete" : "insert",
+        });
+      }
+      setNotice(t("Unable to update challenge completion."));
+    }
     else {
       // Awards and progress use the same database-side metrics as the
       // Achievement page. A refresh failure must not undo the saved completion.
-      await client.rpc("refresh_my_achievements");
+      const refresh = await client.rpc("refresh_my_achievements");
+      if (refresh.error && process.env.NODE_ENV !== "production") {
+        console.error("[daily-challenge] achievement refresh failed after completion was saved", {
+          code: refresh.error.code,
+          message: refresh.error.message,
+          details: refresh.error.details,
+          hint: refresh.error.hint,
+        });
+      }
       if (wasCompleted) {
         setCompletedCategories(categories => categories.filter(category => category !== challenge.category));
       }
