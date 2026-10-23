@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import Link from "@/components/navigation-link";
+import { useRouter } from "next/navigation";
 import { T } from "@/components/i18n";
 import { AddFlightDropdown } from "@/components/add-flight-dropdown";
 import { SmartAirportFilter } from "@/components/smart-airport-filter";
@@ -30,7 +31,9 @@ const controlClass =
   "mt-1 h-9 min-h-9 w-full min-w-0 rounded-lg border border-line-strong bg-surface px-3 text-sm text-ink outline-none transition placeholder:text-subtle focus:border-brand focus:ring-2 focus:ring-brand/15 sm:h-9 sm:min-h-9";
 
 export function AllFlightsFilters({ values, countries = [], departureAirports, arrivalAirports, maximumDurationHours = 48 }: AllFlightsFiltersProps) {
+  const router = useRouter();
   const [open, setOpen] = useState(true);
+  const [isClearing, startClearing] = useTransition();
   const [resetVersion, setResetVersion] = useState(0);
   const airports = useMemo(() => {
     const values = new Map<string, Airport>();
@@ -236,13 +239,21 @@ export function AllFlightsFilters({ values, countries = [], departureAirports, a
             </label>
             <DurationRangeFilter initialMin={values.minDuration ?? ""} initialMax={values.maxDuration ?? ""} maximumHours={maximumDurationHours} />
             <div className="flex flex-wrap justify-end gap-2 sm:col-span-2 lg:col-span-3">
-              <Link
-                href={clearHref}
-                onClick={() => { setCountryName(""); setSelectedCode(""); setResetVersion(value => value + 1); }}
-                className="inline-flex min-h-11 items-center justify-center rounded-lg border border-line px-4 text-sm font-semibold text-brand transition hover:bg-brand-soft sm:min-h-9"
+              <button
+                type="button"
+                disabled={isClearing}
+                aria-busy={isClearing}
+                onClick={() => {
+                  setCountryName("");
+                  setSelectedCode("");
+                  setResetVersion(value => value + 1);
+                  startClearing(() => router.push(clearHref));
+                }}
+                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-line px-4 text-sm font-semibold text-brand transition hover:bg-brand-soft disabled:cursor-wait disabled:opacity-70 sm:min-h-9"
               >
+                {isClearing && <span aria-hidden="true" className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-current border-t-transparent" />}
                 <T id="dashboard.clearFilters" />
-              </Link>
+              </button>
               <button
                 type="submit"
                 className="inline-flex min-h-11 items-center justify-center rounded-lg bg-brand px-5 text-sm font-semibold text-on-brand transition hover:opacity-90 sm:min-h-9"
