@@ -99,7 +99,7 @@ function FeaturedAchievementWindow({ index, label: windowLabel, item, selected, 
     const copy = `${item.name_en} — ${item.unlocked ? "Unlocked" : "Locked"}`;
     return <button type="button" className={`achievement-window ${selected ? "is-selected" : ""}`} title={copy} aria-pressed={selected} onClick={event => { event.stopPropagation(); onSelect(item); }}><AchievementBadge item={item} compact eager /><span className="sr-only">{copy}</span></button>;
   }
-  return <div className="achievement-window achievement-window-placeholder" role="img" aria-label={`${windowLabel} ${index + 1}`}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.45" aria-hidden="true"><path d="m3 13.5 18-3.5-7.2 4.2-1.8 5.3-1.5-.2.4-5.5-6.5.8Z" /><path d="M12 5v4" /></svg></div>;
+  return <div className="achievement-window achievement-window-placeholder" role="img" aria-label={`${windowLabel} ${index + 1}`}><svg className="achievement-window-placeholder-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.45" aria-hidden="true"><path d="m3 13.5 18-3.5-7.2 4.2-1.8 5.3-1.5-.2.4-5.5-6.5.8Z" /><path d="M12 5v4" /></svg></div>;
 }
 
 function AchievementCard({ item, zh, flipped, featured, featuredFull, onFlip, onAddToFeatured, onRemoveFromFeatured, onChooseDisplayLevel, onPreview, onShowGuidance }: { item: AchievementItem; zh: boolean; flipped: boolean; featured: boolean; featuredFull: boolean; onFlip: () => void; onAddToFeatured: () => void; onRemoveFromFeatured: () => void; onChooseDisplayLevel: (levelKey: AchievementLevel["level_key"]) => void; onPreview: (item: AchievementItem, trigger: HTMLButtonElement) => void; onShowGuidance: (level: AchievementLevel) => void }) {

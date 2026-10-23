@@ -617,5 +617,6 @@ table tbody td:last-child a:hover { background: var(--brand-soft); }
 .achievement-window { overflow: hidden; }
 .achievement-window > .achievement-badge { width: min(78%, 5.5rem); max-width: 5.5rem; }
 .achievement-window > .achievement-badge svg { display: block; width: 54%; height: 54%; max-width: 3rem; max-height: 3rem; }
+.achievement-window-placeholder-icon { display: block; width: 32px; height: 32px; max-width: 32px; max-height: 32px; flex: 0 0 32px; color: color-mix(in srgb, var(--muted) 55%, transparent); }
 .achievement-dashboard-placeholder { color: color-mix(in srgb, var(--muted) 55%, transparent); }
 .achievement-dashboard-placeholder svg { display: block; width: 34%; height: 34%; max-width: 2rem; max-height: 2rem; }
