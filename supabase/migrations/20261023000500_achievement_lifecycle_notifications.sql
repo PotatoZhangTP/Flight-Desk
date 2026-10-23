@@ -105,7 +105,7 @@ BEGIN
     INSERT INTO public.user_achievements (user_id, achievement_definition_id, achievement_level_id, achieved_at, unlocked_at)
     SELECT p_user_id, e.achievement_definition_id, e.achievement_level_id, now(), now()
     FROM _achievement_eligible e
-    ON CONFLICT (user_id, achievement_definition_id, achievement_level_id) DO NOTHING
+    ON CONFLICT DO NOTHING
     RETURNING achievement_definition_id, achievement_level_id
   ) INSERT INTO _achievement_inserted SELECT * FROM inserted;
 
