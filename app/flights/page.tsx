@@ -345,7 +345,6 @@ export default async function AllFlightsPage({
   const search = (p.q || "").trim();
   if (p.from) query = query.gte("flight_date", p.from);
   if (p.to) query = query.lte("flight_date", p.to);
-  if (p.aircraft) query = query.ilike("aircraft_type", `%${p.aircraft}%`);
   if (p.status === "planned" || p.status === "completed")
     query = query.eq("status", p.status);
   const sort = sortable[p.sort || ""] ? p.sort! : "flight_date";
@@ -372,6 +371,19 @@ export default async function AllFlightsPage({
       if (!links || links.length < 1000) break;
     }
   }
+  // Aircraft filtering must use the same catalog mapping as the table display.
+  // Daily Challenge flights store canonical codes such as B787, while users
+  // search by the human-readable catalog name such as Boeing 787.
+  const aircraftDisplayMap = await loadAircraftDisplayMap(supabase, result.data.map((flight) => flight.aircraft_type));
+  const normalizeAircraftSearch = (value: string | null | undefined) =>
+    (value || "").toLocaleLowerCase().replace(/[^a-z0-9]+/g, "");
+  const aircraftSearch = normalizeAircraftSearch(p.aircraft);
+  const aircraftMatches = (flight: FlightRow) => {
+    if (!aircraftSearch) return true;
+    const raw = normalizeAircraftSearch(flight.aircraft_type);
+    const display = normalizeAircraftSearch(formatAircraftDisplayName(flight.aircraft_type, null, aircraftDisplayMap));
+    return raw.includes(aircraftSearch) || display.includes(aircraftSearch);
+  };
   const categoryFiltered = categoryError ? [] : filterFlightCategory(result.data, category, memorialFlightIds);
   const toAirportMatches = (rows: Airport[]) =>
     rows.map((row) => ({
@@ -440,7 +452,8 @@ export default async function AllFlightsPage({
           p.airportFilterExact ? "" : airportFilterText,
         )),
   );
-  const countryFiltered = airportFiltered.filter((flight) => flightMatchesCountry(flight, destinationCountry, catalog));
+  const airportFilteredWithAircraft = airportFiltered.filter(aircraftMatches);
+  const countryFiltered = airportFilteredWithAircraft.filter((flight) => flightMatchesCountry(flight, destinationCountry, catalog));
   const durationFiltered =
     min != null || max != null
       ? countryFiltered.filter((flight) => {
@@ -479,7 +492,6 @@ export default async function AllFlightsPage({
   const currentPage = flightPage(ordered, page, p.focusFlightId, size);
   const focusedFlight = p.focusFlightId && ordered.some(flight => flight.id === p.focusFlightId) ? p.focusFlightId : "";
   const data = ordered.slice((currentPage - 1) * size, currentPage * size);
-  const aircraftDisplayMap = await loadAircraftDisplayMap(supabase, data.map((flight) => flight.aircraft_type));
   const url = hrefFor;
   const from = total ? (currentPage - 1) * size + 1 : 0;
   const to = Math.min(currentPage * size, total);
