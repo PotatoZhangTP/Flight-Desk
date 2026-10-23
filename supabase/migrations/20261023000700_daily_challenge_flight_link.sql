@@ -15,6 +15,12 @@ CREATE UNIQUE INDEX IF NOT EXISTS flights_daily_challenge_unique_idx
   ON public.flights (user_id, daily_challenge_date, daily_challenge_category)
   WHERE daily_challenge_date IS NOT NULL AND daily_challenge_category IS NOT NULL;
 
+-- The RPC remains SECURITY INVOKER, so grant only the operations it performs.
+-- Existing RLS policies still restrict every row to the authenticated user.
+GRANT SELECT ON public.daily_challenges TO authenticated;
+GRANT SELECT, INSERT, DELETE ON public.daily_challenge_completions TO authenticated;
+GRANT SELECT, INSERT ON public.flights TO authenticated;
+
 CREATE OR REPLACE FUNCTION public.toggle_daily_challenge_completion(
   p_challenge_date date,
   p_category text
