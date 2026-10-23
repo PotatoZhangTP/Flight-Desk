@@ -9,7 +9,7 @@ WITH catalog AS (
     AS row(code text, display_name text, manufacturer text, manufacturer_family text)
 ), aliases AS (
   SELECT DISTINCT
-    regexp_replace(upper(value), '[^A-Z0-9]', '', 'g') AS alias_key,
+    public.achievement_aircraft_alias_key(value) AS alias_key,
     code AS canonical_type_key,
     manufacturer,
     display_name,

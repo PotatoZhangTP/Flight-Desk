@@ -13,6 +13,7 @@ import { FlightArrival } from "@/components/flight-arrival";
 import { flightRelatedToCountry } from "@/lib/flight-country";
 import { airportCoordinateMap, flightDistanceKm } from "@/lib/flight-stats";
 import { formatDistance, normalizePreferences, type UserPreferences } from "@/lib/preferences";
+import { formatAircraftDisplayName, loadAircraftDisplayMap } from "@/lib/aircraft-catalog";
 
 const sortable: Record<string, string> = {
   flight_date: "Date",
@@ -478,6 +479,7 @@ export default async function AllFlightsPage({
   const currentPage = flightPage(ordered, page, p.focusFlightId, size);
   const focusedFlight = p.focusFlightId && ordered.some(flight => flight.id === p.focusFlightId) ? p.focusFlightId : "";
   const data = ordered.slice((currentPage - 1) * size, currentPage * size);
+  const aircraftDisplayMap = await loadAircraftDisplayMap(supabase, data.map((flight) => flight.aircraft_type));
   const url = hrefFor;
   const from = total ? (currentPage - 1) * size + 1 : 0;
   const to = Math.min(currentPage * size, total);
@@ -572,7 +574,7 @@ export default async function AllFlightsPage({
                     {flight.departure_airport_iata || flight.departure_airport}{" "}
                     → {flight.arrival_airport_iata || flight.arrival_airport}
                   </td>
-                  <td>{flight.aircraft_type || "—"}</td>
+                  <td>{formatAircraftDisplayName(flight.aircraft_type, null, aircraftDisplayMap)}</td>
                   <td>
                     {effectiveDuration(flight) == null ? (
                       "—"
