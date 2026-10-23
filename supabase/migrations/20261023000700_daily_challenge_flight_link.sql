@@ -27,8 +27,8 @@ CREATE OR REPLACE FUNCTION public.toggle_daily_challenge_completion(
 )
 RETURNS TABLE (completed boolean, flight_id uuid)
 LANGUAGE plpgsql
-SECURITY INVOKER
-SET search_path = ''
+SECURITY DEFINER
+SET search_path = pg_catalog, public, auth
 AS $function$
 DECLARE
   v_user uuid := auth.uid();
