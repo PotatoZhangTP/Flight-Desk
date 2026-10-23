@@ -27,3 +27,17 @@ export async function PATCH(request: Request) {
   if (error) return NextResponse.json({ error: "Notification could not be updated." }, { status: 500 });
   return NextResponse.json({ ok: true });
 }
+
+export async function DELETE(request: Request) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return NextResponse.json({ error: "Authentication required." }, { status: 401 });
+  const body = await request.json().catch(() => ({}));
+  if (typeof body?.id !== "string") return NextResponse.json({ error: "A notification id is required." }, { status: 400 });
+  const { error } = await supabase.from("achievement_notifications")
+    .delete()
+    .eq("id", body.id)
+    .eq("user_id", user.id);
+  if (error) return NextResponse.json({ error: "Notification could not be deleted." }, { status: 500 });
+  return NextResponse.json({ ok: true });
+}
