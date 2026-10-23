@@ -343,6 +343,7 @@ achievements.maxTier|Highest Tier|最高等级
 achievements.condition|Unlock Condition|解锁条件
 achievements.emptyFilter|No achievements match this filter.|没有符合当前筛选条件的成就。
 achievements.now|Now: {value}|当前：{value}
+achievements.notUnlocked|None|未解锁
 achievements.setupRequired|Achievement data is not available yet. Run the Flight Achievements migration, then refresh this page.|成就数据暂不可用。请先执行 Flight Achievements Migration，然后刷新页面。
 common.close|Close|关闭
 dashboard.viewAllAchievements|View All Achievements|查看全部成就
