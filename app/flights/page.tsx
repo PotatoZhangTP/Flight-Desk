@@ -377,12 +377,23 @@ export default async function AllFlightsPage({
   const aircraftDisplayMap = await loadAircraftDisplayMap(supabase, result.data.map((flight) => flight.aircraft_type));
   const normalizeAircraftSearch = (value: string | null | undefined) =>
     (value || "").toLocaleLowerCase().replace(/[^a-z0-9]+/g, "");
-  const aircraftSearch = normalizeAircraftSearch(p.aircraft);
+  const aircraftSearchVariants = (value: string | null | undefined) => {
+    const normalized = normalizeAircraftSearch(value);
+    const variants = new Set([normalized]);
+    // The legacy display formatter may render Boeing 787 as Boeing B787.
+    // Treat both representations as the same catalog search term.
+    if (normalized.startsWith("boeingb")) variants.add(normalized.replace(/^boeingb/, "boeing"));
+    if (normalized.startsWith("boeing")) variants.add(normalized.replace(/^boeing/, "b"));
+    return [...variants].filter(Boolean);
+  };
+  const aircraftSearch = aircraftSearchVariants(p.aircraft);
   const aircraftMatches = (flight: FlightRow) => {
-    if (!aircraftSearch) return true;
-    const raw = normalizeAircraftSearch(flight.aircraft_type);
-    const display = normalizeAircraftSearch(formatAircraftDisplayName(flight.aircraft_type, null, aircraftDisplayMap));
-    return raw.includes(aircraftSearch) || display.includes(aircraftSearch);
+    if (!aircraftSearch.length) return true;
+    const candidates = [
+      ...aircraftSearchVariants(flight.aircraft_type),
+      ...aircraftSearchVariants(formatAircraftDisplayName(flight.aircraft_type, null, aircraftDisplayMap)),
+    ];
+    return aircraftSearch.some(term => candidates.some(candidate => candidate.includes(term)));
   };
   const categoryFiltered = categoryError ? [] : filterFlightCategory(result.data, category, memorialFlightIds);
   const toAirportMatches = (rows: Airport[]) =>
