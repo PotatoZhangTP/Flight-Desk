@@ -8,6 +8,7 @@ type AircraftOption = { code: string; name: string; manufacturer: string | null;
 export function AircraftPicker({ value, onChange }: { value: string; onChange: (value: string) => void }) {
   const t = useText();
   const [options, setOptions] = useState<AircraftOption[]>([]);
+  const [selectedOption, setSelectedOption] = useState<AircraftOption | null>(null);
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
@@ -34,15 +35,17 @@ export function AircraftPicker({ value, onChange }: { value: string; onChange: (
 
   useEffect(() => () => requestRef.current?.abort(), []);
 
+  const displayValue = selectedOption?.code === value ? selectedOption.name : value;
+
   return <div className="relative">
     <label className="block text-sm font-semibold text-muted" htmlFor="aircraft-type-picker">{t("Aircraft type (optional)")}</label>
     <input
       ref={inputRef}
       id="aircraft-type-picker"
-      value={value}
-      onChange={event => { onChange(event.target.value); setOpen(true); }}
+      value={displayValue}
+      onChange={event => { setSelectedOption(null); onChange(event.target.value); setOpen(true); }}
       onFocus={() => setOpen(true)}
-      onKeyDown={event => { if (event.key === "Escape") setOpen(false); if (event.key === "ArrowDown" && options[0]) { event.preventDefault(); onChange(options[0].code); setOpen(false); } }}
+      onKeyDown={event => { if (event.key === "Escape") setOpen(false); if (event.key === "ArrowDown" && options[0]) { event.preventDefault(); setSelectedOption(options[0]); onChange(options[0].code); setOpen(false); } }}
       autoComplete="off"
       placeholder={t("e.g. Boeing 737-800")}
       className="mt-1.5 w-full rounded-xl border border-line-strong bg-surface px-3 py-3 text-sm font-normal text-ink outline-none focus:border-brand focus:ring-2 focus:ring-brand/15"
@@ -52,7 +55,7 @@ export function AircraftPicker({ value, onChange }: { value: string; onChange: (
     {open && value.trim() && <div id="aircraft-type-results" role="listbox" className="absolute z-20 mt-2 max-h-64 w-full overflow-auto rounded-xl border border-line bg-elevated p-1 shadow-xl">
       {loading && <p className="px-3 py-2 text-xs text-muted">{t("Loading…")}</p>}
       {!loading && error && <p className="px-3 py-2 text-xs text-muted">{t("Catalog unavailable. You can still enter a manual aircraft type.")}</p>}
-      {!loading && !error && options.map(option => <button key={option.code} type="button" role="option" className="flex w-full min-w-0 items-start gap-3 rounded-lg px-3 py-2 text-left hover:bg-brand-soft focus:bg-brand-soft focus:outline-none" onMouseDown={event => event.preventDefault()} onClick={() => { onChange(option.code); setOpen(false); inputRef.current?.focus(); }}>
+      {!loading && !error && options.map(option => <button key={option.code} type="button" role="option" className="flex w-full min-w-0 items-start gap-3 rounded-lg px-3 py-2 text-left hover:bg-brand-soft focus:bg-brand-soft focus:outline-none" onMouseDown={event => event.preventDefault()} onClick={() => { setSelectedOption(option); onChange(option.code); setOpen(false); inputRef.current?.focus(); }}>
         <span className="mt-0.5 shrink-0 rounded-md bg-brand-soft px-2 py-1 text-xs font-bold text-brand">{option.code}</span>
         <span className="min-w-0"><strong className="block truncate text-sm text-ink">{option.name}</strong><span className="block text-xs text-muted">{option.manufacturer ? option.manufacturer[0].toUpperCase() + option.manufacturer.slice(1) : t("Unclassified")}{option.family ? ` · ${option.family}` : ""}</span></span>
       </button>)}
