@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { T, useLanguage, useText } from "@/components/i18n";
 import { AchievementBadge } from "@/components/achievement-badge";
@@ -14,7 +15,7 @@ export function AchievementCabin({ cabin }: { cabin: AchievementCabin }) {
   const [displayLevels, setDisplayLevels] = useState<Record<string, string>>(() => Object.fromEntries(cabin.items.filter(item => item.displayLevelKey).map(item => [item.id, item.displayLevelKey as string])));
   const [category, setCategory] = useState("all"); const [flippedId, setFlippedId] = useState<string | null>(null); const [featuredIds, setFeaturedIds] = useState<string[]>(() => cabin.featured.map(item => item.id)); const [featuredOpen, setFeaturedOpen] = useState(true); const [selectedFeaturedId, setSelectedFeaturedId] = useState<string | null>(null); const [featuredError, setFeaturedError] = useState<string | null>(null); const [featuredNotice, setFeaturedNotice] = useState<{ text: string; fading: boolean } | null>(null); const [featuredSaving, setFeaturedSaving] = useState(false); const [previewItem, setPreviewItem] = useState<AchievementItem | null>(null); const [guidance, setGuidance] = useState<{ item: AchievementItem; level: AchievementLevel } | null>(null);
   const previewTriggerRef = useRef<HTMLButtonElement | null>(null); const previewDialogRef = useRef<HTMLDivElement | null>(null); const featuredNoticeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const { locale } = useLanguage(); const t = useText(); const zh = locale === "zh-CN";
+  const { locale } = useLanguage(); const t = useText(); const zh = locale === "zh-CN"; const router = useRouter();
   const visible = useMemo(() => cabin.items.filter(item => category === "all" || item.category_id === category).map(item => displayLevels[item.id] ? { ...item, displayLevelKey: displayLevels[item.id] as AchievementLevel["level_key"] } : item), [cabin.items, category, displayLevels]);
   const categories = useMemo(() => achievementCategoryCatalog.map(config => cabin.categories.find(categoryItem => categoryItem.slug === config.slug) ?? { ...config, id: `placeholder-${config.slug}`, display_order: achievementCategoryCatalog.findIndex(item => item.slug === config.slug) + 1, icon_key: "achievement" }), [cabin.categories]);
   const selectedCategory = useMemo(() => category === "all" ? null : categories.find(item => item.id === category), [categories, category]);
@@ -75,6 +76,12 @@ export function AchievementCabin({ cabin }: { cabin: AchievementCabin }) {
   }, [guidance]);
   useEffect(() => () => { if (featuredNoticeTimerRef.current) clearTimeout(featuredNoticeTimerRef.current); }, []);
   useEffect(() => {
+    const refreshAchievements = () => { if (document.visibilityState === "visible") router.refresh(); };
+    window.addEventListener("focus", refreshAchievements);
+    window.addEventListener("flightdesk-flights-updated", refreshAchievements);
+    return () => { window.removeEventListener("focus", refreshAchievements); window.removeEventListener("flightdesk-flights-updated", refreshAchievements); };
+  }, [router]);
+  useEffect(() => {
     if (!previewItem) return;
     const previousOverflow = document.body.style.overflow;
     const onKeyDown = (event: KeyboardEvent) => { if (event.key === "Escape") closePreview(); };
@@ -132,6 +139,7 @@ function AchievementCard({ item, zh, flipped, featured, featuredFull, onFlip, on
           {displayLevel && <p className="achievement-tier">{achievementLevelLabel(displayLevel.level_key, zh)}{item.badge_type === "progressive" && <button type="button" className="achievement-guidance-button" aria-label={`Unlock guidance for ${displayLevel.level_key === "platinum" ? "Purple" : displayLevel.level_key}`} onClick={event => { event.stopPropagation(); onShowGuidance(displayLevel); }}>!</button>}</p>}
         </div>
         {item.badge_type === "progressive" ? <div className="achievement-display-level"><p className="achievement-display-level-title">Choose Display Level</p><div className="achievement-display-level-grid">{item.levels.map(levelOption => { const unlocked = Boolean(item.progress.level && levelOption.level_order <= item.progress.level.level_order); const selected = (item.displayLevelKey ?? item.progress.level?.level_key) === levelOption.level_key; return <button key={levelOption.id} type="button" disabled={!unlocked} className={`achievement-display-level-option tier-${levelOption.level_key} ${selected ? "is-selected" : ""} ${unlocked ? "" : "is-locked"}`} onClick={event => { event.stopPropagation(); onChooseDisplayLevel(levelOption.level_key); }}>{levelOption.level_key === "platinum" ? "Purple" : levelOption.level_key[0].toUpperCase() + levelOption.level_key.slice(1)}</button>; })}</div></div> : <div className="achievement-progress"><p>{progressCopy}</p></div>}
+        <p className="achievement-now"><T id="achievements.now" values={{ value: formatAchievementNow(item.progress.value, item.progress.unit, zh) }} /></p>
         <button type="button" className={`${featured ? "button-danger" : "button-primary"} achievement-feature-button`} disabled={!featured && featuredFull} onClick={event => { event.stopPropagation(); if (featured) onRemoveFromFeatured(); else onAddToFeatured(); }}>
           <T source={featured ? "Remove from Featured" : "Add to Featured"} />
         </button>
@@ -180,4 +188,19 @@ function formatAchievementValue(value: number, unit: string | null | undefined) 
   if (!Number.isFinite(value)) return "0";
   if (unit === "hours") return Number.isInteger(value) ? String(value) : value.toFixed(1).replace(/\.0$/, "");
   return String(Math.round(value));
+}
+
+function formatAchievementNow(value: number | null, unit: string | null, zh: boolean) {
+  if (value === null || !Number.isFinite(value)) return "—";
+  if (unit === "hours") {
+    const minutes = Math.max(0, Math.round(value * 60));
+    return zh ? `${Math.floor(minutes / 60)} 小时 ${minutes % 60} 分钟` : `${Math.floor(minutes / 60)}h ${minutes % 60}m`;
+  }
+  const number = Math.max(0, Math.round(value)).toLocaleString(zh ? "zh-CN" : "en-US");
+  const units: Record<string, [string, string]> = {
+    flights: ["flights", "个航班"], km: ["km", "公里"], airports: ["airports", "个机场"], countries: ["countries", "个国家或地区"],
+    continents: ["continents", "个大洲"], cities: ["cities", "个城市"], routes: ["routes", "条航线"], "aircraft types": ["aircraft types", "种机型"],
+    challenges: ["challenges", "次挑战"], "memorial flights": ["memorial flights", "次纪念飞行"],
+  };
+  return zh ? `${number} ${units[unit ?? ""]?.[1] ?? unit ?? ""}` : `${number} ${units[unit ?? ""]?.[0] ?? unit ?? ""}`;
 }
