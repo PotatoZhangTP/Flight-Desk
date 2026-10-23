@@ -9,6 +9,7 @@ import { normalizeFlightInput } from "@/lib/flight-input";
 import { createFlight, updateFlight } from "@/app/flights/actions";
 import { CountryFlag } from "@/components/country-flag";
 import { AirportPicker } from "@/components/airport-picker";
+import { AircraftPicker } from "@/components/aircraft-picker";
 import { AsyncButton } from "./async-button";
 import { useTransition } from "react";
 import { unstable_rethrow } from "next/navigation";
@@ -121,7 +122,7 @@ export function FlightForm({ initialData = {}, formId }: { initialData?: FlightI
           <label className="block text-sm font-semibold text-muted"><T id="flight.status" /><select aria-label={t("Flight status")} value={status} onChange={e => setStatus(e.target.value)} className={inputClass}><option value="planned"><T id="flight.planned" /></option><option value="completed"><T id="flight.completed" /></option></select></label>
           <Field label="Airline" value={airline} onChange={setAirline} placeholder={t("e.g. Air China")} />
           <Field label="Flight number" value={flightNumber} onChange={setFlightNumber} placeholder="e.g. CA1234" />
-          <Field label="Aircraft type (optional)" value={aircraftType} onChange={setAircraftType} placeholder={t("e.g. Boeing 737-800")} />
+          <AircraftPicker value={aircraftType} onChange={setAircraftType} />
           <Field label="Registration (optional)" value={registration} onChange={setRegistration} placeholder="e.g. B-2087" />
         </div>
         <div className="mt-6 grid gap-5 sm:grid-cols-2">
