@@ -64,8 +64,10 @@ BEGIN
   ) ON COMMIT DROP;
 
   WITH inserted AS (
-    INSERT INTO public.user_achievements (user_id, achievement_definition_id, achievement_level_id, achieved_at, unlocked_at)
-    SELECT p_user_id, e.achievement_definition_id, e.achievement_level_id, now(), now()
+    -- Use only columns shared by the deployed and current achievement schemas.
+    -- Timestamp columns, when present, retain their database defaults.
+    INSERT INTO public.user_achievements (user_id, achievement_definition_id, achievement_level_id)
+    SELECT p_user_id, e.achievement_definition_id, e.achievement_level_id
     FROM _achievement_eligible e
     ON CONFLICT DO NOTHING
     RETURNING achievement_definition_id, achievement_level_id
