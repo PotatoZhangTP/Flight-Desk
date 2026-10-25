@@ -3,7 +3,9 @@
 import Link from "@/components/navigation-link";
 import { LocalizedDate, T, useLanguage } from "@/components/i18n";
 import { MemorialFlightActions } from "@/components/memorial-flight-actions";
+import { PageLoadingScreen } from "@/components/page-loading-screen";
 import { useRouter } from "next/navigation";
+import { useTransition } from "react";
 
 export type MemorialFlightDetailEvent = {
   id: string;
@@ -36,6 +38,7 @@ export function MemorialFlightDetail({
   currentEventKey?: string;
 }) {
   const router = useRouter();
+  const [isPending, startTransition] = useTransition();
   const { locale } = useLanguage();
   const currentIndex = Math.max(0, events.findIndex(item => (item.event_key || item.id) === currentEventKey));
   const currentEvent = events[currentIndex] || event;
@@ -52,9 +55,12 @@ export function MemorialFlightDetail({
     `${currentEvent.event_year}-${String(currentEvent.event_month).padStart(2, "0")}-${String(currentEvent.event_day).padStart(2, "0")}`;
 
   const goTo = (index: number) => {
+    if (isPending) return;
     const next = events[index];
     if (!next) return;
-    router.push(`/memorial-flights/${encodeURIComponent(next.event_key || next.id)}`);
+    startTransition(() => {
+      router.push(`/memorial-flights/${encodeURIComponent(next.event_key || next.id)}`);
+    });
   };
 
 
@@ -66,7 +72,9 @@ export function MemorialFlightDetail({
           <T source="Back To Challenges" />
         </span>
       </Link>
-      <section key={currentEvent.id} className="mt-12 rounded-2xl border border-[#d5b36a]/50 bg-[#2b263d] p-6 text-white transition-opacity duration-200 sm:p-8">
+      <div className="relative mt-12" aria-busy={isPending}>
+      {isPending && <PageLoadingScreen context="page" className="!absolute !inset-0 !z-20 !min-h-0 !rounded-2xl" />}
+      <section key={currentEvent.id} className="rounded-2xl border border-[#d5b36a]/50 bg-[#2b263d] p-6 text-white transition-opacity duration-200 sm:p-8">
         <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#d5b36a]">
           <T source="Memorial Flight" />
         </p>
@@ -95,12 +103,12 @@ export function MemorialFlightDetail({
         </div>
       </section>
       {events.length > 1 && <nav className="mt-7 flex flex-wrap items-center justify-center gap-3" aria-label="Memorial flights pagination">
-        <button type="button" disabled={currentIndex === 0} onClick={() => goTo(currentIndex - 1)} className="grid h-9 w-9 place-items-center rounded-full border border-brand text-brand transition hover:bg-brand-soft disabled:cursor-not-allowed disabled:opacity-35" aria-label="Previous Memorial Flight">←</button>
+        <button type="button" disabled={isPending || currentIndex === 0} onClick={() => goTo(currentIndex - 1)} className="grid h-9 w-9 place-items-center rounded-full border border-brand text-brand transition hover:bg-brand-soft disabled:cursor-not-allowed disabled:opacity-35" aria-label="Previous Memorial Flight">←</button>
         <div className="flex items-center gap-1.5" aria-label={`${currentIndex + 1} / ${events.length}`}>
-          {events.map((item, index) => <button key={item.id} type="button" onClick={() => goTo(index)} aria-label={`Memorial Flight ${index + 1}`} aria-current={index === currentIndex ? "page" : undefined} className={`h-2.5 w-2.5 rounded-full transition ${index === currentIndex ? "bg-brand" : "bg-brand/25 hover:bg-brand/50"}`} />)}
+          {events.map((item, index) => <button key={item.id} type="button" disabled={isPending} onClick={() => goTo(index)} aria-label={`Memorial Flight ${index + 1}`} aria-current={index === currentIndex ? "page" : undefined} className={`h-2.5 w-2.5 rounded-full transition disabled:cursor-not-allowed ${index === currentIndex ? "bg-brand" : "bg-brand/25 hover:bg-brand/50"}`} />)}
         </div>
         <span className="min-w-12 text-center text-sm font-bold text-muted">{currentIndex + 1} / {events.length}</span>
-        <button type="button" disabled={currentIndex === events.length - 1} onClick={() => goTo(currentIndex + 1)} className="grid h-9 w-9 place-items-center rounded-full border border-brand text-brand transition hover:bg-brand-soft disabled:cursor-not-allowed disabled:opacity-35" aria-label="Next Memorial Flight">→</button>
+        <button type="button" disabled={isPending || currentIndex === events.length - 1} onClick={() => goTo(currentIndex + 1)} className="grid h-9 w-9 place-items-center rounded-full border border-brand text-brand transition hover:bg-brand-soft disabled:cursor-not-allowed disabled:opacity-35" aria-label="Next Memorial Flight">→</button>
       </nav>}
       <section key={`${currentEvent.id}-story`} className="mt-8 rounded-2xl border border-line bg-surface p-6 sm:p-8">
         <h2 className="text-2xl font-bold text-ink">
@@ -110,7 +118,8 @@ export function MemorialFlightDetail({
           {story}
         </div>
       </section>
-      <section key={`${currentEvent.id}-actions`} className="mt-8 rounded-2xl border border-line bg-surface p-5"><MemorialFlightActions event={currentEvent} /></section>
+      <section key={`${currentEvent.id}-actions`} className="mt-8 rounded-2xl border border-line bg-surface p-5"><MemorialFlightActions event={currentEvent} disabled={isPending} /></section>
+      </div>
     </main>
   );
 }

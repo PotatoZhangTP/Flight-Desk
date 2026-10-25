@@ -41,6 +41,10 @@ const isPublished = (event: ApiMemorial, today: string) => {
     ? monthDay >= startDay && monthDay <= endDay
     : monthDay >= startDay || monthDay <= endDay;
 };
+const sortMemorials = (events: ApiMemorial[]) =>
+  [...events].sort((left, right) =>
+    String(left.event_key || left.id).localeCompare(String(right.event_key || right.id)),
+  );
 function ChallengeRow({
   challenge,
   distanceUnit,
@@ -139,7 +143,7 @@ export function DailyChallengeCarousel() {
     return () => { disposed = true; clearTimeout(timer); document.removeEventListener("visibilitychange", refreshWhenVisible); window.removeEventListener("focus", refreshWhenVisible); };
   }, []);
   const memorials = useMemo(
-    () => data.memorials.filter((event) => isPublished(event, today)),
+    () => sortMemorials(data.memorials.filter((event) => isPublished(event, today))),
     [data, today],
   );
   return (

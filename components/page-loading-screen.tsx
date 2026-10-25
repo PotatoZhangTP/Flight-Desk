@@ -3,10 +3,10 @@ import { getLoadingMessages, type LoadingContext } from "@/lib/ui-messages";
 import { useLanguage, T } from "./i18n";
 
 /** Shared by route fallbacks and real pending navigation. No minimum delay. */
-export function PageLoadingScreen({ context = "page", locale }: { context?: LoadingContext; locale?: string }) {
+export function PageLoadingScreen({ context = "page", locale, className = "" }: { context?: LoadingContext; locale?: string; className?: string }) {
   const language = useLanguage();
   const copy = getLoadingMessages(locale ?? language.locale);
-  return <div data-page-loading lang={copy.lang} className="page-loading-screen" role="status" aria-live="polite" aria-atomic="true">
+  return <div data-page-loading lang={copy.lang} className={`page-loading-screen ${className}`} role="status" aria-live="polite" aria-atomic="true">
     <div className="flex flex-col items-center px-6 text-center">
       <svg aria-hidden="true" viewBox="0 0 240 160" fill="none" className="h-40 w-60 max-w-[75vw] text-brand sm:h-48 sm:w-72">
         <path d="M25 139c45-2 73-24 100-54s55-52 89-57" stroke="currentColor" strokeWidth="1.5" opacity=".16" />
