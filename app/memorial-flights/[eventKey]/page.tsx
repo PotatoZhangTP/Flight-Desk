@@ -34,6 +34,14 @@ function isPublished(event: Record<string, unknown>, today: Date) {
     : today >= startThisYear || today <= endThisYear;
 }
 
+function occurrenceDate(event: Record<string, unknown>, today: Date) {
+  const month = String(event.event_month).padStart(2, "0");
+  const day = String(event.event_day).padStart(2, "0");
+  return event.recurring
+    ? `${today.getUTCFullYear()}-${month}-${day}`
+    : String(event.event_date || `${event.event_year}-${month}-${day}`);
+}
+
 export default async function MemorialFlightPage({
   params,
 }: {
@@ -51,19 +59,24 @@ export default async function MemorialFlightPage({
     .eq("event_key", eventKey)
     .eq("enabled", true)
     .maybeSingle();
-  if (
-    !event ||
-    !isPublished(
-      event,
-      new Date(`${new Date().toISOString().slice(0, 10)}T00:00:00Z`),
-    )
-  )
+  const today = new Date(`${new Date().toISOString().slice(0, 10)}T00:00:00Z`);
+  if (!event || !isPublished(event, today))
     notFound();
+  const { data: publishedEvents } = await supabase
+    .from("memorial_events")
+    .select("*")
+    .eq("enabled", true);
+  const currentOccurrence = occurrenceDate(event, today);
+  const events = (publishedEvents ?? [])
+    .filter(candidate => isPublished(candidate, today) && occurrenceDate(candidate, today) === currentOccurrence)
+    .sort((left, right) => String(left.event_key || left.id).localeCompare(String(right.event_key || right.id)));
   return (
     <div className="min-h-screen bg-page">
       <SiteHeader />
       <MemorialFlightDetail
         event={event as MemorialFlightDetailEvent}
+        events={events as MemorialFlightDetailEvent[]}
+        currentEventKey={eventKey}
       />
     </div>
   );
