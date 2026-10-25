@@ -262,7 +262,7 @@ function MemorialForm({
           }}
         />
         <label className="text-sm font-semibold text-muted">
-          Historical Event Date
+          Event Date
           <input
             name="event_date"
             type="date"

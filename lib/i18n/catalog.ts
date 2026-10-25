@@ -36,7 +36,7 @@ memorial.messageEn|English Memorial Message|英文纪念文案
 memorial.messageZh|Chinese Memorial Message|中文纪念文案
 memorial.messageHelp|Optional short card message. Leave blank to use the existing description.|可选的卡片简短文案，留空时使用已有说明文字。
 memorial.storyBackground|Story Background|故事背景
-memorial.historicalEventDate|Historical Event Date|历史事件日期
+memorial.eventDate|Event Date|事件日期
 memorial.suggestedAircraft|Suggested Aircraft|推荐机型
 memorial.markComplete|Mark as Complete|标记为已完成
 memorial.completed|Completed|已完成

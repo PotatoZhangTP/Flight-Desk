@@ -87,7 +87,7 @@ export function MemorialFlightDetail({
         </p>
         <div className="mt-5 flex flex-wrap gap-x-6 gap-y-2 text-sm text-white/75">
           <span>
-            <T id="memorial.historicalEventDate" />:{" "}
+            <T id="memorial.eventDate" />:{" "}
             <LocalizedDate value={date} />
           </span>
           {currentEvent.suggested_aircraft && (
