@@ -5,6 +5,7 @@ import Link from "@/components/navigation-link";
 import { MemorialArtwork } from "@/components/memorial-artwork";
 import { T, useLanguage, useText } from "@/components/i18n";
 import { formatDistance } from "@/lib/preferences";
+import { sortMemorialFlights } from "@/lib/memorial-flight-order";
 import {
   challengeCategoryLabel,
   sortChallengesByDuration,
@@ -41,10 +42,6 @@ const isPublished = (event: ApiMemorial, today: string) => {
     ? monthDay >= startDay && monthDay <= endDay
     : monthDay >= startDay || monthDay <= endDay;
 };
-const sortMemorials = (events: ApiMemorial[]) =>
-  [...events].sort((left, right) =>
-    String(left.event_key || left.id).localeCompare(String(right.event_key || right.id)),
-  );
 function ChallengeRow({
   challenge,
   distanceUnit,
@@ -143,7 +140,7 @@ export function DailyChallengeCarousel() {
     return () => { disposed = true; clearTimeout(timer); document.removeEventListener("visibilitychange", refreshWhenVisible); window.removeEventListener("focus", refreshWhenVisible); };
   }, []);
   const memorials = useMemo(
-    () => sortMemorials(data.memorials.filter((event) => isPublished(event, today))),
+    () => sortMemorialFlights(data.memorials.filter((event) => isPublished(event, today))),
     [data, today],
   );
   return (

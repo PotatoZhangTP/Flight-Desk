@@ -5,6 +5,7 @@ import {
   type MemorialFlightDetailEvent,
 } from "@/components/memorial-flight-detail";
 import { requestAuth } from "@/lib/auth/server";
+import { sortMemorialFlights } from "@/lib/memorial-flight-order";
 
 export const dynamic = "force-dynamic";
 
@@ -67,9 +68,9 @@ export default async function MemorialFlightPage({
     .select("*")
     .eq("enabled", true);
   const currentOccurrence = occurrenceDate(event, today);
-  const events = (publishedEvents ?? [])
+  const events = sortMemorialFlights((publishedEvents ?? [])
     .filter(candidate => isPublished(candidate, today) && occurrenceDate(candidate, today) === currentOccurrence)
-    .sort((left, right) => String(left.event_key || left.id).localeCompare(String(right.event_key || right.id)));
+  );
   return (
     <div className="min-h-screen bg-page">
       <SiteHeader />
