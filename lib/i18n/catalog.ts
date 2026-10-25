@@ -37,6 +37,23 @@ memorial.messageZh|Chinese Memorial Message|中文纪念文案
 memorial.messageHelp|Optional short card message. Leave blank to use the existing description.|可选的卡片简短文案，留空时使用已有说明文字。
 memorial.storyBackground|Story Background|故事背景
 memorial.eventDate|Event Date|事件日期
+memorial.filterByMonth|Filter by Month|按月份筛选
+memorial.allMonths|All Months|全部月份
+memorial.january|January|一月
+memorial.february|February|二月
+memorial.march|March|三月
+memorial.april|April|四月
+memorial.may|May|五月
+memorial.june|June|六月
+memorial.july|July|七月
+memorial.august|August|八月
+memorial.september|September|九月
+memorial.october|October|十月
+memorial.november|November|十一月
+memorial.december|December|十二月
+memorial.jumpToToday|Jump to Today|跳转到今天
+memorial.noMonthResults|No memorial flights found for this month.|本月没有找到纪念航班。
+memorial.noEvents|No memorial flights found.|没有找到纪念航班。
 memorial.suggestedAircraft|Suggested Aircraft|推荐机型
 memorial.markComplete|Mark as Complete|标记为已完成
 memorial.completed|Completed|已完成

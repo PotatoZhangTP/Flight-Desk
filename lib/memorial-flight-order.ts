@@ -24,3 +24,16 @@ export function sortMemorialFlights<T extends MemorialFlightOrderFields>(events:
     return String(left.event_key || left.id).localeCompare(String(right.event_key || right.id));
   });
 }
+
+/** Admin order: calendar month/day ascending, then newer historical year first. */
+export function sortMemorialFlightsForAdmin<T extends MemorialFlightOrderFields>(events: T[]) {
+  return [...events].sort((left, right) => {
+    const leftDate = memorialEventDateKey(left);
+    const rightDate = memorialEventDateKey(right);
+    const monthDayOrder = (leftDate.slice(5) || "99-99").localeCompare(rightDate.slice(5) || "99-99");
+    if (monthDayOrder !== 0) return monthDayOrder;
+    const yearOrder = rightDate.localeCompare(leftDate);
+    if (yearOrder !== 0) return yearOrder;
+    return String(left.event_key || left.id).localeCompare(String(right.event_key || right.id));
+  });
+}

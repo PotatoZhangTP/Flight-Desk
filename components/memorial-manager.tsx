@@ -1,9 +1,11 @@
 "use client";
-import { useState, type FormEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
+import { useRouter } from "next/navigation";
 import { AirportPicker } from "@/components/airport-picker";
 import type { Airport } from "@/lib/airports";
 import { T } from "@/components/i18n";
 import { defaultDisplayTone, normalizeDisplayTone, normalizeMemorialType, type MemorialPresentation } from "@/lib/memorial-presentation";
+import { memorialEventDateKey, sortMemorialFlightsForAdmin } from "@/lib/memorial-flight-order";
 import {
   saveMemorial,
   deleteMemorial,
@@ -342,11 +344,42 @@ function MemorialForm({
 }
 
 export function MemorialManager({ events }: { events: Event[] }) {
+  const router = useRouter();
   const [addOpen, setAddOpen] = useState(false);
   const [editingEventId, setEditingEventId] = useState<string | null>(null);
   const [editingDirty, setEditingDirty] = useState(false);
   const [message, setMessage] = useState("");
+  const [monthFilter, setMonthFilter] = useState("all");
+  const [highlightedId, setHighlightedId] = useState<string | null>(null);
+  const cardRefs = useRef<Record<string, HTMLElement | null>>({});
+  const highlightTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const sortedEvents = useMemo(() => sortMemorialFlightsForAdmin(events), [events]);
+  const visibleEvents = useMemo(
+    () => monthFilter === "all"
+      ? sortedEvents
+      : sortedEvents.filter(event => memorialEventDateKey(event).slice(5, 7) === monthFilter),
+    [monthFilter, sortedEvents],
+  );
   const editingEvent = events.find((event) => event.id === editingEventId);
+  useEffect(() => () => {
+    if (highlightTimer.current) clearTimeout(highlightTimer.current);
+  }, []);
+  const jumpToToday = () => {
+    if (!sortedEvents.length) {
+      setMonthFilter("all");
+      return;
+    }
+    const today = new Date();
+    const todayMonthDay = `${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+    const target = sortedEvents.find(event => memorialEventDateKey(event).slice(5) === todayMonthDay)
+      || sortedEvents.find(event => memorialEventDateKey(event).slice(5) > todayMonthDay)
+      || sortedEvents[0];
+    setMonthFilter("all");
+    setHighlightedId(target.id);
+    if (highlightTimer.current) clearTimeout(highlightTimer.current);
+    highlightTimer.current = setTimeout(() => setHighlightedId(null), 2000);
+    window.setTimeout(() => cardRefs.current[target.id]?.scrollIntoView({ behavior: "smooth", block: "start" }), 40);
+  };
   const openEdit = (event: Event) => {
     if (
       editingEventId &&
@@ -385,20 +418,40 @@ export function MemorialManager({ events }: { events: Event[] }) {
           {message}
         </p>
       )}
+      <div className="flex flex-wrap items-end gap-3">
+        <label className="min-w-48 text-sm font-semibold text-muted">
+          <T id="memorial.filterByMonth" />
+          <select value={monthFilter} onChange={event => setMonthFilter(event.target.value)} className={input}>
+            <option value="all"><T id="memorial.allMonths" /></option>
+            {[
+              ["01", "memorial.january"], ["02", "memorial.february"], ["03", "memorial.march"],
+              ["04", "memorial.april"], ["05", "memorial.may"], ["06", "memorial.june"],
+              ["07", "memorial.july"], ["08", "memorial.august"], ["09", "memorial.september"],
+              ["10", "memorial.october"], ["11", "memorial.november"], ["12", "memorial.december"],
+            ].map(([value, id]) => <option key={value} value={value}><T id={id} /></option>)}
+          </select>
+        </label>
+        <button type="button" className="button-secondary inline-flex items-center gap-2" onClick={jumpToToday}>
+          <span aria-hidden="true">▣</span>
+          <T id="memorial.jumpToToday" />
+        </button>
+      </div>
       {addOpen && (
         <MemorialForm
           key="new"
           mode="add"
           onCancel={() => setAddOpen(false)}
-          onSaved={() => setAddOpen(false)}
+          onSaved={() => { setAddOpen(false); router.refresh(); }}
           onMessage={setMessage}
           onDirty={() => {}}
         />
       )}
-      {events.map((event) => (
+      {!visibleEvents.length && <p className="rounded-2xl border border-dashed border-line p-5 text-sm text-muted"><T id={events.length ? "memorial.noMonthResults" : "memorial.noEvents"} /></p>}
+      {visibleEvents.map((event) => (
         <article
           key={event.id}
-          className="rounded-2xl border border-line bg-surface p-5"
+          ref={node => { cardRefs.current[event.id] = node; }}
+          className={`scroll-mt-24 rounded-2xl border bg-surface p-5 transition ${highlightedId === event.id ? "border-brand shadow-[0_0_0_3px_color-mix(in_srgb,var(--brand)_18%,transparent)]" : "border-line"}`}
         >
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
@@ -436,6 +489,7 @@ export function MemorialManager({ events }: { events: Event[] }) {
                 if (window.confirm("Delete this memorial event?")) {
                   const result = await deleteMemorial(event.id);
                   setMessage(result.success || result.error || "");
+                  if (result.success) router.refresh();
                 }
               }}
             >
@@ -454,6 +508,7 @@ export function MemorialManager({ events }: { events: Event[] }) {
               onSaved={() => {
                 setEditingEventId(null);
                 setEditingDirty(false);
+                router.refresh();
               }}
               onMessage={setMessage}
               onDirty={setEditingDirty}
