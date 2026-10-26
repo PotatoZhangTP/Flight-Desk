@@ -50,7 +50,7 @@ export async function PATCH(request: Request) {
     if (error) return NextResponse.json({ error: "Conversation notifications could not be updated." }, { status: 500 });
     return NextResponse.json({ ok: true });
   }
-  if (typeof body?.conversationId !== "string" || !["open", "closed"].includes(body?.status)) return NextResponse.json({ error: "A valid conversation status is required." }, { status: 400 });
+  if (typeof body?.conversationId !== "string" || body?.status !== "closed") return NextResponse.json({ error: "A valid conversation status is required." }, { status: 400 });
   const { data, error } = await supabase.rpc("set_feedback_conversation_status", { p_conversation_id: body.conversationId, p_status: body.status });
   if (error) return NextResponse.json({ error: "Conversation status could not be updated." }, { status: 500 });
   return NextResponse.json({ conversation: data });

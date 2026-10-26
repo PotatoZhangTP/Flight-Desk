@@ -507,6 +507,7 @@ feedback.sendMessage|Send Message|发送消息
 feedback.sending|Sending…|正在发送…
 feedback.messagePlaceholder|Write a message…|输入消息…
 feedback.closedNotice|This conversation has been closed.|此对话已结束。
+feedback.closedPermanent|This conversation is closed permanently. The history remains available, but new messages are disabled.|此对话已永久结束。历史记录仍可查看，但不能继续发送消息。
 feedback.closeConfirm|Close this conversation?|确认结束这个对话吗？
 feedback.chatLoadError|Chats could not be loaded. Please try again.|对话加载失败，请重试。
 feedback.chatSendError|Message could not be sent. Your text was kept so you can retry.|消息发送失败，输入内容已保留，可以重试。
