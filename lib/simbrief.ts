@@ -49,13 +49,16 @@ function cleanCode(value: string) {
 
 function splitCombinedFlight(value: string) {
   const clean = value.trim().toUpperCase().replace(/[\s-]+/g, "");
-  const match = /^([A-Z0-9]{2,3})(\d{1,5}[A-Z]?)$/.exec(clean);
+  // A valid airline prefix may contain digits, but it must contain at least
+  // one letter. Otherwise a numeric flight number such as 050 would be
+  // incorrectly split into airline 05 and number 0.
+  const match = /^([A-Z][A-Z0-9]{1,2}?)(\d{1,5}[A-Z]?)$/.exec(clean);
   return match ? { prefix: match[1], number: match[2] } : { prefix: "", number: clean.match(/\d{1,5}[A-Z]?$/)?.[0] || "" };
 }
 
 function airlineCodeFrom(value: string) {
   const clean = cleanCode(value);
-  if (/^[A-Z0-9]{2}$/.test(clean)) return clean;
+  if (/^(?=.*[A-Z])[A-Z0-9]{2}$/.test(clean)) return clean;
   return airlineIataByIcao[clean] || "";
 }
 
@@ -63,10 +66,12 @@ function parseAirlineAndNumber(payload: unknown) {
   const rawNumber = textAt(payload, [["general", "flight_number"], ["atc", "flight_number"]]);
   const rawAirlineIata = textAt(payload, [["general", "airline_iata"], ["airline", "iata"], ["airline", "iata_code"], ["atc", "airline_iata"]]);
   const rawAirlineIcao = textAt(payload, [["general", "airline_icao"], ["airline", "icao"], ["airline", "icao_code"], ["atc", "airline_icao"]]);
-  const rawAirlineCode = textAt(payload, [["general", "airline_code"]]);
-  const combined = [rawNumber, textAt(payload, [["general", "airline"], ["atc", "callsign"]])].find(value => /\d/.test(value)) || "";
+  const rawAirlineCode = textAt(payload, [["general", "airline_code"], ["general", "airline"]]);
+  const combined = [rawNumber, textAt(payload, [["general", "airline"], ["atc", "callsign"]]), textAt(payload, [["atc", "flight_number"]])]
+    .find(value => /[A-Z]/i.test(value) && /\d/.test(value)) || "";
   const split = splitCombinedFlight(combined);
-  const number = split.number || rawNumber.replace(/^[A-Za-z0-9]{2,3}(?=\d)/, "");
+  const normalizedNumber = cleanCode(rawNumber);
+  const number = /^\d{1,5}[A-Z]?$/.test(normalizedNumber) ? normalizedNumber : split.number || normalizedNumber.replace(/^[A-Za-z0-9]{2,3}(?=\d)/, "");
   const airline = airlineCodeFrom(rawAirlineIata) || airlineCodeFrom(rawAirlineIcao) || airlineCodeFrom(rawAirlineCode) || airlineCodeFrom(split.prefix);
   return { airline, number };
 }
