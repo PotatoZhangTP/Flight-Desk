@@ -44,13 +44,15 @@ export async function PUT(request: Request) {
   if (displayLevelKeys !== undefined && (!displayLevelKeys || typeof displayLevelKeys !== "object" || Array.isArray(displayLevelKeys))) return NextResponse.json({ error: "Invalid display levels." }, { status: 400 });
 
   if (ids.length) {
-    const { data: definitions, error } = await supabase.from("achievement_definitions").select("id").in("id", ids).eq("is_active", true).eq("is_hidden", false);
+    const { data: definitions, error } = await supabase.from("achievement_definitions").select("id,badge_type").in("id", ids).eq("is_active", true).eq("is_hidden", false);
     if (error || definitions?.length !== ids.length) return NextResponse.json({ error: "One or more achievements are unavailable." }, { status: 400 });
     const { data: unlocked, error: unlockedError } = await supabase.from("user_achievements").select("achievement_definition_id").eq("user_id", user.id).in("achievement_definition_id", ids);
     if (unlockedError || new Set((unlocked ?? []).map(row => row.achievement_definition_id)).size !== ids.length) {
       return NextResponse.json({ error: "Only unlocked achievements can be featured." }, { status: 400 });
     }
+    const definitionById = new Map((definitions ?? []).map(definition => [definition.id, definition]));
     for (const [definitionId, levelKey] of Object.entries(displayLevelKeys ?? {})) {
+      if (definitionById.get(definitionId)?.badge_type === "standalone") continue;
       if (!ids.includes(definitionId) || !["bronze", "silver", "gold", "platinum"].includes(String(levelKey))) return NextResponse.json({ error: "Invalid display level selection." }, { status: 400 });
       const { data: level } = await supabase.from("achievement_levels").select("id").eq("achievement_definition_id", definitionId).eq("level_key", levelKey).maybeSingle();
       if (!level) return NextResponse.json({ error: "Invalid display level selection." }, { status: 400 });

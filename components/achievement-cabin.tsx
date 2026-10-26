@@ -123,9 +123,13 @@ function AchievementCard({ item, zh, flipped, featured, featuredFull, onFlip, on
   const displayValue = formatAchievementValue(value, item.progress.unit);
   const displayTarget = formatAchievementValue(target, item.progress.unit);
   const displayRemaining = formatAchievementValue(remaining, item.progress.unit);
-  const progressCopy = next
-    ? (zh ? `距离下一等级还差 ${displayRemaining} ${unit}` : `${displayRemaining} more ${unit} to the next level`)
-    : (zh ? "已达到最高等级" : "Highest tier reached");
+  const progressCopy = item.badge_type === "standalone"
+    ? item.unlocked
+      ? (zh ? "特殊成就已解锁" : "Special achievement unlocked")
+      : copy.description
+    : next
+      ? (zh ? `距离下一等级还差 ${displayRemaining} ${unit}` : `${displayRemaining} more ${unit} to the next level`)
+      : (zh ? "已达到最高等级" : "Highest tier reached");
 
   return <article className={`achievement-card spotlight-card ${item.unlocked ? "is-unlocked" : "is-locked"} ${flipped ? "is-flipped" : ""}`}>
     <div className="achievement-card-inner">
@@ -140,7 +144,7 @@ function AchievementCard({ item, zh, flipped, featured, featuredFull, onFlip, on
           {guidanceLevel && <p className="achievement-tier"><span>{displayLevel ? achievementLevelLabel(displayLevel.level_key, zh) : <T id="achievements.notUnlocked" />}</span><span className="achievement-now-inline"><T id="achievements.now" values={{ value: formatAchievementNow(item.progress.value, item.progress.unit, zh) }} /></span>{item.badge_type === "progressive" && <button type="button" className="achievement-guidance-button" aria-label={zh ? `查看 ${copy.name} 的解锁说明` : `View unlock guidance for ${copy.name}`} onClick={event => { event.stopPropagation(); onShowGuidance(guidanceLevel); }}>!</button>}</p>}
         </div>
         {item.badge_type === "progressive" ? <div className="achievement-display-level"><p className="achievement-display-level-title">Choose Display Level</p><div className="achievement-display-level-grid">{item.levels.map(levelOption => { const unlocked = Boolean(item.progress.level && levelOption.level_order <= item.progress.level.level_order); const selected = (item.displayLevelKey ?? item.progress.level?.level_key) === levelOption.level_key; return <button key={levelOption.id} type="button" disabled={!unlocked} className={`achievement-display-level-option tier-${levelOption.level_key} ${selected ? "is-selected" : ""} ${unlocked ? "" : "is-locked"}`} onClick={event => { event.stopPropagation(); onChooseDisplayLevel(levelOption.level_key); }}>{levelOption.level_key === "platinum" ? "Purple" : levelOption.level_key[0].toUpperCase() + levelOption.level_key.slice(1)}</button>; })}</div></div> : <div className="achievement-progress"><p>{progressCopy}</p></div>}
-        <button type="button" className={`${featured ? "button-danger" : "button-primary"} achievement-feature-button`} disabled={!featured && featuredFull} onClick={event => { event.stopPropagation(); if (featured) onRemoveFromFeatured(); else onAddToFeatured(); }}>
+        <button type="button" className={`${featured ? "button-danger" : "button-primary"} achievement-feature-button`} disabled={!item.unlocked || (!featured && featuredFull)} onClick={event => { event.stopPropagation(); if (featured) onRemoveFromFeatured(); else onAddToFeatured(); }}>
           <T source={featured ? "Remove from Featured" : "Add to Featured"} />
         </button>
       </div>
