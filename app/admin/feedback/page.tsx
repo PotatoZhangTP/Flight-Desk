@@ -4,6 +4,7 @@ import { SiteHeader } from "@/components/site-header";
 import { AdminDenied } from "@/components/admin-denied";
 import { AdminNavigation } from "@/components/admin-navigation";
 import { FeedbackInbox } from "@/components/feedback-inbox";
+import { FeedbackChat } from "@/components/feedback-chat";
 import { siteAdminAccess } from "@/lib/admin/server";
 
 export const dynamic = "force-dynamic";
@@ -18,5 +19,5 @@ export default async function FeedbackPage() {
   const signed = paths.length ? await supabase.storage.from("feedback-attachments").createSignedUrls(paths, 600) : { data: [] };
   const urlByPath = new Map((signed.data ?? []).filter(item => item.path && item.signedUrl).map(item => [item.path as string, item.signedUrl as string]));
   const initial = rows.map(row => ({ ...row, attachment_urls: row.attachments.map(file => ({ name: file.name, url: urlByPath.get(file.path) ?? "" })).filter(file => file.url) }));
-  return <><SiteHeader /><main className="mx-auto max-w-7xl px-6 py-12 lg:px-12"><AdminNavigation current="feedback" /><div><p className="eyebrow"><T id="admin.workspace" /></p><h1 className="mt-3 text-4xl font-bold tracking-tight"><T id="feedback.inbox" /></h1><p className="mt-4 max-w-2xl leading-7 text-muted"><T id="feedback.inboxHelp" /></p></div>{readError ? <p role="alert" className="mt-8 rounded-2xl bg-danger-bg p-5 text-danger-fg"><T id="feedback.loadError" /></p> : <FeedbackInbox initial={initial} />}</main></>;
+  return <><SiteHeader /><main className="mx-auto max-w-7xl px-6 py-12 lg:px-12"><AdminNavigation current="feedback" /><div><p className="eyebrow"><T id="admin.workspace" /></p><h1 className="mt-3 text-4xl font-bold tracking-tight"><T id="feedback.inbox" /></h1><p className="mt-4 max-w-2xl leading-7 text-muted"><T id="feedback.inboxHelp" /></p></div>{readError ? <p role="alert" className="mt-8 rounded-2xl bg-danger-bg p-5 text-danger-fg"><T id="feedback.loadError" /></p> : <><FeedbackInbox initial={initial} /><FeedbackChat adminOnly /></>}</main></>;
 }

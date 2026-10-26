@@ -488,6 +488,32 @@ feedback.archiveConfirm|Archive this feedback?|确认归档这条反馈吗？
 feedback.updating|Updating…|正在更新…
 feedback.updated|Feedback updated.|反馈已更新。
 feedback.updateError|The feedback could not be updated.|反馈更新失败。
+feedback.notifications|Notifications|通知
+feedback.messages|Messages|消息
+feedback.openChat|Open Chat|打开对话
+feedback.openAchievement|Open Achievement|打开成就
+feedback.markAllRead|Mark All As Read|全部标记为已读
+feedback.read|Read|已读
+feedback.noNotifications|No notifications yet.|暂无通知。
+feedback.noChats|No feedback chats yet.|暂无反馈对话。
+feedback.selectChat|Select A Chat To View The Conversation.|选择一个对话查看聊天记录。
+feedback.conversationHistory|Conversation History|聊天记录
+feedback.adminChats|Feedback Chats|反馈对话
+feedback.status.open|Open|进行中
+feedback.status.closed|Closed|已结束
+feedback.closeChat|Close Chat|结束对话
+feedback.reopenChat|Reopen Chat|重新打开对话
+feedback.sendMessage|Send Message|发送消息
+feedback.sending|Sending…|正在发送…
+feedback.messagePlaceholder|Write a message…|输入消息…
+feedback.closedNotice|This conversation has been closed.|此对话已结束。
+feedback.closeConfirm|Close this conversation?|确认结束这个对话吗？
+feedback.chatLoadError|Chats could not be loaded. Please try again.|对话加载失败，请重试。
+feedback.chatSendError|Message could not be sent. Your text was kept so you can retry.|消息发送失败，输入内容已保留，可以重试。
+feedback.chatStatusError|Conversation status could not be updated.|对话状态更新失败。
+feedback.support|Flight Desk Support|Flight Desk 支持团队
+feedback.system|System|系统
+feedback.you|You|你
 dashboard.noActivity|Complete a flight to start building your activity calendar.|完成一次航班后即可生成活动日历。
 map.viewFull|View Full Map|查看完整地图
 map.subtitle|Explore your completed journeys across the world.|探索你在世界各地完成的飞行旅程。

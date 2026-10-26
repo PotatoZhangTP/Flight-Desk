@@ -4,7 +4,7 @@ import { siteAdminAccess } from "@/lib/admin/server";
 
 export async function AdminNavigation({ current }: { current: "overview" | "roadmap" | "landing" | "translations" | "memorial" | "guidance" | "countryMappings" | "feedback" }) {
   const { supabase, isAdmin } = await siteAdminAccess();
-  const { count } = isAdmin ? await supabase.from("feedback_submissions").select("id", { count: "exact", head: true }).eq("is_read", false).is("archived_at", null) : { count: 0 };
+  const { count } = isAdmin ? await supabase.from("inbox_notifications").select("id", { count: "exact", head: true }).eq("recipient_user_id", (await supabase.auth.getUser()).data.user?.id ?? "").eq("is_read", false) : { count: 0 };
   return <LocalizedNav label="Administration" className="mb-8 flex flex-wrap gap-2 border-b border-line pb-4">{[
     { id: "overview", href: "/admin", label: "Admin Dashboard" },
     { id: "roadmap", href: "/admin/roadmap", label: "Manage Roadmap" },
