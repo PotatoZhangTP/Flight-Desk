@@ -20,5 +20,6 @@ export default async function AdminPage() {
     { href: "/admin/memorial-flights", title: "Memorial Flights", description: "Create, publish and maintain aviation memorial routes." },
     { href: "/admin/achievement-guidance", title: "Badge Level Guidance", description: "Manage the unlock guidance shown for achievement levels." },
     { href: "/admin/country-mappings", title: "Country & Region Mapping", description: "Manage the display country used by airport search, the passport and country achievements." },
+    { href: "/admin/feedback", title: "Feedback Inbox", description: "Review feature suggestions and bug reports submitted inside Flight Desk." },
   ].map(module => <Link key={module.href} href={module.href} className="interaction-card rounded-2xl border border-line bg-surface p-7 shadow-sm shadow-ink/5 transition hover:border-brand/40 hover:shadow-md focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand"><h2 className="text-xl font-bold"><T source={module.title} /> <span aria-hidden="true" className="text-brand">→</span></h2><p className="mt-3 text-sm leading-7 text-muted"><T source={module.description} /></p></Link>)}</div></main></>;
 }

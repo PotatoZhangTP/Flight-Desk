@@ -447,6 +447,47 @@ dashboard.feedbackHelp|Help us improve Flight Desk by sharing your feedback.|分
 dashboard.sendFeedback|Send Feedback|发送反馈
 dashboard.suggestFeature|Suggest a Feature|建议功能
 dashboard.bugReport|Bug Report|问题反馈
+feedback.suggestFeature|Suggest a Feature|建议功能
+feedback.reportBug|Report a Bug|报告问题
+feedback.featureSubtitle|Help make Flight Desk even better.|帮助 Flight Desk 变得更好。
+feedback.bugSubtitle|Tell us what went wrong, and we'll look into it.|告诉我们发生了什么，我们会尽快查看。
+feedback.featureTitle|Feature Title|功能标题
+feedback.issueTitle|Issue Title|问题标题
+feedback.description|Description|描述
+feedback.screenshots|Screenshots|截图
+feedback.addScreenshots|Add Screenshots|添加截图
+feedback.screenshotHelp|PNG, JPG, WEBP or GIF · up to 5 files · 5 MB each|PNG、JPG、WEBP 或 GIF · 最多 5 个文件 · 每个最大 5 MB
+feedback.includeEnvironment|Include Technical Information|附带技术信息
+feedback.environmentHelp|We will include this page path, browser, device type and submission time. No passwords, cookies or tokens are collected.|将附带当前页面、浏览器、设备类型和提交时间。不会收集密码、Cookie 或令牌。
+feedback.submit|Submit Feedback|提交反馈
+feedback.submitting|Submitting…|正在提交…
+feedback.success|Thanks — your feedback has been submitted.|感谢你的反馈，提交成功。
+feedback.submitError|Your feedback could not be submitted. Please try again.|反馈提交失败，请重试。
+feedback.inbox|Feedback Inbox|反馈收件箱
+feedback.inboxHelp|Review and manage feature suggestions and bug reports submitted inside Flight Desk.|查看和管理在 Flight Desk 内提交的功能建议与问题反馈。
+feedback.loadError|Feedback could not be loaded. Please try again later.|反馈暂时无法加载，请稍后重试。
+feedback.all|All|全部
+feedback.unread|Unread|未读
+feedback.features|Features|功能建议
+feedback.bugs|Bugs|问题反馈
+feedback.feature|Feature|功能建议
+feedback.bug|Bug|问题
+feedback.new|New|未读
+feedback.empty|No feedback found in this view.|当前视图中没有反馈。
+feedback.select|Select a feedback item to view its details.|选择一条反馈查看详情。
+feedback.authenticatedUser|Authenticated User|已登录用户
+feedback.environment|Technical Information|技术信息
+feedback.statusLabel|Status|状态
+feedback.status.new|New|新建
+feedback.status.in_progress|In Progress|处理中
+feedback.status.resolved|Resolved|已解决
+feedback.markRead|Mark As Read|标记为已读
+feedback.markUnread|Mark As Unread|标记为未读
+feedback.archive|Archive|归档
+feedback.archiveConfirm|Archive this feedback?|确认归档这条反馈吗？
+feedback.updating|Updating…|正在更新…
+feedback.updated|Feedback updated.|反馈已更新。
+feedback.updateError|The feedback could not be updated.|反馈更新失败。
 dashboard.noActivity|Complete a flight to start building your activity calendar.|完成一次航班后即可生成活动日历。
 map.viewFull|View Full Map|查看完整地图
 map.subtitle|Explore your completed journeys across the world.|探索你在世界各地完成的飞行旅程。
