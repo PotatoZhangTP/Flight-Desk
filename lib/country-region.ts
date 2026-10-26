@@ -24,6 +24,13 @@ export function displayCountryName(value: string | null | undefined, mappings: r
   try { return new Intl.DisplayNames(["en"], { type: "region" }).of(code) || code; } catch { return code; }
 }
 
+export function displayAirportCountryName(originalName: string | null | undefined, originalCode: string | null | undefined, mappings: readonly CountryRegionMapping[] = []) {
+  const displayName = displayCountryName(originalCode, mappings);
+  const original = originalName?.trim();
+  if (!original || original.toLowerCase() === displayName.toLowerCase()) return displayName;
+  return `${original}, ${displayName}`;
+}
+
 export async function loadCountryMappings(supabase: SupabaseClient): Promise<CountryRegionMapping[]> {
   const { data } = await supabase.from("country_region_mappings").select("original_code,target_code,is_active").eq("is_active", true).order("original_code");
   return (data ?? []) as CountryRegionMapping[];

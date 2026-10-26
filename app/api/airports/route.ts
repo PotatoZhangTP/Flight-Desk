@@ -1,7 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 import { airportFromRow } from "@/lib/airports";
 import { AirportConfigError, resolveAirportConfig } from "@/lib/airport-config";
-import { displayCountryCode, displayCountryName, loadCountryMappings } from "@/lib/country-region";
+import { displayAirportCountryName, displayCountryCode, loadCountryMappings } from "@/lib/country-region";
 
 export const dynamic = "force-dynamic";
 
@@ -55,7 +55,7 @@ export async function GET(request: Request) {
     return Response.json({ airports: data.slice(0, 12).map(row => {
       const rawCode = String(row.country_code || "").trim().toUpperCase();
       const displayCode = resolvedCodes.get(rawCode) || displayCountryCode(rawCode, mappings);
-      return airportFromRow({ ...row, country_code: displayCode, country_name: displayCountryName(displayCode, []) });
+      return airportFromRow({ ...row, country_code: displayCode, country_name: displayAirportCountryName(row.country_name, rawCode, mappings) });
     }) }, { headers: successHeaders });
   } catch (error) {
     if (error instanceof AirportConfigError) return unavailable(error.diagnosticCode);
