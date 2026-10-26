@@ -86,9 +86,9 @@ common.explore|Explore Flight Desk|探索 Flight Desk
 common.soon|Coming Soon|即将上线
 simbrief.title|SimBrief|SimBrief
 simbrief.description|Fetch and review your latest SimBrief flight plan before adding it to your logbook.|获取并检查最新 SimBrief 飞行计划，再将其添加到飞行日志。
-simbrief.alias|Navigraph Alias|Navigraph 别名
+simbrief.alias|SimBrief Alias|SimBrief 别名
 simbrief.pilotId|SimBrief Pilot ID (optional)|SimBrief Pilot ID（可选）
-simbrief.aliasHelp|Use your Navigraph Alias first. Do not enter your password.|优先使用 Navigraph 别名。无需输入密码。
+simbrief.aliasHelp|SimBrief → Account Settings → Alias (Username)|SimBrief → Account Settings → Alias (Username)
 simbrief.saveConfig|Save Configuration|保存配置
 simbrief.testConnection|Test Connection|测试连接
 simbrief.removeConfig|Remove Account Configuration|移除账号配置
