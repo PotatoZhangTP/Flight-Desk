@@ -103,7 +103,7 @@ simbrief.backToAdd|Back to Add a Flight|返回添加航班
 simbrief.addAnother|Add Another Flight|继续添加航班
 simbrief.viewExisting|View Existing Flight|查看已有航班
 simbrief.imported|Flight imported as planned.|航班已作为计划航班导入。
-simbrief.duplicate|This flight plan has already been imported.|这份飞行计划已经导入过。
+simbrief.duplicate|This same flight already exists in your logbook.|这趟航班已经存在于你的飞行日志中。
 simbrief.similar|A similar flight already exists. Import as new flight?|已有相似航班。仍要作为新航班导入吗？
 simbrief.configureFirst|Configure SimBrief before fetching a flight plan.|请先配置 SimBrief，再获取飞行计划。
 simbrief.identifierRequired|Enter a Navigraph Alias or Pilot ID.|请输入 Navigraph 别名或 Pilot ID。

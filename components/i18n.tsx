@@ -93,7 +93,7 @@ export function LocalizedDuration({ minutes, scheduled = false }: { minutes: num
 /** Explicit UI error boundary; never use this for user-authored content. */
 export function UiError({ message }: { message: string }) {
   const { locale } = useLanguage();
-  const known = sourceKeys[message];
+  const known = sourceKeys[message] ?? (byKey[message] ? message : undefined);
   return known ? <T id={known} /> : <>{locale === "en" ? message : <T id="common.requestError" />}</>;
 }
 
