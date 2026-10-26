@@ -32,6 +32,45 @@ function textAt(value: unknown, paths: string[][]) {
   return "";
 }
 
+// Only explicit, well-known ICAO/IATA pairs are converted. Unknown three-letter
+// codes stay unresolved instead of being guessed from a prefix.
+const airlineIataByIcao: Record<string, string> = {
+  AAL: "AA", ACA: "AC", AFR: "AF", ASA: "AS", BAW: "BA", CAL: "CI",
+  CCA: "CA", CES: "MU", CPA: "CX", CSN: "CZ", DAL: "DL", EIN: "EI",
+  EVA: "BR", FIN: "AY", GIA: "GA", JAL: "JL", KAL: "KE", KLM: "KL",
+  LAN: "LA", MAS: "MH", QFA: "QF", QTR: "QR", RYR: "FR", SIA: "SQ",
+  SKW: "OO", SWA: "WN", TAP: "TP", THY: "TK", UAE: "EK", UAL: "UA",
+  VIR: "VS", WJA: "WS",
+};
+
+function cleanCode(value: string) {
+  return value.toUpperCase().replace(/[^A-Z0-9]/g, "");
+}
+
+function splitCombinedFlight(value: string) {
+  const clean = value.trim().toUpperCase().replace(/[\s-]+/g, "");
+  const match = /^([A-Z0-9]{2,3})(\d{1,5}[A-Z]?)$/.exec(clean);
+  return match ? { prefix: match[1], number: match[2] } : { prefix: "", number: clean.match(/\d{1,5}[A-Z]?$/)?.[0] || "" };
+}
+
+function airlineCodeFrom(value: string) {
+  const clean = cleanCode(value);
+  if (/^[A-Z0-9]{2}$/.test(clean)) return clean;
+  return airlineIataByIcao[clean] || "";
+}
+
+function parseAirlineAndNumber(payload: unknown) {
+  const rawNumber = textAt(payload, [["general", "flight_number"], ["atc", "flight_number"]]);
+  const rawAirlineIata = textAt(payload, [["general", "airline_iata"], ["airline", "iata"], ["airline", "iata_code"], ["atc", "airline_iata"]]);
+  const rawAirlineIcao = textAt(payload, [["general", "airline_icao"], ["airline", "icao"], ["airline", "icao_code"], ["atc", "airline_icao"]]);
+  const rawAirlineCode = textAt(payload, [["general", "airline_code"]]);
+  const combined = [rawNumber, textAt(payload, [["general", "airline"], ["atc", "callsign"]])].find(value => /\d/.test(value)) || "";
+  const split = splitCombinedFlight(combined);
+  const number = split.number || rawNumber.replace(/^[A-Za-z0-9]{2,3}(?=\d)/, "");
+  const airline = airlineCodeFrom(rawAirlineIata) || airlineCodeFrom(rawAirlineIcao) || airlineCodeFrom(rawAirlineCode) || airlineCodeFrom(split.prefix);
+  return { airline, number };
+}
+
 function timestampAt(value: unknown, paths: string[]) {
   for (const path of paths) {
     const item = objectAt(value, path.split("."));
@@ -51,16 +90,15 @@ function timestampAt(value: unknown, paths: string[]) {
 
 export function parseSimBriefPayload(payload: unknown): SimBriefRawPreview {
   const requestId = textAt(payload, [["params", "request_id"], ["params", "ofp_id"], ["general", "request_id"], ["general", "ofp_id"], ["ofp_id"]]) || null;
-  const flightNumber = textAt(payload, [["general", "flight_number"], ["atc", "flight_number"], ["general", "callsign"], ["atc", "callsign"]]);
-  const airline = textAt(payload, [["general", "airline"], ["general", "airline_name"], ["general", "airline_code"], ["atc", "callsign"]]);
+  const flight = parseAirlineAndNumber(payload);
   const departureIcao = textAt(payload, [["origin", "icao_code"], ["origin", "icao"], ["general", "icao_airport_origin"]]).toUpperCase();
   const arrivalIcao = textAt(payload, [["destination", "icao_code"], ["destination", "icao"], ["general", "icao_airport_destination"]]).toUpperCase();
   const aircraftCode = textAt(payload, [["aircraft", "icaocode"], ["aircraft", "icao_code"], ["general", "aircraft"], ["general", "aircraft_type"]]).toUpperCase();
   const registration = textAt(payload, [["aircraft", "reg"], ["aircraft", "registration"], ["general", "registration"]]);
   return {
     requestId,
-    flightNumber,
-    airline: airline === flightNumber ? "" : airline,
+    flightNumber: flight.number,
+    airline: flight.airline,
     departureIcao,
     arrivalIcao,
     aircraftCode,

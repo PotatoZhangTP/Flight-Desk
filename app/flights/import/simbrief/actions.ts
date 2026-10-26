@@ -74,6 +74,7 @@ async function toPreview(supabase: Awaited<ReturnType<typeof createClient>>, par
   if (!arrival) warnings.push("simbrief.arrivalNotFound");
   if (!parsed.aircraftCode) warnings.push("simbrief.aircraftMissing");
   else if (!aircraft) warnings.push("simbrief.aircraftNotFound");
+  if (!parsed.airline) warnings.push("simbrief.airlineMissing");
   if (!parsed.departureTimestamp || !parsed.arrivalTimestamp) warnings.push("simbrief.timeMissing");
   if (departure && !departure.timezone) warnings.push("simbrief.timezoneMissing");
   const departureLocal = localFieldsFromTimestamp(parsed.departureTimestamp, departure?.timezone || null);

@@ -126,6 +126,7 @@ simbrief.departureNotFound|Departure airport was not found in the Flight Desk ai
 simbrief.arrivalNotFound|Arrival airport was not found in the Flight Desk airport catalog.|到达机场不在 Flight Desk 机场目录中。
 simbrief.aircraftMissing|Aircraft type was not provided by SimBrief.|SimBrief 未提供机型。
 simbrief.aircraftNotFound|Aircraft type was not found in the Flight Desk catalog; please review it.|机型不在 Flight Desk 目录中，请检查后再保存。
+simbrief.airlineMissing|Airline code could not be reliably identified; please enter it manually.|无法可靠识别航司代码，请手动填写。
 simbrief.timeMissing|Reliable scheduled times were not provided; please complete them.|缺少可靠的计划时间，请补充后再保存。
 simbrief.timezoneMissing|Airport timezone was not found; please verify the timezone.|找不到机场时区，请核对时区。
 simbrief.invalidFlight|Review the flight details before importing.|请检查航班信息后再导入。
