@@ -28,16 +28,19 @@ set search_path = pg_catalog, public
 as $function$
 begin
   if exists (
-    with recursive mapping_chain(code, depth) as (
-      select new.target_code, 1
+    with recursive mapping_chain(code, path) as (
+      select new.target_code, array[new.target_code]
       union all
-      select mapping.target_code, chain.depth + 1
+      select mapping.target_code, chain.path || mapping.target_code
       from mapping_chain as chain
       join public.country_region_mappings as mapping
         on mapping.original_code = chain.code
        and mapping.is_active
        and (tg_op = 'INSERT' or mapping.id <> new.id)
-      where chain.depth < 10
+      where chain.code <> new.original_code
+        and (mapping.target_code = new.original_code
+         or not mapping.target_code = any(chain.path)
+        )
     )
     select 1 from mapping_chain where code = new.original_code
   ) then
