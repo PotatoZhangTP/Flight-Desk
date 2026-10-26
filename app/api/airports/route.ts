@@ -46,7 +46,17 @@ export async function GET(request: Request) {
     stage = "response";
     if (!Array.isArray(data)) return unavailable("AIRPORT_RESPONSE_INVALID");
     const mappings = await loadCountryMappings(client);
-    return Response.json({ airports: data.slice(0, 12).map(row => airportFromRow({ ...row, country_code: displayCountryCode(row.country_code, mappings), country_name: displayCountryName(row.country_code, mappings) })) }, { headers: successHeaders });
+    const rawCodes = [...new Set(data.slice(0, 12).map(row => String(row.country_code || "").trim().toUpperCase()).filter(Boolean))];
+    const resolvedCodes = new Map<string, string>();
+    await Promise.all(rawCodes.map(async code => {
+      const resolved = await client.rpc("resolve_display_country_code", { input_code: code });
+      resolvedCodes.set(code, typeof resolved.data === "string" && resolved.data ? resolved.data : displayCountryCode(code, mappings));
+    }));
+    return Response.json({ airports: data.slice(0, 12).map(row => {
+      const rawCode = String(row.country_code || "").trim().toUpperCase();
+      const displayCode = resolvedCodes.get(rawCode) || displayCountryCode(rawCode, mappings);
+      return airportFromRow({ ...row, country_code: displayCode, country_name: displayCountryName(displayCode, []) });
+    }) }, { headers: successHeaders });
   } catch (error) {
     if (error instanceof AirportConfigError) return unavailable(error.diagnosticCode);
     return unavailable(stage === "response" ? "AIRPORT_RESPONSE_INVALID" : "AIRPORT_CONNECTION_FAILED");
