@@ -50,7 +50,11 @@ export function AddFlightDropdown() {
           <div className="my-1 border-t border-line" />
           <MenuItem icon={<path d="M4 5h16v14H4zM8 9h8M8 13h5" />} title="Import from Excel" description="Bulk import flight history" />
           <div className="my-1 border-t border-line" />
-          <MenuItem icon={<path d="M4 17h16M6 17l2-7h8l2 7M10 10V6h4v4M12 3v3" />} title="Import from SimBrief" description="Import a generated flight plan" />
+          <Link href="/flights/import/simbrief" onClick={() => setOpen(false)} className="flex items-center gap-3 rounded-xl px-3 py-3 transition hover:bg-brand-soft focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand">
+            <MenuIcon><path d="M4 17h16M6 17l2-7h8l2 7M10 10V6h4v4M12 3v3" /></MenuIcon>
+            <span className="min-w-0 flex-1"><strong className="block text-sm font-bold text-ink"><T id="flight.importSimbrief" /></strong><span className="block text-xs text-muted"><T id="flight.importPlanDesc" /></span></span>
+            <span aria-hidden="true" className="text-lg text-brand">→</span>
+          </Link>
         </div>
       )}
     </div>

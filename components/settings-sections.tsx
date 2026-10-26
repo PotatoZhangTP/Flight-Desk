@@ -4,7 +4,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { useSearchParams } from "next/navigation";
 import { T } from "@/components/i18n";
 
-const sections = ["general", "account"] as const;
+const sections = ["general", "account", "integrations"] as const;
 type Section = typeof sections[number];
 
 function valid(value: string | null): Section {
@@ -18,11 +18,11 @@ function sectionUrl(section: Section) {
   return `${window.location.pathname}${next.toString() ? `?${next}` : ""}${window.location.hash}`;
 }
 
-export function SettingsSections({ general, account }: { general: ReactNode; account: ReactNode }) {
+export function SettingsSections({ general, account, integrations }: { general: ReactNode; account: ReactNode; integrations: ReactNode }) {
   const params = useSearchParams();
   const [active, setActive] = useState<Section>(() => valid(params.get("section")));
-  const labels: Record<Section, string> = { general: "settings.general", account: "settings.account" };
-  const content: Record<Section, ReactNode> = { general, account };
+  const labels: Record<Section, string> = { general: "settings.general", account: "settings.account", integrations: "settings.integrations" };
+  const content: Record<Section, ReactNode> = { general, account, integrations };
 
   useEffect(() => {
     const updateFromHistory = () => setActive(valid(new URLSearchParams(window.location.search).get("section")));

@@ -56,6 +56,9 @@ export function normalizeFlightInput(input: Record<string, unknown>): { data: Re
       aircraft_type: text("aircraftType"), registration: text("registration", 80), notes: text("notes", 10000), status, source,
       is_user_modified: input.isUserModified === true,
     });
+    if ("simbriefRequestId" in input) {
+      data.simbrief_request_id = input.simbriefRequestId == null || input.simbriefRequestId === "" ? null : text("simbriefRequestId", 160);
+    }
     return { data, error: null };
   } catch (error) {
     return { data: null, error: error instanceof Error ? error.message : "Check the flight details." };

@@ -84,6 +84,64 @@ common.openLogbook|Register / Login|注册 / 登录
 common.openLogbookLower|Register / Login|注册 / 登录
 common.explore|Explore Flight Desk|探索 Flight Desk
 common.soon|Coming Soon|即将上线
+simbrief.title|SimBrief|SimBrief
+simbrief.description|Fetch and review your latest SimBrief flight plan before adding it to your logbook.|获取并检查最新 SimBrief 飞行计划，再将其添加到飞行日志。
+simbrief.alias|Navigraph Alias|Navigraph 别名
+simbrief.pilotId|SimBrief Pilot ID (optional)|SimBrief Pilot ID（可选）
+simbrief.aliasHelp|Use your Navigraph Alias first. Do not enter your password.|优先使用 Navigraph 别名。无需输入密码。
+simbrief.saveConfig|Save Configuration|保存配置
+simbrief.testConnection|Test Connection|测试连接
+simbrief.removeConfig|Remove Account Configuration|移除账号配置
+simbrief.configured|Configuration saved|配置已保存
+simbrief.notConfigured|Not configured|未配置
+simbrief.fetch|Fetch Latest Flight Plan|获取最新飞行计划
+simbrief.fetching|Fetching Flight Plan…|正在获取飞行计划…
+simbrief.review|Flight Plan Preview|飞行计划预览
+simbrief.import|Import Flight|导入航班
+simbrief.importing|Importing Flight…|正在导入航班…
+simbrief.backToAdd|Back to Add a Flight|返回添加航班
+simbrief.addAnother|Add Another Flight|继续添加航班
+simbrief.viewExisting|View Existing Flight|查看已有航班
+simbrief.imported|Flight imported as planned.|航班已作为计划航班导入。
+simbrief.duplicate|This flight plan has already been imported.|这份飞行计划已经导入过。
+simbrief.similar|A similar flight already exists. Import as new flight?|已有相似航班。仍要作为新航班导入吗？
+simbrief.configureFirst|Configure SimBrief before fetching a flight plan.|请先配置 SimBrief，再获取飞行计划。
+simbrief.identifierRequired|Enter a Navigraph Alias or Pilot ID.|请输入 Navigraph 别名或 Pilot ID。
+simbrief.invalidAlias|Enter a valid Navigraph Alias.|请输入有效的 Navigraph 别名。
+simbrief.invalidPilotId|Enter a valid numeric Pilot ID.|请输入有效的数字 Pilot ID。
+simbrief.saveError|SimBrief configuration could not be saved.|SimBrief 配置保存失败。
+simbrief.saved|SimBrief configuration saved.|SimBrief 配置已保存。
+simbrief.removeError|SimBrief configuration could not be removed.|SimBrief 配置移除失败。
+simbrief.removed|SimBrief configuration removed.|SimBrief 配置已移除。
+simbrief.connectionOk|SimBrief account responded successfully. This does not verify account ownership.|SimBrief 账号响应成功，但这不代表已验证账号所有权。
+simbrief.accountOrOfpNotFound|The account could not be found, or no latest OFP is available.|找不到该账号，或该账号尚未生成最新 OFP。
+simbrief.noOfp|No SimBrief OFP is available for this account yet.|该账号还没有可用的 SimBrief OFP。
+simbrief.apiError|SimBrief returned an API error.|SimBrief 返回了接口错误。
+simbrief.invalidResponse|SimBrief returned an unreadable response.|SimBrief 返回的数据格式无法读取。
+simbrief.responseTooLarge|The SimBrief response was too large to process safely.|SimBrief 返回内容过大，无法安全处理。
+simbrief.timeout|SimBrief took too long to respond.|SimBrief 响应超时。
+simbrief.networkError|SimBrief could not be reached. Try again later.|无法连接 SimBrief，请稍后重试。
+simbrief.missingRoute|The latest OFP did not contain a reliable route.|最新 OFP 缺少可靠的起降机场信息。
+simbrief.departureNotFound|Departure airport was not found in the Flight Desk airport catalog.|出发机场不在 Flight Desk 机场目录中。
+simbrief.arrivalNotFound|Arrival airport was not found in the Flight Desk airport catalog.|到达机场不在 Flight Desk 机场目录中。
+simbrief.aircraftMissing|Aircraft type was not provided by SimBrief.|SimBrief 未提供机型。
+simbrief.aircraftNotFound|Aircraft type was not found in the Flight Desk catalog; please review it.|机型不在 Flight Desk 目录中，请检查后再保存。
+simbrief.timeMissing|Reliable scheduled times were not provided; please complete them.|缺少可靠的计划时间，请补充后再保存。
+simbrief.timezoneMissing|Airport timezone was not found; please verify the timezone.|找不到机场时区，请核对时区。
+simbrief.invalidFlight|Review the flight details before importing.|请检查航班信息后再导入。
+simbrief.importError|The SimBrief flight could not be imported.|SimBrief 航班导入失败。
+simbrief.airline|Airline|航空公司
+simbrief.flightNumber|Flight Number|航班号
+simbrief.aircraftRegistration|Aircraft Registration|飞机注册号
+simbrief.plannedDuration|Planned Duration|计划时长
+simbrief.distance|Distance|距离
+simbrief.calculatedDistance|Calculated from airport catalog|根据机场目录计算
+simbrief.flightStatus|Flight Status|航班状态
+simbrief.planned|Planned|计划中
+simbrief.reviewNotice|Review the imported values before saving.|保存前请检查导入的数据。
+simbrief.viewAllFlights|View in All Flights|在全部航班中查看
+flight.importSimbrief|Import from SimBrief|从 SimBrief 导入
+flight.importPlanDesc|Import a generated flight plan|导入已生成的飞行计划
 common.next|Coming Next|后续上线
 common.available|Available|已上线
 common.unavailable|Not available yet|暂无数据
@@ -206,6 +264,7 @@ settings.passwordError|The email request could not be confirmed. Check your conn
 settings.general|General Settings|常规设置
 settings.generalHelp|Manage how Flight Desk displays your information.|管理 Flight Desk 的显示方式。
 settings.account|Account Settings|账户设置
+settings.integrations|Integrations|集成
 header.changeTheme|Click To Change Theme|点击切换主题
 header.openUserMenu|Open User Menu|打开账号菜单
 settings.flightPreferences|Flight Preferences|飞行偏好

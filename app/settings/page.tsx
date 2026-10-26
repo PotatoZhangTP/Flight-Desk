@@ -13,11 +13,14 @@ import { DashboardSpotlight } from "@/components/dashboard-spotlight";
 import { requestAuth } from "@/lib/auth/server";
 import { FullSettingsPreferences } from "@/components/full-settings";
 import { SettingsSections } from "@/components/settings-sections";
+import { SimBriefSettings } from "@/components/simbrief-settings";
+import { getSimBriefIntegration } from "@/app/flights/import/simbrief/actions";
 
 export default async function SettingsPage({ searchParams }: { searchParams: Promise<{ section?: string }> }) {
   const { supabase, user } = await requestAuth();
   if (!user) redirect("/auth?next=/settings");
   const { data: profile } = await supabase.from("profiles").select("display_name,avatar_url,bio").eq("id", user.id).maybeSingle();
+  const simbrief = await getSimBriefIntegration();
   const displayName = profile?.display_name?.trim() || user.email?.split("@")[0] || "Pilot";
   const account = <section className="space-y-6">
     <section className="spotlight-card rounded-2xl border border-line bg-surface p-6">
@@ -28,5 +31,5 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
     <section className="spotlight-card rounded-2xl border border-line bg-surface p-6"><h2 className="text-xl font-bold text-ink"><T id="profile.emailTitle" /></h2><p className="mt-2 text-sm text-muted"><T id="profile.emailHelp" /></p><p className="mt-4 rounded-xl bg-page px-4 py-3 font-semibold text-ink">{user.email}</p></section>
     <div className="spotlight-card rounded-2xl"><PasswordSecurity /></div>
   </section>;
-  return <div className="min-h-screen bg-page"><DashboardSpotlight /><header className="flex flex-wrap items-center justify-between gap-3 border-b border-line bg-surface px-6 py-5 lg:px-12"><Brand /><UserMenu email={user.email ?? ""} initials={displayName.slice(0, 2).toUpperCase()} /></header><main className="mx-auto max-w-5xl px-6 py-10 lg:px-12"><Link href="/dashboard" className="text-sm font-semibold text-muted"><T id="common.backDashboard" /></Link><p className="mt-8 text-sm font-bold uppercase tracking-[0.18em] text-brand"><T id="profile.account" /></p><h1 className="mt-2 text-4xl font-bold tracking-tight text-ink"><T id="common.settings" /></h1><p className="mt-2 text-muted"><T id="profile.settingsHelp" /></p><SettingsSections general={<><AppearanceSettings /><LanguageSelector settings /><FullSettingsPreferences /></>} account={account} /></main></div>;
+  return <div className="min-h-screen bg-page"><DashboardSpotlight /><header className="flex flex-wrap items-center justify-between gap-3 border-b border-line bg-surface px-6 py-5 lg:px-12"><Brand /><UserMenu email={user.email ?? ""} initials={displayName.slice(0, 2).toUpperCase()} /></header><main className="mx-auto max-w-5xl px-6 py-10 lg:px-12"><Link href="/dashboard" className="text-sm font-semibold text-muted"><T id="common.backDashboard" /></Link><p className="mt-8 text-sm font-bold uppercase tracking-[0.18em] text-brand"><T id="profile.account" /></p><h1 className="mt-2 text-4xl font-bold tracking-tight text-ink"><T id="common.settings" /></h1><p className="mt-2 text-muted"><T id="profile.settingsHelp" /></p><SettingsSections general={<><AppearanceSettings /><LanguageSelector settings /><FullSettingsPreferences /></>} account={account} integrations={<SimBriefSettings initial={simbrief} />} /></main></div>;
 }
