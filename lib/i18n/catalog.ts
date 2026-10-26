@@ -489,6 +489,7 @@ feedback.updating|Updating…|正在更新…
 feedback.updated|Feedback updated.|反馈已更新。
 feedback.updateError|The feedback could not be updated.|反馈更新失败。
 feedback.notifications|Notifications|通知
+feedback.notificationCenter|Notification Center|通知中心
 feedback.messages|Messages|消息
 feedback.openChat|Open Chat|打开对话
 feedback.openAchievement|Open Achievement|打开成就
