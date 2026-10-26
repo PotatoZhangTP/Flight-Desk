@@ -36,6 +36,34 @@ export async function updateFlight(id: string, input: Record<string, unknown>) {
   redirect("/flights/" + id + "?updated=1");
 }
 
+export async function updateFlightStatus(id: string, status: "planned" | "completed") {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: "common.loginRequired" };
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) return { error: "flight.invalidRecord" };
+
+  const { data, error } = await supabase.from("flights")
+    .update({ status })
+    .eq("id", id)
+    .eq("user_id", user.id)
+    .select("id,status")
+    .maybeSingle();
+  if (error) {
+    console.error("[flights] status update failed", { code: error.code, message: error.message, details: error.details, hint: error.hint });
+    return { error: "flight.statusUpdateError" };
+  }
+  if (!data) return { error: "flight.unavailable" };
+
+  await supabase.rpc("refresh_my_achievements");
+  revalidatePath("/dashboard");
+  revalidatePath("/flights");
+  revalidatePath("/profile");
+  revalidatePath("/achievements");
+  revalidatePath("/flight-map");
+  revalidatePath("/reports");
+  return { status: data.status };
+}
+
 export async function deleteFlight(id: string, _formData?: FormData) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();

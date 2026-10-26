@@ -301,6 +301,11 @@ dashboard.viewEdit|View/Edit|查看／编辑
 flight.status|Flight status|航班状态
 flight.planned|Planned|计划中
 flight.completed|Completed|已完成
+flight.markAs|Mark As|标记为
+flight.markCompleted|Mark as Completed|标记为已完成
+flight.markPlanned|Mark as Planned|标记为计划中
+flight.updatingStatus|Updating flight status…|正在更新航班状态…
+flight.statusUpdateError|Unable to update flight status.|无法更新航班状态。
 dashboard.glance|Here’s your flying at a glance.|你的飞行经历，一目了然。
 dashboard.total|Total Flights|航班总数
 dashboard.recorded|Your Recorded Flights|已记录的航班

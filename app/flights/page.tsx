@@ -14,6 +14,7 @@ import { flightRelatedToCountry } from "@/lib/flight-country";
 import { airportCoordinateMap, flightDistanceKm } from "@/lib/flight-stats";
 import { formatDistance, normalizePreferences, type UserPreferences } from "@/lib/preferences";
 import { formatAircraftDisplayName, loadAircraftDisplayMap } from "@/lib/aircraft-catalog";
+import { FlightStatusToggle } from "@/components/flight-status-toggle";
 
 const sortable: Record<string, string> = {
   flight_date: "Date",
@@ -579,6 +580,9 @@ export default async function AllFlightsPage({
                   );
                 })}
                 <th className="pb-3">
+                  <T id="flight.markAs" />
+                </th>
+                <th className="pb-3">
                   <T id="common.viewEdit" />
                 </th>
               </tr>
@@ -614,6 +618,9 @@ export default async function AllFlightsPage({
                           : "dashboard.completed"
                       }
                     />
+                  </td>
+                  <td>
+                    <FlightStatusToggle id={flight.id} status={flight.status} />
                   </td>
                   <td>
                     <div className="flex justify-center gap-2">
