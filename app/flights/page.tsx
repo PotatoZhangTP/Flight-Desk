@@ -15,6 +15,7 @@ import { airportCoordinateMap, flightDistanceKm } from "@/lib/flight-stats";
 import { formatDistance, normalizePreferences, type UserPreferences } from "@/lib/preferences";
 import { formatAircraftDisplayName, loadAircraftDisplayMap } from "@/lib/aircraft-catalog";
 import { FlightStatusToggle } from "@/components/flight-status-toggle";
+import { displayCountryCode, displayCountryName, loadCountryMappings } from "@/lib/country-region";
 
 const sortable: Record<string, string> = {
   flight_date: "Date",
@@ -150,8 +151,8 @@ function mergeAirportCandidates(...groups: Airport[][]) {
     left.name.localeCompare(right.name),
   );
 }
-function flightMatchesCountry(flight: FlightRow, country: string, catalog: Map<string, Airport>) {
-  return flightRelatedToCountry(flight, country, catalog);
+function flightMatchesCountry(flight: FlightRow, country: string, catalog: Map<string, Airport>, mappings: Parameters<typeof displayCountryCode>[1] = []) {
+  return flightRelatedToCountry(flight, country, catalog, mappings);
 }
 
 function parseExact(value?: string) {
@@ -210,6 +211,7 @@ export default async function AllFlightsPage({
     .eq("id", user.id)
     .maybeSingle();
   const distanceUnit = normalizePreferences({ distanceUnit: preferenceProfile?.distance_unit as UserPreferences["distanceUnit"] }).distanceUnit;
+  const countryMappings = await loadCountryMappings(supabase);
   const hrefFor = (extra: Record<string, string>) => {
     const params = new URLSearchParams(
       Object.entries(p).filter(([, value]) => value) as [string, string][],
@@ -278,7 +280,8 @@ export default async function AllFlightsPage({
     ...(iataRows.data || []),
     ...(identRows.data || []),
   ].forEach((row) => {
-    const airport = airportFromRow(row);
+    const rawAirport = airportFromRow(row);
+    const airport = { ...rawAirport, countryCode: displayCountryCode(rawAirport.countryCode, countryMappings), countryName: displayCountryName(rawAirport.countryCode, countryMappings) };
     [airport.icao, airport.iata, airport.ident]
       .filter(Boolean)
       .forEach((code) => catalog.set(normal(code), airport));
@@ -465,7 +468,7 @@ export default async function AllFlightsPage({
         )),
   );
   const airportFilteredWithAircraft = airportFiltered.filter(aircraftMatches);
-  const countryFiltered = airportFilteredWithAircraft.filter((flight) => flightMatchesCountry(flight, destinationCountry, catalog));
+  const countryFiltered = airportFilteredWithAircraft.filter((flight) => flightMatchesCountry(flight, destinationCountry, catalog, countryMappings));
   const durationFiltered =
     min != null || max != null
       ? countryFiltered.filter((flight) => {

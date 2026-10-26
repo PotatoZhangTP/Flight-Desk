@@ -580,6 +580,42 @@ admin.manageLanding|Manage Landing Page|管理首页文案
 admin.workspace|Administrator workspace|管理员工作区
 admin.website|Website management|网站管理
 admin.intro|Manage Flight Desk content and settings.|管理 Flight Desk 内容与设置。
+admin.countryMapping|Country & Region Mapping|国家与地区映射
+admin.countryMappingHelp|Control how original airport regions are displayed and counted across Flight Desk.|控制机场原始地区在 Flight Desk 各模块中的显示和统计归属。
+admin.countryMappingCardHelp|Manage the display country used by airport search, the passport and country achievements.|管理机场搜索、护照和国家成就使用的显示国家。
+admin.mappingActiveHelp|Only active mappings affect airport display and country statistics.|只有启用的映射会影响机场显示和国家统计。
+admin.originalRegion|Original Region|原始地区
+admin.displayCountry|Display Country|显示国家
+admin.selectCountry|Select country or region|选择国家或地区
+admin.selectDisplayCountry|Select display country|选择显示国家
+admin.previewChanges|Preview Changes|预览修改
+admin.selectBothCountries|Select both countries to preview.|请选择两个国家后预览。
+admin.active|Active|启用
+admin.inactive|Inactive|停用
+admin.saveMapping|Save Mapping|保存映射
+admin.edit|Edit|编辑
+admin.enable|Enable|启用
+admin.disable|Disable|停用
+admin.delete|Delete|删除
+admin.noMappings|No country mappings found.|暂无国家映射。
+admin.affectedAreas|Affected areas|可能受影响的功能
+admin.originalCode|Original Code|原始代码
+admin.displayCode|Display Code|显示代码
+admin.flag|Flag|国旗
+admin.mappingStatus|Status|状态
+admin.actions|Actions|操作
+admin.addMapping|Add Mapping|添加映射
+admin.mappingSaved|Country mapping saved.|国家映射已保存。
+admin.mappingDeleted|Country mapping deleted.|国家映射已删除。
+admin.mappingSaveError|The country mapping could not be saved.|国家映射保存失败。
+admin.mappingStatusError|The country mapping status could not be updated.|国家映射状态更新失败。
+admin.mappingDeleteError|The country mapping could not be deleted.|国家映射删除失败。
+admin.mappingInvalid|Choose two different valid ISO country codes.|请选择两个不同的有效 ISO 国家代码。
+admin.mappingDuplicate|A mapping for this original country already exists.|该原始国家已经存在映射。
+admin.mappingCycle|This mapping would create a cycle.|该映射会形成循环。
+admin.mappingAccessDenied|Access denied.|无权访问。
+admin.mappingStatusUpdated|Country mapping status updated.|国家映射状态已更新。
+admin.deleteMappingConfirm|Delete this country mapping?|确认删除这条国家映射吗？
 admin.roadmapHelp|Organize product milestones, development statuses and published updates.|管理产品里程碑、开发状态与公开更新。
 admin.landingHelp|Edit homepage copy privately, save a draft, then publish it when you’re ready.|编辑首页文案，先保存草稿，确认后再发布。
 admin.access|Administrator access|管理员访问

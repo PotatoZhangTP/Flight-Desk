@@ -1,4 +1,4 @@
-import { normalizeCountryCode } from "@/lib/country-codes";
+import { displayCountryCode, type CountryRegionMapping } from "@/lib/country-region";
 
 export type PassportFlight = { id: string; flight_date: string; status?: string | null; departure_country_code?: string | null; arrival_country_code?: string | null };
 export type CountryVisits = { code: string; count: number; first: string; latest: string; flightIds: string[]; relatedFlightIds: string[] };
@@ -13,7 +13,7 @@ export function isCompletedPassportFlight(flight: Pick<PassportFlight, "status">
  * rows of the same ID count once. This keeps stamps, dates and counts based on
  * the same completed-flight source while excluding planned flights.
  */
-export function passportVisits(flights: PassportFlight[]) {
+export function passportVisits(flights: PassportFlight[], mappings: readonly CountryRegionMapping[] = []) {
   const visits = new Map<string, CountryVisits>();
   const completed = [...new Map(flights.filter(isCompletedPassportFlight).map(f => [f.id, f])).values()];
   for (const flight of completed) {
@@ -21,7 +21,7 @@ export function passportVisits(flights: PassportFlight[]) {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(date || "")) continue;
     const time = new Date(`${date}T00:00:00Z`);
     if (!Number.isFinite(time.getTime()) || time.toISOString().slice(0, 10) !== date) continue;
-    for (const code of new Set([normalizeCountryCode(flight.departure_country_code), normalizeCountryCode(flight.arrival_country_code)])) {
+    for (const code of new Set([displayCountryCode(flight.departure_country_code, mappings), displayCountryCode(flight.arrival_country_code, mappings)])) {
       if (!/^[A-Z]{2}$/.test(code)) continue;
       const current = visits.get(code) ?? { code, count: 0, first: date, latest: date, flightIds: [], relatedFlightIds: [] };
       current.count += 1;

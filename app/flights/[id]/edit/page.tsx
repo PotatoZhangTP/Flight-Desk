@@ -1,2 +1,21 @@
-import { T } from "@/components/i18n"; import Link from "@/components/navigation-link"; import { notFound, redirect } from "next/navigation"; import { Brand } from "@/components/brand"; import { FlightForm } from "@/components/flight-form"; import { UserMenu } from "@/components/user-menu"; import { DeleteFlightForm } from "@/components/delete-flight-form"; import { createClient } from "@/lib/supabase/server";
-export default async function EditFlightPage({ params }: { params: Promise<{ id: string }> }) { const { id }=await params; const supabase=await createClient(); const {data:{user}}=await supabase.auth.getUser(); if(!user) redirect(`/auth?next=/flights/${id}/edit`); const {data:flight,error}=await supabase.from("flights").select("*").eq("id",id).eq("user_id",user.id).maybeSingle(); if(error||!flight) notFound(); return <div className="min-h-screen bg-page"><header className="flex flex-wrap items-center justify-between gap-3 border-b border-line bg-surface px-6 py-5 lg:px-12"><Brand/><UserMenu email={user.email??""} initials={(user.email?.slice(0,2)||"P").toUpperCase()}/></header><main className="mx-auto max-w-5xl px-6 py-10 lg:px-12"><Link href="/dashboard" className="text-sm font-semibold text-brand"><T id="common.backDashboard"/></Link><div className="mt-8 mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"><h1 className="text-4xl font-bold tracking-tight text-brand"><T id="flight.edit"/></h1><div className="flex flex-wrap items-center justify-end gap-3"><button type="submit" form="edit-flight-form" className="button-primary min-w-32"><T id="flight.update"/></button><DeleteFlightForm id={id} className="min-w-32"/></div></div><FlightForm initialData={flight} formId="edit-flight-form"/></main></div>; }
+import { T } from "@/components/i18n";
+import Link from "@/components/navigation-link";
+import { notFound, redirect } from "next/navigation";
+import { Brand } from "@/components/brand";
+import { FlightForm } from "@/components/flight-form";
+import { UserMenu } from "@/components/user-menu";
+import { DeleteFlightForm } from "@/components/delete-flight-form";
+import { createClient } from "@/lib/supabase/server";
+import { displayFlightEndpointCountries } from "@/lib/country-region";
+
+export default async function EditFlightPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect(`/auth?next=/flights/${id}/edit`);
+  const { data: flight, error } = await supabase.from("flights").select("*").eq("id", id).eq("user_id", user.id).maybeSingle();
+  if (error || !flight) notFound();
+  const endpointCountries = await displayFlightEndpointCountries(supabase, flight);
+  const initialData = { ...flight, departure_country_code: endpointCountries.departure, arrival_country_code: endpointCountries.arrival };
+  return <div className="min-h-screen bg-page"><header className="flex flex-wrap items-center justify-between gap-3 border-b border-line bg-surface px-6 py-5 lg:px-12"><Brand /><UserMenu email={user.email ?? ""} initials={(user.email?.slice(0, 2) || "P").toUpperCase()} /></header><main className="mx-auto max-w-5xl px-6 py-10 lg:px-12"><Link href="/dashboard" className="text-sm font-semibold text-brand"><T id="common.backDashboard" /></Link><div className="mt-8 mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"><h1 className="text-4xl font-bold tracking-tight text-brand"><T id="flight.edit" /></h1><div className="flex flex-wrap items-center justify-end gap-3"><button type="submit" form="edit-flight-form" className="button-primary min-w-32"><T id="flight.update" /></button><DeleteFlightForm id={id} className="min-w-32" /></div></div><FlightForm initialData={initialData} formId="edit-flight-form" /></main></div>;
+}

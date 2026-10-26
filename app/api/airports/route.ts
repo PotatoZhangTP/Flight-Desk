@@ -1,6 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 import { airportFromRow } from "@/lib/airports";
 import { AirportConfigError, resolveAirportConfig } from "@/lib/airport-config";
+import { displayCountryCode, displayCountryName, loadCountryMappings } from "@/lib/country-region";
 
 export const dynamic = "force-dynamic";
 
@@ -42,7 +43,8 @@ export async function GET(request: Request) {
     }
     stage = "response";
     if (!Array.isArray(data)) return unavailable("AIRPORT_RESPONSE_INVALID");
-    return Response.json({ airports: data.slice(0, 12).map(airportFromRow) }, { headers: successHeaders });
+    const mappings = await loadCountryMappings(client);
+    return Response.json({ airports: data.slice(0, 12).map(row => airportFromRow({ ...row, country_code: displayCountryCode(row.country_code, mappings), country_name: displayCountryName(row.country_code, mappings) })) }, { headers: successHeaders });
   } catch (error) {
     if (error instanceof AirportConfigError) return unavailable(error.diagnosticCode);
     return unavailable(stage === "response" ? "AIRPORT_RESPONSE_INVALID" : "AIRPORT_CONNECTION_FAILED");

@@ -1,6 +1,7 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { airportCoordinateMap, airportLookupKey, type FlightStatRow } from "@/lib/flight-stats";
+import { displayCountryCode, displayCountryName, loadCountryMappings } from "@/lib/country-region";
 
 export type MapFlight = FlightStatRow & { id: string; flight_number?: string | null; flight_date?: string | null; created_at?: string | null };
 export type MapAirportRow = {
@@ -31,7 +32,9 @@ export async function getFlightMapData(supabase: SupabaseClient, userId: string)
   const rows = (flights ?? []) as MapFlight[];
   const codes = [...new Set(rows.flatMap(row => [row.departure_airport_icao, row.arrival_airport_icao, row.departure_airport_iata, row.arrival_airport_iata, row.departure_airport, row.arrival_airport]).filter((code): code is string => Boolean(code)).map(code => code.trim().toUpperCase()))];
   const [{ data: icao }, { data: iata }, { data: ident }] = codes.length ? await Promise.all([supabase.from("airports").select("name,municipality,country_code,country_name,icao_code,iata_code,ident,latitude,longitude").in("icao_code", codes), supabase.from("airports").select("name,municipality,country_code,country_name,icao_code,iata_code,ident,latitude,longitude").in("iata_code", codes), supabase.from("airports").select("name,municipality,country_code,country_name,icao_code,iata_code,ident,latitude,longitude").in("ident", codes)]) : [{ data: [] }, { data: [] }, { data: [] }];
-  return buildFlightMapData(rows, [...(icao ?? []), ...(iata ?? []), ...(ident ?? [])]);
+  const mappings = await loadCountryMappings(supabase);
+  const airportRows = [...(icao ?? []), ...(iata ?? []), ...(ident ?? [])].map(row => ({ ...row, country_code: displayCountryCode(row.country_code, mappings), country_name: displayCountryName(row.country_code, mappings) }));
+  return buildFlightMapData(rows, airportRows);
 }
 
 export function buildFlightMapData(rows: MapFlight[], airportRows: MapAirportRow[]): FlightMapData {

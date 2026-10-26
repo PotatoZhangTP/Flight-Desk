@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { aircraftAliasKey, formatAircraftDisplayName } from "@/lib/aircraft-catalog";
 import { normalizeFlightInput } from "@/lib/flight-input";
 import { localFieldsFromTimestamp, parseSimBriefPayload, simbriefIdentifier, type SimBriefRawPreview } from "@/lib/simbrief";
+import { displayCountryCode, loadCountryMappings } from "@/lib/country-region";
 
 type Integration = { navigraph_alias: string | null; pilot_id: string | null };
 type AirportMatch = { name: string; iata: string; icao: string; countryCode: string; timezone: string };
@@ -60,8 +61,9 @@ async function fetchPayload(kind: "alias" | "pilot", identifier: string) {
 async function toPreview(supabase: Awaited<ReturnType<typeof createClient>>, parsed: SimBriefRawPreview): Promise<SimBriefFlightPreview> {
   const codes = [...new Set([parsed.departureIcao, parsed.arrivalIcao].filter(Boolean))];
   const { data: airportRows } = await supabase.from("airports").select("name,iata_code,icao_code,country_code,timezone").in("icao_code", codes);
+  const mappings = await loadCountryMappings(supabase);
   const airportByIcao = new Map((airportRows ?? []).map(row => [String(row.icao_code).toUpperCase(), {
-    name: String(row.name || row.icao_code), iata: String(row.iata_code || ""), icao: String(row.icao_code || "").toUpperCase(), countryCode: String(row.country_code || ""), timezone: String(row.timezone || ""),
+    name: String(row.name || row.icao_code), iata: String(row.iata_code || ""), icao: String(row.icao_code || "").toUpperCase(), countryCode: displayCountryCode(String(row.country_code || ""), mappings), timezone: String(row.timezone || ""),
   }]));
   const departure = airportByIcao.get(parsed.departureIcao) || null;
   const arrival = airportByIcao.get(parsed.arrivalIcao) || null;
