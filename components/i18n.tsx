@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { createTranslator, NextIntlClientProvider } from "next-intl";
-import { formatDateUTC, defaultDateFormat } from "@/lib/date-format";
+import { formatDateUTC, formatDateTime, defaultDateFormat } from "@/lib/date-format";
 import { defaultPreferences, normalizePreferences, type UserPreferences } from "@/lib/preferences";
 import { baseMessages, byKey, localeCookie, normalizeLocale, sourceKeys, type Locale } from "@/lib/i18n/catalog";
 
@@ -82,6 +82,10 @@ export function StatisticDetail({ value }: { value: string }) {
 export function LocalizedDate({ value, monthOnly = false }: { value: string; monthOnly?: boolean }) {
   const { preferences } = useLanguage();
   return <>{formatDateUTC(value, preferences.dateFormat || defaultDateFormat, monthOnly)}</>;
+}
+export function LocalizedDateTime({ value }: { value: string }) {
+  const { locale, preferences } = useLanguage();
+  return <>{formatDateTime(value, preferences.dateFormat || defaultDateFormat, preferences.timeFormat, locale === "zh-CN" ? "zh-CN" : "en-US")}</>;
 }
 
 export function LocalizedDuration({ minutes, scheduled = false }: { minutes: number | null; scheduled?: boolean }) {
