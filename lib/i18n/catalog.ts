@@ -484,7 +484,7 @@ feedback.status.new|New|新建
 feedback.status.in_progress|In Progress|处理中
 feedback.status.resolved|Resolved|已解决
 feedback.markRead|Mark As Read|标记为已读
-feedback.markUnread|Mark As Unread|标记为未读
+feedback.markUnread|Mark as Unread|标记为未读
 feedback.archive|Archive|归档
 feedback.archiveConfirm|Archive this feedback?|确认归档这条反馈吗？
 feedback.updating|Updating…|正在更新…

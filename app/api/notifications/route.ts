@@ -27,6 +27,7 @@ export async function PATCH(request: Request) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Authentication required." }, { status: 401 });
   const body = await request.json().catch(() => ({}));
+  const nextIsRead = typeof body?.is_read === "boolean" ? body.is_read : true;
   if (body?.all === true) {
     const [achievements, messages] = await Promise.all([
       supabase.from("achievement_notifications").update({ is_read: true, read_at: new Date().toISOString() }).eq("user_id", user.id).eq("is_read", false),
@@ -36,11 +37,11 @@ export async function PATCH(request: Request) {
     return NextResponse.json({ ok: true });
   }
   if (typeof body?.id === "string" && body?.kind === "message") {
-    const { error } = await supabase.from("inbox_notifications").update({ is_read: true, read_at: new Date().toISOString() }).eq("id", body.id).eq("recipient_user_id", user.id);
+    const { error } = await supabase.from("inbox_notifications").update({ is_read: nextIsRead, read_at: nextIsRead ? new Date().toISOString() : null }).eq("id", body.id).eq("recipient_user_id", user.id);
     if (error) return NextResponse.json({ error: "Notification could not be updated." }, { status: 500 });
     return NextResponse.json({ ok: true });
   }
-  let query = supabase.from("achievement_notifications").update({ is_read: true, read_at: new Date().toISOString() }).eq("user_id", user.id);
+  let query = supabase.from("achievement_notifications").update({ is_read: nextIsRead, read_at: nextIsRead ? new Date().toISOString() : null }).eq("user_id", user.id);
   if (typeof body?.id === "string") query = query.eq("id", body.id);
   else return NextResponse.json({ error: "A notification id is required." }, { status: 400 });
   const { error } = await query;
