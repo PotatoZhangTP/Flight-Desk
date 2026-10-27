@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { flownChallengeCategories } from "@/lib/daily-challenge-flight-status";
+import { addDailyChallengeReasons } from "@/lib/daily-challenge-recommendation";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -71,12 +72,13 @@ export async function GET(request: Request) {
 
   const today = new Date(`${date}T00:00:00Z`);
   const memorialInWeek = (memorials ?? []).filter(event => { const start = event.publish_start_date ? new Date(`${event.publish_start_date}T00:00:00Z`) : new Date(Date.UTC(event.publish_year, event.publish_month - 1, event.publish_day)); const end = event.publish_end_date ? new Date(`${event.publish_end_date}T23:59:59Z`) : start; if (!event.recurring) return today >= start && today <= end; const year = today.getUTCFullYear(); const startThisYear = new Date(Date.UTC(year, start.getUTCMonth(), start.getUTCDate())); const endThisYear = new Date(Date.UTC(year, end.getUTCMonth(), end.getUTCDate(), 23, 59, 59)); return startThisYear <= endThisYear ? today >= startThisYear && today <= endThisYear : today >= startThisYear || today <= endThisYear; });
+  const challengesWithReasons = await addDailyChallengeReasons(supabase, challenges);
   return NextResponse.json({
     date,
-    challenges,
+    challenges: challengesWithReasons,
     memorials: memorialInWeek,
     completedCategories: (completions ?? []).map(completion => completion.category),
-    flownCategories: flownChallengeCategories(challenges, flownFlights ?? []),
+    flownCategories: flownChallengeCategories(challengesWithReasons, flownFlights ?? []),
     errors: {
       challenges: initialChallengeError?.message || generationError,
       memorials: memorialError?.message || null,

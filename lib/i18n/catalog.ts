@@ -14,6 +14,8 @@ challenge.completed|Completed|已完成
 challenge.completedMessage|Challenge completed! Great flight, Captain!|挑战完成！精彩飞行，机长！
 challenge.completionError|Unable to update challenge completion.|无法更新挑战完成状态。
 challenge.flownBefore|Flown Before|曾飞过
+challenge.whyRoute|Why this route?|为什么推荐这条航线？
+challenge.routeDisclaimer|Routes may be suggested for simulation. Distances and flight times are estimates.|航线可能用于模拟飞行推荐，距离和飞行时间均为估算值。
 memorial.start|Start|开始
 memorial.viewDetails|View Details|查看详情
 memorial.week|Memorial Flight This Week|本周纪念航班
