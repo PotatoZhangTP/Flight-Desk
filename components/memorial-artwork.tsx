@@ -20,8 +20,8 @@ export function MemorialArtwork({ type, tone }: { type?: string | null; tone?: s
       </defs>
       <ellipse cx="80" cy="64" rx="57" ry="61" fill={`url(#${id}-glow)`} />
       <ellipse cx="80" cy="164" rx="35" ry="5" fill="#D5B36A" fillOpacity=".08" />
-      <path d="M80 31c-3 13-15 21-13 33 1 9 7 13 13 13 9 0 15-8 13-17-1-10-9-18-13-29Z" fill="#DCC181" />
-      <path d="M80 50c-1 8-7 13-6 19 1 5 3 7 6 7 5 0 8-4 7-9-1-6-5-11-7-17Z" fill="#F6E8BD" />
+      <path className="memorial-candle-flame" d="M80 31c-3 13-15 21-13 33 1 9 7 13 13 13 9 0 15-8 13-17-1-10-9-18-13-29Z" fill="#DCC181" />
+      <path className="memorial-candle-inner-flame" d="M80 50c-1 8-7 13-6 19 1 5 3 7 6 7 5 0 8-4 7-9-1-6-5-11-7-17Z" fill="#F6E8BD" />
       <path d="M59 90h42v67c0 8-42 8-42 0Z" fill={`url(#${id}-wax)`} />
       <ellipse cx="80" cy="90" rx="21" ry="5" fill="#F5EFDF" />
       <ellipse cx="80" cy="90" rx="9" ry="2.2" fill="#C6B997" fillOpacity=".7" />

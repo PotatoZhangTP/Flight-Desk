@@ -6,6 +6,7 @@ import { MemorialFlightActions } from "@/components/memorial-flight-actions";
 import { PageLoadingScreen } from "@/components/page-loading-screen";
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
+import { MemorialDecoration } from "@/components/memorial-decoration";
 
 export type MemorialFlightDetailEvent = {
   id: string;
@@ -74,7 +75,9 @@ export function MemorialFlightDetail({
       </Link>
       <div className="relative mt-12" aria-busy={isPending}>
       {isPending && <PageLoadingScreen context="page" className="!absolute !inset-0 !z-20 !min-h-0 !rounded-2xl" />}
-      <section key={currentEvent.id} className="rounded-2xl border border-[#d5b36a]/50 bg-[#2b263d] p-6 text-white transition-opacity duration-200 sm:p-8">
+      <section key={currentEvent.id} className="relative overflow-hidden rounded-2xl border border-[#d5b36a]/50 bg-[#2b263d] p-6 text-white transition-opacity duration-200 sm:p-8">
+        <MemorialDecoration type={currentEvent.memorial_type} tone={currentEvent.display_tone} className="absolute bottom-2 right-5 z-0 hidden w-32 opacity-25 sm:block md:w-40" />
+        <div className="relative z-10 max-w-[calc(100%-5rem)] sm:max-w-[calc(100%-8rem)]">
         <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#d5b36a]">
           <T source="Memorial Flight" />
         </p>
@@ -100,6 +103,7 @@ export function MemorialFlightDetail({
               <T source="Recurring Annually" />
             </span>
           )}
+        </div>
         </div>
       </section>
       {events.length > 1 && <nav className="mt-7 flex flex-wrap items-center justify-center gap-3" aria-label="Memorial flights pagination">

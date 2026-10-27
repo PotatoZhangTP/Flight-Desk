@@ -99,6 +99,11 @@
 .passport-country-popover__link { display: flex; align-items: center; justify-content: space-between; gap: 12px; border-top: 1px solid var(--line); padding: 12px 16px; color: var(--brand); font-size: .8rem; font-weight: 700; text-decoration: none; }
 .passport-country-popover__link:hover { background: var(--brand-soft); }
 body { margin: 0; background: var(--cream); color: var(--ink); font-family: Arial, Helvetica, sans-serif; }
+.memorial-candle-flame { transform-origin: 80px 73px; animation: memorial-flame-glow 4.8s ease-in-out infinite; }
+.memorial-candle-inner-flame { transform-origin: 80px 76px; animation: memorial-flame-inner 4.8s ease-in-out infinite; }
+@keyframes memorial-flame-glow { 0%, 100% { opacity: .82; filter: drop-shadow(0 0 1px rgb(220 193 129 / 12%)); } 50% { opacity: 1; filter: drop-shadow(0 0 5px rgb(220 193 129 / 26%)); } }
+@keyframes memorial-flame-inner { 0%, 100% { opacity: .78; } 50% { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .memorial-candle-flame, .memorial-candle-inner-flame { animation: none; } }
 /* Shared public-site grid; padding is part of the container at every breakpoint. */
 :root { --site-width: 1440px; --site-gutter: 16px; }
 .site-container { width: 100%; max-width: var(--site-width); margin-inline: auto; padding-inline: var(--site-gutter); min-width: 0; }

@@ -4,7 +4,7 @@ import Link from "@/components/navigation-link";
 import { T, useLanguage } from "@/components/i18n";
 import type { Memorial } from "@/components/daily-challenge";
 import { memorialCardCopy } from "@/lib/memorial-presentation";
-import { MemorialArtwork } from "@/components/memorial-artwork";
+import { MemorialDecoration } from "@/components/memorial-decoration";
 
 export function DashboardMemorialCard({ event }: { event: Memorial }) {
   const { locale } = useLanguage();
@@ -16,6 +16,6 @@ export function DashboardMemorialCard({ event }: { event: Memorial }) {
       <p className="mt-2 break-words text-sm font-medium leading-6 text-[#eee5d2]">{event.departure_iata || event.departure_icao} <span className="text-[#d5b36a]">→</span> {event.arrival_iata || event.arrival_icao}{event.suggested_aircraft ? ` · ${event.suggested_aircraft}` : ""}</p>
       {message && <p className="mt-2 whitespace-pre-line break-words text-sm leading-relaxed text-white/70">{message}</p>}
     </div>
-    <div className="pointer-events-none mx-auto w-full max-w-[144px] select-none"><MemorialArtwork type={event.memorial_type} tone={event.display_tone} /></div>
+    <MemorialDecoration type={event.memorial_type} tone={event.display_tone} className="mx-auto w-full max-w-[144px]" />
   </Link>;
 }
