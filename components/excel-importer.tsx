@@ -168,15 +168,22 @@ export function ExcelImporter() {
       aircraft_type: row.fields.aircraft_type.normalized, registration: "", notes: "", scheduled_duration_minutes: scheduledDuration, actual_duration_minutes: null, status: row.fields.status.normalized === "planned" ? "planned" : "completed", source: "manual", is_user_modified: false,
     }};
   }, [airportForRow]);
-  async function importSelectedRows(rows = importableRows) {
+  async function importSelectedRows(rows = reviews) {
     if (importing || !rows.length) return;
     const currentBatch = batchId || crypto.randomUUID(); setBatchId(currentBatch); setImporting(true); setError("");
     try {
-      const records = rows.map(buildImportRecord);
-      const response = await fetch("/api/flights/import-batch", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ batchId: currentBatch, records }) });
+      const records = rows.map(row => {
+        if (row.status === "Ready") {
+          try { return buildImportRecord(row); } catch (caught) { return { row_number: row.sourceRow, data: {}, preflight_result: "failed", error_type: "validation", error_message: caught instanceof Error ? caught.message : "Unable to prepare this row.", suggestion: "Correct the row and retry it." }; }
+        }
+        const originalData = Object.fromEntries(Object.entries(row.fields).map(([field, value]) => [field, value.original]));
+        return { row_number: row.sourceRow, data: originalData, preflight_result: row.status === "Skipped" ? "skipped" : "failed", error_type: "review", error_message: row.reasons.join(" ") || "This row was not approved for import.", suggestion: row.status === "Skipped" ? "Remove the skip decision to include this row." : "Resolve the review issues and retry this row." };
+      });
+      const response = await fetch("/api/flights/import-batch", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ batchId: currentBatch, fileName, totalRecords: reviews.length, records }) });
       const body = await response.json();
       if (!response.ok) throw new Error(body.error || "The import could not be completed.");
-      setImportResults([...(body.results || []), ...reviews.filter(row => row.status === "Skipped").map(row => ({ rowNumber: row.sourceRow, result: "skipped" }))]);
+      const returned = body.results || [];
+      setImportResults(previous => previous ? [...previous.filter(old => !returned.some((next: { rowNumber: number }) => next.rowNumber === old.rowNumber)), ...returned] : returned);
     } catch (caught) { setError(caught instanceof Error ? caught.message : "The import could not be completed."); }
     finally { setImporting(false); }
   }

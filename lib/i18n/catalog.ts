@@ -464,6 +464,29 @@ View My Flights|View My Flights|查看我的航班
 Retry Failed Records|Retry Failed Records|重试失败记录
 Return to Import Review|Return to Import Review|返回导入审核
 The import could not be confirmed. You can safely retry this batch.|The import could not be confirmed. You can safely retry this batch.|无法确认导入结果，可以安全地重试此批次。
+Import History|Import History|导入历史
+Review your Excel import batches and safely undo created flights.|Review your Excel import batches and safely undo created flights.|查看 Excel 导入批次，并安全撤销本批次创建的航班。
+records|records|条记录
+No import history yet.|No import history yet.|暂无导入历史。
+Download Error Report|Download Error Report|下载错误报告
+Undo Import|Undo Import|撤销导入
+Imported|Imported|已导入
+Excel row|Excel row|Excel 行号
+Flight created|Flight created|已创建航班
+Undo this import?|Undo this import?|撤销这次导入？
+This will remove only flights created by this batch.|This will remove only flights created by this batch.|只会删除本批次实际创建的航班。
+flights are eligible for review.|flights are eligible for review.|条航班符合安全撤销检查。
+Undoing…|Undoing…|正在撤销…
+Confirm Undo|Confirm Undo|确认撤销
+Cancel|Cancel|取消
+Undo failed.|Undo failed.|撤销失败。
+Select an import batch to view details.|Select an import batch to view details.|请选择一个导入批次查看详情。
+processing|Processing|处理中
+completed|Completed|已完成
+partially_completed|Partially Completed|部分完成
+failed|Failed|失败
+undone|Undone|已撤销
+already_imported|Already Imported|已导入
 Search airport by code, name or city|Search airport by code, name or city|按代码、名称或城市搜索机场
 dashboard.map|Flight Map|飞行地图
 dashboard.allFlights|All Flights|全部航班
