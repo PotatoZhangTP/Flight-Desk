@@ -2,9 +2,11 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { T, useText } from "@/components/i18n";
-import { autoMatch, detectHeaderRow, excelFields, type Confidence, type ExcelField, type SheetData } from "@/lib/excel-import";
+import { autoMatch, detectHeaderRow, excelFields, normalizeAircraftValue, normalizeDateValue, normalizeDurationValue, normalizeFlightPair, normalizeTimeValue, type Confidence, type ExcelField, type NormalizedValue } from "@/lib/excel-import";
+import { airportCodes, type Airport } from "@/lib/airports";
 
 type RawSheet = { name: string; rawRows: string[][] };
+type ConfirmationTarget = { field: "departure_airport" | "arrival_airport"; sourceRow: number; original: string };
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 const extensions = [".xlsx", ".xls", ".csv"];
 
@@ -22,6 +24,14 @@ export function ExcelImporter() {
   const [dragging, setDragging] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [dateFormat, setDateFormat] = useState<"MM/DD/YYYY" | "DD/MM/YYYY" | "YYYY-MM-DD">("MM/DD/YYYY");
+  const [airportCandidates, setAirportCandidates] = useState<Record<string, Airport[]>>({});
+  const [airportSelections, setAirportSelections] = useState<Record<string, Airport>>({});
+  const [rowAirportSelections, setRowAirportSelections] = useState<Record<string, Airport>>({});
+  const [airportLoading, setAirportLoading] = useState(false);
+  const [confirmation, setConfirmation] = useState<ConfirmationTarget | null>(null);
+  const [confirmationOptions, setConfirmationOptions] = useState<Airport[]>([]);
+  const [confirmationQuery, setConfirmationQuery] = useState("");
   const current = sheets.find(sheet => sheet.name === selectedSheet);
   const headerIndex = headerMode === "none" ? -1 : headerMode === "manual" ? manualHeader : detectHeaderRow(current?.rawRows || []);
   const headers = useMemo(() => headerIndex >= 0 ? (current?.rawRows[headerIndex] || []).map((value, index) => String(value || `Column ${index + 1}`)) : (current?.rawRows[0] || []).map((_, index) => `Column ${index + 1}`), [current, headerIndex]);
@@ -29,6 +39,52 @@ export function ExcelImporter() {
     const rows = current?.rawRows || [];
     return rows.slice(headerIndex >= 0 ? headerIndex + 1 : 0).map((values, index) => ({ sourceRow: headerIndex >= 0 ? headerIndex + index + 2 : index + 1, values }));
   }, [current, headerIndex]);
+  const fieldColumn = useCallback((field: ExcelField) => Object.keys(mapping).find(index => mapping[Number(index)] === field), [mapping]);
+  const airportColumns = useMemo(() => [fieldColumn("departure_airport"), fieldColumn("arrival_airport")].filter((value): value is string => Boolean(value)), [fieldColumn]);
+
+  useEffect(() => {
+    let live = true;
+    const values = [...new Set(dataRows.flatMap(row => airportColumns.map(column => (row.values[Number(column)] || "").trim()).filter(Boolean)))];
+    if (!values.length) { setAirportCandidates({}); return; }
+    setAirportLoading(true);
+    Promise.all(values.map(async value => {
+      try { const response = await fetch(`/api/airports?q=${encodeURIComponent(value)}`, { cache: "no-store" }); const body = await response.json(); return [value.toLowerCase(), response.ok && Array.isArray(body.airports) ? body.airports as Airport[] : []] as const; } catch { return [value.toLowerCase(), []] as const; }
+    })).then(entries => { if (live) setAirportCandidates(Object.fromEntries(entries)); }).finally(() => { if (live) setAirportLoading(false); });
+    return () => { live = false; };
+  }, [airportColumns, dataRows]);
+
+  const airportResult = useCallback((field: "departure_airport" | "arrival_airport", row: { sourceRow: number; values: string[] }): NormalizedValue & { candidates: Airport[] } => {
+    const column = fieldColumn(field); const original = column ? (row.values[Number(column)] || "").trim() : ""; const key = original.toLowerCase();
+    const candidates = airportCandidates[key] || []; const selected = rowAirportSelections[`${field}:${row.sourceRow}`] || airportSelections[key];
+    if (!original) return { original, normalized: "", status: "Unresolved", candidates };
+    if (selected) return { original, normalized: airportCodes(selected), status: "Resolved", candidates };
+    const code = /^[A-Z]{3,4}$/i.test(original);
+    const exact = candidates.filter(item => [item.name, item.iata, item.icao, item.ident, item.municipality].filter(Boolean).some(value => String(value).trim().toLowerCase() === key));
+    if (code && candidates.length === 1) return { original, normalized: airportCodes(candidates[0]), status: "Resolved", candidates };
+    if (!code && exact.length === 1) return { original, normalized: airportCodes(exact[0]), status: "Resolved", candidates };
+    return { original, normalized: original, status: candidates.length > 1 ? "Needs Confirmation" : "Unresolved", candidates };
+  }, [airportCandidates, airportSelections, fieldColumn, rowAirportSelections]);
+
+  const normalizedRows = useMemo(() => dataRows.map(row => {
+    const value = (field: ExcelField) => { const column = fieldColumn(field); return column ? row.values[Number(column)] || "" : ""; };
+    const pair = normalizeFlightPair(value("airline"), value("flight_number"));
+    const fields: Record<string, NormalizedValue & { candidates?: Airport[] }> = {
+      departure_airport: airportResult("departure_airport", row), arrival_airport: airportResult("arrival_airport", row),
+      airline: pair.airline, flight_number: pair.flightNumber,
+      aircraft_type: normalizeAircraftValue(value("aircraft_type")), departure_date: normalizeDateValue(value("departure_date"), dateFormat),
+      departure_time: normalizeTimeValue(value("departure_time")), arrival_time: normalizeTimeValue(value("arrival_time")), flight_duration: normalizeDurationValue(value("flight_duration")),
+      status: value("status") ? { original: value("status"), normalized: value("status").toLowerCase(), status: "Resolved" } : { original: "", normalized: "", status: "Unresolved" },
+    };
+    return { sourceRow: row.sourceRow, fields };
+  }), [airportResult, dataRows, dateFormat, fieldColumn]);
+
+  useEffect(() => {
+    if (!confirmation) { setConfirmationOptions([]); return; }
+    const local = airportCandidates[confirmation.original.toLowerCase()] || [];
+    if (!confirmationQuery.trim()) { setConfirmationOptions(local); return; }
+    let live = true; const timer = setTimeout(async () => { try { const response = await fetch(`/api/airports?q=${encodeURIComponent(confirmationQuery.trim())}`, { cache: "no-store" }); const body = await response.json(); if (live) setConfirmationOptions(response.ok && Array.isArray(body.airports) ? body.airports : []); } catch { if (live) setConfirmationOptions([]); } }, 180);
+    return () => { live = false; clearTimeout(timer); };
+  }, [airportCandidates, confirmation, confirmationQuery]);
 
   const runAutoMatch = useCallback((preserve = true) => {
     const result = autoMatch(headers, dataRows.map(row => row.values), preserve ? locked : new Set());
@@ -61,6 +117,18 @@ export function ExcelImporter() {
     setMapping(previous => { const next = { ...previous }; Object.keys(next).forEach(key => { if (Number(key) !== index && next[Number(key)] === value && value !== "ignore") next[Number(key)] = "ignore"; }); next[index] = value; return next; });
     setLocked(previous => new Set(previous).add(index));
   }
+  function openConfirmation(field: "departure_airport" | "arrival_airport", row: { sourceRow: number; fields: Record<string, NormalizedValue & { candidates?: Airport[] }> }) {
+    const result = row.fields[field];
+    if (!result.original) return;
+    setConfirmation({ field, sourceRow: row.sourceRow, original: result.original }); setConfirmationQuery(""); setConfirmationOptions(result.candidates || []);
+  }
+  function chooseAirport(airport: Airport, applyAll: boolean) {
+    if (!confirmation) return;
+    const key = confirmation.original.toLowerCase();
+    if (applyAll) setAirportSelections(previous => ({ ...previous, [key]: airport }));
+    else setRowAirportSelections(previous => ({ ...previous, [`${confirmation.field}:${confirmation.sourceRow}`]: airport }));
+    setConfirmation(null); setConfirmationQuery("");
+  }
   const autoMatched = Object.values(mapping).filter(value => value !== "ignore").length;
   return <div className="mt-8 space-y-6">
     {!sheets.length ? <section className={`rounded-2xl border-2 border-dashed p-8 text-center transition ${dragging ? "border-brand bg-brand-soft" : "border-line-strong bg-surface"}`} onDragOver={event => { event.preventDefault(); setDragging(true); }} onDragLeave={() => setDragging(false)} onDrop={event => { event.preventDefault(); setDragging(false); const file = event.dataTransfer.files[0]; if (file) void parse(file); }}>
@@ -70,6 +138,8 @@ export function ExcelImporter() {
       <section className="rounded-2xl border border-line bg-surface p-5"><div className="flex flex-wrap items-end gap-4"><label className="min-w-[12rem] flex-1 text-sm font-semibold"><T id="excel.sheet" /><select value={selectedSheet} onChange={event => setSelectedSheet(event.target.value)} className="mt-1.5 w-full rounded-xl border border-line-strong bg-surface px-3 py-3 text-sm">{sheets.map(sheet => <option key={sheet.name} value={sheet.name}>{sheet.name}</option>)}</select></label><label className="min-w-[12rem] flex-1 text-sm font-semibold"><T id="excel.headerMode" /><select value={headerMode} onChange={event => setHeaderMode(event.target.value as typeof headerMode)} className="mt-1.5 w-full rounded-xl border border-line-strong bg-surface px-3 py-3 text-sm"><option value="auto">{t("Auto-detect header")}</option><option value="manual">{t("Choose header row")}</option><option value="none">{t("No header row")}</option></select></label>{headerMode === "manual" && <label className="w-40 text-sm font-semibold"><T id="excel.headerRow" /><select value={manualHeader} onChange={event => setManualHeader(Number(event.target.value))} className="mt-1.5 w-full rounded-xl border border-line-strong bg-surface px-3 py-3 text-sm">{(current?.rawRows || []).slice(0, 30).map((_, index) => <option key={index} value={index}>{index + 1}</option>)}</select></label>}</div>{headerMode === "auto" && <p className="mt-3 text-xs text-muted">{headerIndex >= 0 ? t("Header row detected") + `: ${headerIndex + 1}` : t("No clear header row found; please choose one or use no-header mode.")}</p>}</section>
       <section className="overflow-hidden rounded-2xl border border-line bg-surface"><div className="flex flex-wrap items-center justify-between gap-3 border-b border-line p-5"><div><h2 className="text-xl font-bold"><T id="excel.matchTitle" /></h2><p className="mt-1 text-sm text-muted"><T id="excel.matchHelp" /></p></div><div className="flex flex-wrap gap-2"><button type="button" className="button-secondary !px-3 !py-2 text-xs" onClick={() => runAutoMatch(true)}><T id="excel.autoMatch" /></button><button type="button" className="button-secondary !px-3 !py-2 text-xs" onClick={() => { setLocked(new Set()); runAutoMatch(false); }}><T id="excel.resetMapping" /></button><button type="button" className="button-secondary !px-3 !py-2 text-xs" onClick={() => { setMapping(previous => Object.fromEntries(Object.keys(previous).map(key => [key, "ignore"]))); setLocked(new Set()); }}><T id="excel.ignoreUnmatched" /></button></div></div><div className="overflow-x-auto"><table className="min-w-[760px] w-full text-left text-sm"><thead className="bg-surface-muted text-xs uppercase tracking-wider text-subtle"><tr><th className="px-4 py-3"><T id="excel.yourColumn" /></th><th className="px-4 py-3"><T id="excel.sampleData" /></th><th className="px-4 py-3"><T id="excel.flightDeskField" /></th><th className="px-4 py-3"><T id="excel.status" /></th></tr></thead><tbody>{headers.map((header, index) => <tr key={`${header}-${index}`} className="border-t border-line"><td className="max-w-48 truncate px-4 py-3 font-semibold" title={header}>{header}</td><td className="max-w-64 truncate px-4 py-3 text-muted">{(dataRows.slice(0, 3).map(row => row.values[index] || "—").join(" · ")) || "—"}</td><td className="px-4 py-3"><select value={mapping[index] || "ignore"} onChange={event => changeMapping(index, event.target.value as ExcelField | "ignore")} className="w-full min-w-48 rounded-lg border border-line-strong bg-surface px-2 py-2 text-sm"><option value="ignore"><T id="excel.ignore" /></option>{excelFields.map(([value, label]) => <option key={value} value={value}>{t(label)}</option>)}</select></td><td className="px-4 py-3"><span className={`rounded-full px-2 py-1 text-xs font-bold ${mapping[index] && mapping[index] !== "ignore" ? confidence[index] === "High" ? "bg-completed-bg text-completed-fg" : confidence[index] === "Medium" ? "bg-brand-soft text-brand" : "bg-surface-muted text-muted" : "bg-surface-muted text-muted"}`}>{mapping[index] && mapping[index] !== "ignore" ? confidence[index] : t("Ignored")}</span></td></tr>)}</tbody></table></div></section>
       <section className="overflow-hidden rounded-2xl border border-line bg-surface"><div className="flex items-center justify-between gap-3 border-b border-line p-5"><div><h2 className="text-xl font-bold"><T id="excel.previewTitle" /></h2><p className="mt-1 text-sm text-muted">{autoMatched} <T id="excel.fieldsMapped" /> · {Math.min(dataRows.length, 10)} <T id="excel.previewRows" /></p></div></div><div className="overflow-x-auto"><table className="min-w-[900px] w-full text-left text-sm"><thead className="bg-surface-muted text-xs uppercase tracking-wider text-subtle"><tr><th className="px-4 py-3">#</th>{headers.map((_, index) => mapping[index] && mapping[index] !== "ignore" ? <th key={index} className="px-4 py-3">{t(excelFields.find(([value]) => value === mapping[index])?.[1] || "")}</th> : null)}</tr></thead><tbody>{dataRows.slice(0, 10).map(row => <tr key={row.sourceRow} className="border-t border-line"><td className="px-4 py-3 text-muted">{row.sourceRow}</td>{headers.map((_, index) => mapping[index] && mapping[index] !== "ignore" ? <td key={index} className="max-w-56 truncate px-4 py-3">{row.values[index] || "—"}</td> : null)}</tr>)}</tbody></table></div></section>
+      <section className="overflow-hidden rounded-2xl border border-line bg-surface"><div className="flex flex-wrap items-end justify-between gap-3 border-b border-line p-5"><div><h2 className="text-xl font-bold"><T id="excel.normalizationTitle" /></h2><p className="mt-1 text-sm text-muted"><T id="excel.normalizationHelp" /></p></div><label className="text-sm font-semibold"><T id="excel.dateFormat" /><select value={dateFormat} onChange={event => setDateFormat(event.target.value as typeof dateFormat)} className="ml-2 rounded-lg border border-line-strong bg-surface px-2 py-2 text-sm"><option value="MM/DD/YYYY">MM/DD/YYYY</option><option value="DD/MM/YYYY">DD/MM/YYYY</option><option value="YYYY-MM-DD">YYYY-MM-DD</option></select></label></div>{airportLoading && <p className="border-b border-line px-5 py-3 text-xs text-muted"><T id="excel.resolvingAirports" /></p>}<div className="overflow-x-auto"><table className="min-w-[1040px] w-full text-left text-sm"><thead className="bg-surface-muted text-xs uppercase tracking-wider text-subtle"><tr><th className="px-4 py-3">#</th>{(["departure_airport", "arrival_airport", "airline", "flight_number", "aircraft_type", "departure_date", "departure_time", "arrival_time", "flight_duration"] as ExcelField[]).map(field => <th key={field} className="px-4 py-3">{t(excelFields.find(([value]) => value === field)?.[1] || "")}</th>)}</tr></thead><tbody>{normalizedRows.slice(0, 10).map(row => <tr key={row.sourceRow} className="border-t border-line align-top"><td className="px-4 py-3 text-muted">{row.sourceRow}</td>{(["departure_airport", "arrival_airport", "airline", "flight_number", "aircraft_type", "departure_date", "departure_time", "arrival_time", "flight_duration"] as ExcelField[]).map(field => { const item = row.fields[field]; const airportField = field === "departure_airport" || field === "arrival_airport"; return <td key={field} className="max-w-44 px-4 py-3"><p className="truncate" title={item.original}>{item.normalized || "—"}</p><p className="mt-1 truncate text-xs text-muted" title={item.original}>{item.original || "—"}</p><button type="button" onClick={() => airportField ? openConfirmation(field, row) : undefined} className={`mt-1 rounded-full px-2 py-0.5 text-[10px] font-bold ${item.status === "Resolved" ? "bg-completed-bg text-completed-fg" : item.status === "Needs Confirmation" ? "bg-brand-soft text-brand" : "bg-danger-bg text-danger-fg"}`}>{item.status === "Resolved" ? <T id="excel.resolved" /> : item.status === "Needs Confirmation" ? <T id="excel.needsConfirmation" /> : <T id="excel.unresolved" />}{airportField && item.status !== "Resolved" ? " · " : ""}</button></td>; })}</tr>)}</tbody></table></div></section>
+      {confirmation && <section className="rounded-2xl border border-brand/40 bg-brand-soft/30 p-5"><div className="flex flex-wrap items-start justify-between gap-3"><div><h2 className="text-lg font-bold"><T id="excel.confirmationTitle" /></h2><p className="mt-1 text-sm text-muted"><T id="excel.originalValue" />: <strong>{confirmation.original}</strong></p></div><button type="button" className="button-secondary !px-3 !py-2 text-xs" onClick={() => setConfirmation(null)}><T id="common.close" /></button></div><input value={confirmationQuery} onChange={event => setConfirmationQuery(event.target.value)} placeholder={t("Search airport by code, name or city")} className="mt-4 w-full rounded-xl border border-line-strong bg-surface px-3 py-3 text-sm" />{confirmationOptions.length ? <div className="mt-3 grid gap-2 sm:grid-cols-2">{confirmationOptions.map(airport => <div key={airport.id || airport.name} className="flex items-center justify-between gap-3 rounded-xl border border-line bg-surface p-3"><div className="min-w-0"><p className="truncate font-semibold">{airportCodes(airport)} — {airport.name}</p><p className="truncate text-xs text-muted">{[airport.municipality, airport.countryName].filter(Boolean).join(", ")}</p></div><div className="flex shrink-0 gap-1"><button type="button" className="button-primary !min-h-8 !px-2 !py-1 text-xs" onClick={() => chooseAirport(airport, false)}><T id="excel.select" /></button><button type="button" className="button-secondary !min-h-8 !px-2 !py-1 text-xs" onClick={() => chooseAirport(airport, true)}><T id="excel.applyAll" /></button></div></div>)}</div> : <p className="mt-3 text-sm text-muted"><T id="excel.noAirportMatches" /></p>}</section>}
     </>}
     {error && <p role="alert" className="rounded-xl bg-danger-bg p-4 text-sm text-danger-fg">{error}</p>}
     <input ref={input} type="file" accept=".xlsx,.xls,.csv" className="hidden" onChange={choose} />

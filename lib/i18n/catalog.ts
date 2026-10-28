@@ -396,6 +396,19 @@ No header row|No header row|无表头
 Header row detected|Header row detected|已识别表头行
 No clear header row found; please choose one or use no-header mode.|No clear header row found; please choose one or use no-header mode.|未找到明确表头，请手动选择或使用无表头模式。
 Ignored|Ignored|已忽略
+excel.normalizationTitle|Normalization Preview|标准化预览
+excel.normalizationHelp|Review original values, normalized values, and resolution status. Nothing is saved yet.|检查原始值、标准化值和识别状态。本阶段尚未保存任何数据。
+excel.dateFormat|Date format|日期格式
+excel.resolvingAirports|Resolving airports…|正在识别机场…
+excel.resolved|Resolved|已识别
+excel.needsConfirmation|Needs Confirmation|需要确认
+excel.unresolved|Unresolved|无法识别
+excel.confirmationTitle|Airport Confirmation Required|需要确认机场
+excel.originalValue|Original Value|原始值
+excel.select|Select|选择
+excel.applyAll|Apply to All|应用到全部
+excel.noAirportMatches|No matching airports found. Try another search or keep this value unresolved.|未找到匹配机场，请尝试其他搜索或保留为无法识别。
+Search airport by code, name or city|Search airport by code, name or city|按代码、名称或城市搜索机场
 dashboard.map|Flight Map|飞行地图
 dashboard.allFlights|All Flights|全部航班
 dashboard.allFlightsHelp|Manage Your Complete Flight History|管理完整航班记录
