@@ -408,6 +408,47 @@ excel.originalValue|Original Value|原始值
 excel.select|Select|选择
 excel.applyAll|Apply to All|应用到全部
 excel.noAirportMatches|No matching airports found. Try another search or keep this value unresolved.|未找到匹配机场，请尝试其他搜索或保留为无法识别。
+Validation & Review|Validation & Review|数据验证与审核
+Checking your existing flights…|Checking your existing flights…|正在检查已有航班…
+Review every row before the future import step. Nothing is saved yet.|Review every row before the future import step. Nothing is saved yet.|请在后续导入前审核每一行数据。本阶段不会保存任何数据。
+Skip selected|Skip selected|跳过所选记录
+Total|Total|总数
+Ready|Ready|准备导入
+Needs Review|Needs Review|需要审核
+Incomplete|Incomplete|信息不完整
+Duplicate|Duplicate|重复航班
+Skipped|Skipped|已跳过
+All|All|全部
+Only Show Issues|Only Show Issues|仅显示问题
+Select|Select|选择
+Reasons|Reasons|原因
+Flight details|Flight details|航班详情
+Keep this row|Keep this row|保留此记录
+No issues found.|No issues found.|未发现问题。
+Airports|Airports|机场
+Departure|Departure|出发
+Arrival|Arrival|到达
+No records match this filter.|No records match this filter.|没有符合此筛选条件的记录。
+Departure airport is missing.|Departure airport is missing.|缺少出发机场。
+Arrival airport is missing.|Arrival airport is missing.|缺少到达机场。
+Departure date is missing.|Departure date is missing.|缺少出发日期。
+Departure time is missing.|Departure time is missing.|缺少出发时间。
+Arrival time is missing.|Arrival time is missing.|缺少到达时间。
+Departure and arrival airports cannot be the same.|Departure and arrival airports cannot be the same.|出发和到达机场不能相同。
+Departure airport is invalid.|Departure airport is invalid.|出发机场无效。
+Arrival airport is invalid.|Arrival airport is invalid.|到达机场无效。
+Departure date is invalid.|Departure date is invalid.|出发日期无效。
+Departure time is invalid.|Departure time is invalid.|出发时间无效。
+Arrival time is invalid.|Arrival time is invalid.|到达时间无效。
+Departure airport requires confirmation.|Departure airport requires confirmation.|出发机场需要确认。
+Arrival airport requires confirmation.|Arrival airport requires confirmation.|到达机场需要确认。
+Departure date requires confirmation.|Departure date requires confirmation.|出发日期需要确认。
+Departure time requires confirmation.|Departure time requires confirmation.|出发时间需要确认。
+Arrival time requires confirmation.|Arrival time requires confirmation.|到达时间需要确认。
+Flight duration must be a non-negative number of minutes.|Flight duration must be a non-negative number of minutes.|飞行时长必须是非负分钟数。
+Arrival time is earlier than departure time; confirm the date or overnight marker.|Arrival time is earlier than departure time; confirm the date or overnight marker.|到达时间早于出发时间，请确认日期或跨日标记。
+Exact duplicate flight found.|Exact duplicate flight found.|发现完全重复的航班。
+Possible duplicate flight.|Possible duplicate flight.|可能存在重复航班。
 Search airport by code, name or city|Search airport by code, name or city|按代码、名称或城市搜索机场
 dashboard.map|Flight Map|飞行地图
 dashboard.allFlights|All Flights|全部航班

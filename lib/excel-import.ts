@@ -18,6 +18,67 @@ export type ExcelRow = { sourceRow: number; values: string[] };
 export type SheetData = { name: string; rows: ExcelRow[]; rawRows: string[][]; headerRow: number | null; hasHeader: boolean };
 export type NormalizationStatus = "Resolved" | "Needs Confirmation" | "Unresolved";
 export type NormalizedValue = { original: string; normalized: string; status: NormalizationStatus };
+export type ReviewStatus = "Ready" | "Needs Review" | "Incomplete" | "Duplicate" | "Skipped";
+export type ImportReview = { status: ReviewStatus; reasons: string[] };
+
+export function validateImportFields(fields: Record<string, NormalizedValue & { normalized?: string }>): ImportReview {
+  const reasons: string[] = [];
+  const required: [string, string][] = [
+    ["departure_airport", "Departure airport is missing."],
+    ["arrival_airport", "Arrival airport is missing."],
+    ["departure_date", "Departure date is missing."],
+    ["departure_time", "Departure time is missing."],
+    ["arrival_time", "Arrival time is missing."],
+  ];
+  for (const [field, message] of required) {
+    const value = fields[field];
+    if (!value?.normalized) reasons.push(message);
+  }
+  const departure = fields.departure_airport?.normalized?.toUpperCase();
+  const arrival = fields.arrival_airport?.normalized?.toUpperCase();
+  if (departure && arrival && departure === arrival) reasons.push("Departure and arrival airports cannot be the same.");
+  for (const [field, label] of [["departure_airport", "Departure airport"], ["arrival_airport", "Arrival airport"], ["departure_date", "Departure date"], ["departure_time", "Departure time"], ["arrival_time", "Arrival time"]] as const) {
+    if (fields[field]?.status === "Unresolved" && fields[field]?.original) reasons.push(`${label} is invalid.`);
+    if (fields[field]?.status === "Needs Confirmation") reasons.push(`${label} requires confirmation.`);
+  }
+  const duration = fields.flight_duration;
+  if (duration?.original && (duration.status === "Unresolved" || !/^\d+$/.test(duration.normalized))) reasons.push("Flight duration must be a non-negative number of minutes.");
+  const departureTime = fields.departure_time?.normalized?.match(/^(\d{2}):(\d{2})/);
+  const arrivalTime = fields.arrival_time?.normalized?.match(/^(\d{2}):(\d{2})/);
+  if (departureTime && arrivalTime && !fields.arrival_time.normalized.includes("+1")) {
+    const departureMinutes = Number(departureTime[1]) * 60 + Number(departureTime[2]);
+    const arrivalMinutes = Number(arrivalTime[1]) * 60 + Number(arrivalTime[2]);
+    if (arrivalMinutes < departureMinutes) reasons.push("Arrival time is earlier than departure time; confirm the date or overnight marker.");
+  }
+  const needsReview = Object.values(fields).some(value => value?.status === "Needs Confirmation");
+  if (reasons.some(reason => /missing|invalid|cannot be the same|must be/.test(reason))) return { status: "Incomplete", reasons };
+  if (needsReview || reasons.length) return { status: "Needs Review", reasons };
+  return { status: "Ready", reasons: [] };
+}
+
+export type ExistingFlightForDuplicate = { id: string; flight_date?: string | null; flight_number?: string | null; airline?: string | null; departure_airport_iata?: string | null; arrival_airport_iata?: string | null; departure_airport_icao?: string | null; arrival_airport_icao?: string | null };
+
+function sameCode(left?: string | null, right?: string) {
+  if (!left || !right) return false;
+  const values = left.split(/[·,\s]+/).map(value => value.trim().toUpperCase()).filter(Boolean);
+  return values.includes(right.trim().toUpperCase());
+}
+
+export function detectImportDuplicate(fields: Record<string, NormalizedValue>, existing: ExistingFlightForDuplicate[]) {
+  const date = fields.departure_date?.normalized;
+  const flightNumber = fields.flight_number?.normalized?.replace(/\s+/g, "").toUpperCase();
+  const airline = fields.airline?.normalized?.toUpperCase();
+  const departure = fields.departure_airport?.normalized;
+  const arrival = fields.arrival_airport?.normalized;
+  if (!date || !departure || !arrival) return { kind: "none" as const, reason: "" };
+  const routeMatches = (flight: ExistingFlightForDuplicate) =>
+    [flight.departure_airport_iata, flight.departure_airport_icao].some(code => sameCode(code, departure)) &&
+    [flight.arrival_airport_iata, flight.arrival_airport_icao].some(code => sameCode(code, arrival));
+  const exact = existing.find(flight => flight.flight_date === date && routeMatches(flight) && Boolean(flightNumber) && sameCode(flight.flight_number, flightNumber));
+  if (exact) return { kind: "exact" as const, reason: "Exact duplicate flight found." };
+  const possible = existing.find(flight => flight.flight_date === date && routeMatches(flight) || (flight.flight_date === date && Boolean(flightNumber) && (sameCode(flight.flight_number, flightNumber) || sameCode(flight.airline, airline))));
+  return possible ? { kind: "possible" as const, reason: "Possible duplicate flight." } : { kind: "none" as const, reason: "" };
+}
 
 const aliases: Record<ExcelField, string[]> = {
   departure_airport: ["departure airport", "departure airport code", "from", "origin", "origin airport", "dep airport", "dep", "departure", "出发机场", "出发地", "起飞机场"],
