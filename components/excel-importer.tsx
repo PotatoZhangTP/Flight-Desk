@@ -7,6 +7,7 @@ import { airportCodes, type Airport } from "@/lib/airports";
 
 type RawSheet = { name: string; rawRows: string[][] };
 type ConfirmationTarget = { field: "departure_airport" | "arrival_airport"; sourceRow: number; original: string };
+type AircraftOption = { code: string; name: string; aliases?: string[] };
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 const extensions = [".xlsx", ".xls", ".csv"];
 
@@ -29,6 +30,7 @@ export function ExcelImporter() {
   const [airportSelections, setAirportSelections] = useState<Record<string, Airport>>({});
   const [rowAirportSelections, setRowAirportSelections] = useState<Record<string, Airport>>({});
   const [airportLoading, setAirportLoading] = useState(false);
+  const [aircraftCandidates, setAircraftCandidates] = useState<Record<string, AircraftOption[]>>({});
   const [confirmation, setConfirmation] = useState<ConfirmationTarget | null>(null);
   const [confirmationOptions, setConfirmationOptions] = useState<Airport[]>([]);
   const [confirmationQuery, setConfirmationQuery] = useState("");
@@ -53,6 +55,35 @@ export function ExcelImporter() {
     return () => { live = false; };
   }, [airportColumns, dataRows]);
 
+  const aircraftColumn = fieldColumn("aircraft_type");
+  useEffect(() => {
+    let live = true;
+    const values = aircraftColumn
+      ? [...new Set(dataRows.map(row => (row.values[Number(aircraftColumn)] || "").trim()).filter(Boolean))]
+      : [];
+    if (!values.length) { setAircraftCandidates({}); return; }
+    Promise.all(values.map(async value => {
+      try {
+        const response = await fetch(`/api/aircraft-catalog?q=${encodeURIComponent(value)}`, { cache: "no-store" });
+        const body = await response.json();
+        return [value.toLowerCase(), response.ok && Array.isArray(body.items) ? body.items as AircraftOption[] : []] as const;
+      } catch { return [value.toLowerCase(), []] as const; }
+    })).then(entries => { if (live) setAircraftCandidates(Object.fromEntries(entries)); });
+    return () => { live = false; };
+  }, [aircraftColumn, dataRows]);
+
+  const aircraftResult = useCallback((row: { values: string[] }): NormalizedValue => {
+    const original = aircraftColumn ? (row.values[Number(aircraftColumn)] || "").trim() : "";
+    if (!original) return { original, normalized: "", status: "Unresolved" };
+    const options = aircraftCandidates[original.toLowerCase()] || [];
+    const key = original.toLowerCase().replace(/[\s-]+/g, "");
+    const exact = options.filter(option => [option.code, option.name, ...(option.aliases || [])]
+      .some(value => value.toLowerCase().replace(/[\s-]+/g, "") === key));
+    if (exact.length === 1) return { original, normalized: exact[0].code, status: "Resolved" };
+    if (options.length === 1 && /^[AB]\d{3}$/i.test(options[0].code)) return { original, normalized: options[0].code, status: "Resolved" };
+    return normalizeAircraftValue(original);
+  }, [aircraftCandidates, aircraftColumn]);
+
   const airportResult = useCallback((field: "departure_airport" | "arrival_airport", row: { sourceRow: number; values: string[] }): NormalizedValue & { candidates: Airport[] } => {
     const column = fieldColumn(field); const original = column ? (row.values[Number(column)] || "").trim() : ""; const key = original.toLowerCase();
     const candidates = airportCandidates[key] || []; const selected = rowAirportSelections[`${field}:${row.sourceRow}`] || airportSelections[key];
@@ -71,12 +102,12 @@ export function ExcelImporter() {
     const fields: Record<string, NormalizedValue & { candidates?: Airport[] }> = {
       departure_airport: airportResult("departure_airport", row), arrival_airport: airportResult("arrival_airport", row),
       airline: pair.airline, flight_number: pair.flightNumber,
-      aircraft_type: normalizeAircraftValue(value("aircraft_type")), departure_date: normalizeDateValue(value("departure_date"), dateFormat),
+      aircraft_type: aircraftResult(row), departure_date: normalizeDateValue(value("departure_date"), dateFormat),
       departure_time: normalizeTimeValue(value("departure_time")), arrival_time: normalizeTimeValue(value("arrival_time")), flight_duration: normalizeDurationValue(value("flight_duration")),
       status: value("status") ? { original: value("status"), normalized: value("status").toLowerCase(), status: "Resolved" } : { original: "", normalized: "", status: "Unresolved" },
     };
     return { sourceRow: row.sourceRow, fields };
-  }), [airportResult, dataRows, dateFormat, fieldColumn]);
+  }), [aircraftResult, airportResult, dataRows, dateFormat, fieldColumn]);
 
   useEffect(() => {
     if (!confirmation) { setConfirmationOptions([]); return; }
