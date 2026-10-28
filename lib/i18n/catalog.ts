@@ -449,6 +449,21 @@ Flight duration must be a non-negative number of minutes.|Flight duration must b
 Arrival time is earlier than departure time; confirm the date or overnight marker.|Arrival time is earlier than departure time; confirm the date or overnight marker.|到达时间早于出发时间，请确认日期或跨日标记。
 Exact duplicate flight found.|Exact duplicate flight found.|发现完全重复的航班。
 Possible duplicate flight.|Possible duplicate flight.|可能存在重复航班。
+Arrival date is missing.|Arrival date is missing.|缺少到达日期。
+Import Summary|Import Summary|导入摘要
+Only Ready records will be imported.|Only Ready records will be imported.|只有 Ready 记录会被导入。
+records ready|records ready|条记录准备导入
+Import Ready Records|Import Ready Records|导入准备好的记录
+Importing…|Importing…|正在导入…
+Import Complete|Import Complete|导入完成
+Total Records|Total Records|记录总数
+Successfully Imported|Successfully Imported|成功导入
+Already Imported|Already Imported|已导入
+Failed|Failed|失败
+View My Flights|View My Flights|查看我的航班
+Retry Failed Records|Retry Failed Records|重试失败记录
+Return to Import Review|Return to Import Review|返回导入审核
+The import could not be confirmed. You can safely retry this batch.|The import could not be confirmed. You can safely retry this batch.|无法确认导入结果，可以安全地重试此批次。
 Search airport by code, name or city|Search airport by code, name or city|按代码、名称或城市搜索机场
 dashboard.map|Flight Map|飞行地图
 dashboard.allFlights|All Flights|全部航班

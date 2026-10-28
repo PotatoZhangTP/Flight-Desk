@@ -2,6 +2,7 @@ export const excelFields = [
   ["departure_airport", "Departure Airport"],
   ["arrival_airport", "Arrival Airport"],
   ["departure_date", "Departure Date"],
+  ["arrival_date", "Arrival Date"],
   ["flight_number", "Flight Number"],
   ["airline", "Airline"],
   ["aircraft_type", "Aircraft Type"],
@@ -27,6 +28,7 @@ export function validateImportFields(fields: Record<string, NormalizedValue & { 
     ["departure_airport", "Departure airport is missing."],
     ["arrival_airport", "Arrival airport is missing."],
     ["departure_date", "Departure date is missing."],
+    ["arrival_date", "Arrival date is missing."],
     ["departure_time", "Departure time is missing."],
     ["arrival_time", "Arrival time is missing."],
   ];
@@ -37,7 +39,7 @@ export function validateImportFields(fields: Record<string, NormalizedValue & { 
   const departure = fields.departure_airport?.normalized?.toUpperCase();
   const arrival = fields.arrival_airport?.normalized?.toUpperCase();
   if (departure && arrival && departure === arrival) reasons.push("Departure and arrival airports cannot be the same.");
-  for (const [field, label] of [["departure_airport", "Departure airport"], ["arrival_airport", "Arrival airport"], ["departure_date", "Departure date"], ["departure_time", "Departure time"], ["arrival_time", "Arrival time"]] as const) {
+  for (const [field, label] of [["departure_airport", "Departure airport"], ["arrival_airport", "Arrival airport"], ["departure_date", "Departure date"], ["arrival_date", "Arrival date"], ["departure_time", "Departure time"], ["arrival_time", "Arrival time"]] as const) {
     if (fields[field]?.status === "Unresolved" && fields[field]?.original) reasons.push(`${label} is invalid.`);
     if (fields[field]?.status === "Needs Confirmation") reasons.push(`${label} requires confirmation.`);
   }
@@ -84,6 +86,7 @@ const aliases: Record<ExcelField, string[]> = {
   departure_airport: ["departure airport", "departure airport code", "from", "origin", "origin airport", "dep airport", "dep", "departure", "出发机场", "出发地", "起飞机场"],
   arrival_airport: ["arrival airport", "arrival airport code", "to", "destination", "destination airport", "arr airport", "arr", "arrival", "到达机场", "目的地", "降落机场"],
   departure_date: ["departure date", "flight date", "date", "dep date", "outbound date", "出发日期", "飞行日期"],
+  arrival_date: ["arrival date", "arr date", "inbound date", "到达日期", "降落日期"],
   flight_number: ["flight number", "flight no", "flight #", "flight", "flt no", "航班号", "航班编号"],
   airline: ["airline", "carrier", "airline code", "airline iata", "航司", "航空公司"],
   aircraft_type: ["aircraft type", "aircraft", "aircraft model", "equipment", "plane", "机型", "飞机型号"],
