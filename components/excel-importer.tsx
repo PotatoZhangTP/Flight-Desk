@@ -1,0 +1,77 @@
+"use client";
+
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { T, useText } from "@/components/i18n";
+import { autoMatch, detectHeaderRow, excelFields, type Confidence, type ExcelField, type SheetData } from "@/lib/excel-import";
+
+type RawSheet = { name: string; rawRows: string[][] };
+const MAX_FILE_SIZE = 10 * 1024 * 1024;
+const extensions = [".xlsx", ".xls", ".csv"];
+
+export function ExcelImporter() {
+  const input = useRef<HTMLInputElement>(null);
+  const t = useText();
+  const [sheets, setSheets] = useState<RawSheet[]>([]);
+  const [fileName, setFileName] = useState("");
+  const [selectedSheet, setSelectedSheet] = useState("");
+  const [headerMode, setHeaderMode] = useState<"auto" | "manual" | "none">("auto");
+  const [manualHeader, setManualHeader] = useState(0);
+  const [mapping, setMapping] = useState<Record<number, ExcelField | "ignore"> >({});
+  const [confidence, setConfidence] = useState<Record<number, Confidence>>({});
+  const [locked, setLocked] = useState<Set<number>>(new Set());
+  const [dragging, setDragging] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const current = sheets.find(sheet => sheet.name === selectedSheet);
+  const headerIndex = headerMode === "none" ? -1 : headerMode === "manual" ? manualHeader : detectHeaderRow(current?.rawRows || []);
+  const headers = useMemo(() => headerIndex >= 0 ? (current?.rawRows[headerIndex] || []).map((value, index) => String(value || `Column ${index + 1}`)) : (current?.rawRows[0] || []).map((_, index) => `Column ${index + 1}`), [current, headerIndex]);
+  const dataRows = useMemo(() => {
+    const rows = current?.rawRows || [];
+    return rows.slice(headerIndex >= 0 ? headerIndex + 1 : 0).map((values, index) => ({ sourceRow: headerIndex >= 0 ? headerIndex + index + 2 : index + 1, values }));
+  }, [current, headerIndex]);
+
+  const runAutoMatch = useCallback((preserve = true) => {
+    const result = autoMatch(headers, dataRows.map(row => row.values), preserve ? locked : new Set());
+    setMapping(previous => preserve ? { ...result.result, ...Object.fromEntries([...locked].map(index => [index, previous[index]])) } : result.result);
+    setConfidence(result.confidence);
+  }, [dataRows, headers, locked]);
+  useEffect(() => { if (headers.length) { setLocked(new Set()); const result = autoMatch(headers, dataRows.map(row => row.values)); setMapping(result.result); setConfidence(result.confidence); } }, [selectedSheet, headerIndex, headers.length]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  async function parse(file: File) {
+    setError("");
+    const lower = file.name.toLowerCase();
+    if (!extensions.some(extension => lower.endsWith(extension))) { setError(t("Only .xlsx, .xls, and .csv files are supported.")); return; }
+    if (file.size > MAX_FILE_SIZE) { setError(t("The file must be 10 MB or smaller.")); return; }
+    setLoading(true);
+    try {
+      const XLSX = await import("xlsx");
+      const workbook = XLSX.read(await file.arrayBuffer(), { type: "array", cellDates: false, cellNF: false, cellText: true, bookVBA: false });
+      const parsed = workbook.SheetNames.map(name => {
+        const sheet = workbook.Sheets[name];
+        const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "", raw: false, blankrows: true }) as unknown[][];
+        return { name, rawRows: rows.map(row => row.map(value => value == null ? "" : String(value))) };
+      });
+      if (!parsed.length) throw new Error("No worksheets were found.");
+      setFileName(file.name); setSheets(parsed); setSelectedSheet(parsed[0].name); setHeaderMode("auto"); setManualHeader(0); setLocked(new Set());
+    } catch (caught) { console.error("[excel-import] parse failed", caught); setError(t("This file could not be parsed. Please check the file and try again.")); }
+    finally { setLoading(false); }
+  }
+  function choose(event: React.ChangeEvent<HTMLInputElement>) { const file = event.target.files?.[0]; if (file) void parse(file); event.target.value = ""; }
+  function changeMapping(index: number, value: ExcelField | "ignore") {
+    setMapping(previous => { const next = { ...previous }; Object.keys(next).forEach(key => { if (Number(key) !== index && next[Number(key)] === value && value !== "ignore") next[Number(key)] = "ignore"; }); next[index] = value; return next; });
+    setLocked(previous => new Set(previous).add(index));
+  }
+  const autoMatched = Object.values(mapping).filter(value => value !== "ignore").length;
+  return <div className="mt-8 space-y-6">
+    {!sheets.length ? <section className={`rounded-2xl border-2 border-dashed p-8 text-center transition ${dragging ? "border-brand bg-brand-soft" : "border-line-strong bg-surface"}`} onDragOver={event => { event.preventDefault(); setDragging(true); }} onDragLeave={() => setDragging(false)} onDrop={event => { event.preventDefault(); setDragging(false); const file = event.dataTransfer.files[0]; if (file) void parse(file); }}>
+      <div className="mx-auto max-w-xl"><div className="text-4xl text-brand">⇧</div><h2 className="mt-3 text-xl font-bold"><T id="excel.uploadTitle" /></h2><p className="mt-2 text-sm text-muted"><T id="excel.uploadHelp" /></p><button type="button" className="button-primary mt-5" onClick={() => input.current?.click()} disabled={loading}>{loading ? <T id="excel.parsing" /> : <T id="excel.chooseFile" />}</button><p className="mt-3 text-xs text-subtle"><T id="excel.fileLimit" /></p></div>
+    </section> : <>
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-line bg-surface p-4"><div className="min-w-0"><p className="text-sm font-bold text-ink">{fileName}</p><p className="text-xs text-muted">{sheets.length} <T id="excel.sheets" /> · {dataRows.length} <T id="excel.rows" /></p></div><button type="button" className="button-secondary" onClick={() => input.current?.click()}><T id="excel.replaceFile" /></button></div>
+      <section className="rounded-2xl border border-line bg-surface p-5"><div className="flex flex-wrap items-end gap-4"><label className="min-w-[12rem] flex-1 text-sm font-semibold"><T id="excel.sheet" /><select value={selectedSheet} onChange={event => setSelectedSheet(event.target.value)} className="mt-1.5 w-full rounded-xl border border-line-strong bg-surface px-3 py-3 text-sm">{sheets.map(sheet => <option key={sheet.name} value={sheet.name}>{sheet.name}</option>)}</select></label><label className="min-w-[12rem] flex-1 text-sm font-semibold"><T id="excel.headerMode" /><select value={headerMode} onChange={event => setHeaderMode(event.target.value as typeof headerMode)} className="mt-1.5 w-full rounded-xl border border-line-strong bg-surface px-3 py-3 text-sm"><option value="auto">{t("Auto-detect header")}</option><option value="manual">{t("Choose header row")}</option><option value="none">{t("No header row")}</option></select></label>{headerMode === "manual" && <label className="w-40 text-sm font-semibold"><T id="excel.headerRow" /><select value={manualHeader} onChange={event => setManualHeader(Number(event.target.value))} className="mt-1.5 w-full rounded-xl border border-line-strong bg-surface px-3 py-3 text-sm">{(current?.rawRows || []).slice(0, 30).map((_, index) => <option key={index} value={index}>{index + 1}</option>)}</select></label>}</div>{headerMode === "auto" && <p className="mt-3 text-xs text-muted">{headerIndex >= 0 ? t("Header row detected") + `: ${headerIndex + 1}` : t("No clear header row found; please choose one or use no-header mode.")}</p>}</section>
+      <section className="overflow-hidden rounded-2xl border border-line bg-surface"><div className="flex flex-wrap items-center justify-between gap-3 border-b border-line p-5"><div><h2 className="text-xl font-bold"><T id="excel.matchTitle" /></h2><p className="mt-1 text-sm text-muted"><T id="excel.matchHelp" /></p></div><div className="flex flex-wrap gap-2"><button type="button" className="button-secondary !px-3 !py-2 text-xs" onClick={() => runAutoMatch(true)}><T id="excel.autoMatch" /></button><button type="button" className="button-secondary !px-3 !py-2 text-xs" onClick={() => { setLocked(new Set()); runAutoMatch(false); }}><T id="excel.resetMapping" /></button><button type="button" className="button-secondary !px-3 !py-2 text-xs" onClick={() => { setMapping(previous => Object.fromEntries(Object.keys(previous).map(key => [key, "ignore"]))); setLocked(new Set()); }}><T id="excel.ignoreUnmatched" /></button></div></div><div className="overflow-x-auto"><table className="min-w-[760px] w-full text-left text-sm"><thead className="bg-surface-muted text-xs uppercase tracking-wider text-subtle"><tr><th className="px-4 py-3"><T id="excel.yourColumn" /></th><th className="px-4 py-3"><T id="excel.sampleData" /></th><th className="px-4 py-3"><T id="excel.flightDeskField" /></th><th className="px-4 py-3"><T id="excel.status" /></th></tr></thead><tbody>{headers.map((header, index) => <tr key={`${header}-${index}`} className="border-t border-line"><td className="max-w-48 truncate px-4 py-3 font-semibold" title={header}>{header}</td><td className="max-w-64 truncate px-4 py-3 text-muted">{(dataRows.slice(0, 3).map(row => row.values[index] || "—").join(" · ")) || "—"}</td><td className="px-4 py-3"><select value={mapping[index] || "ignore"} onChange={event => changeMapping(index, event.target.value as ExcelField | "ignore")} className="w-full min-w-48 rounded-lg border border-line-strong bg-surface px-2 py-2 text-sm"><option value="ignore"><T id="excel.ignore" /></option>{excelFields.map(([value, label]) => <option key={value} value={value}>{t(label)}</option>)}</select></td><td className="px-4 py-3"><span className={`rounded-full px-2 py-1 text-xs font-bold ${mapping[index] && mapping[index] !== "ignore" ? confidence[index] === "High" ? "bg-completed-bg text-completed-fg" : confidence[index] === "Medium" ? "bg-brand-soft text-brand" : "bg-surface-muted text-muted" : "bg-surface-muted text-muted"}`}>{mapping[index] && mapping[index] !== "ignore" ? confidence[index] : t("Ignored")}</span></td></tr>)}</tbody></table></div></section>
+      <section className="overflow-hidden rounded-2xl border border-line bg-surface"><div className="flex items-center justify-between gap-3 border-b border-line p-5"><div><h2 className="text-xl font-bold"><T id="excel.previewTitle" /></h2><p className="mt-1 text-sm text-muted">{autoMatched} <T id="excel.fieldsMapped" /> · {Math.min(dataRows.length, 10)} <T id="excel.previewRows" /></p></div></div><div className="overflow-x-auto"><table className="min-w-[900px] w-full text-left text-sm"><thead className="bg-surface-muted text-xs uppercase tracking-wider text-subtle"><tr><th className="px-4 py-3">#</th>{headers.map((_, index) => mapping[index] && mapping[index] !== "ignore" ? <th key={index} className="px-4 py-3">{t(excelFields.find(([value]) => value === mapping[index])?.[1] || "")}</th> : null)}</tr></thead><tbody>{dataRows.slice(0, 10).map(row => <tr key={row.sourceRow} className="border-t border-line"><td className="px-4 py-3 text-muted">{row.sourceRow}</td>{headers.map((_, index) => mapping[index] && mapping[index] !== "ignore" ? <td key={index} className="max-w-56 truncate px-4 py-3">{row.values[index] || "—"}</td> : null)}</tr>)}</tbody></table></div></section>
+    </>}
+    {error && <p role="alert" className="rounded-xl bg-danger-bg p-4 text-sm text-danger-fg">{error}</p>}
+    <input ref={input} type="file" accept=".xlsx,.xls,.csv" className="hidden" onChange={choose} />
+  </div>;
+}

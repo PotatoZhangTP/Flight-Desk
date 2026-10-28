@@ -345,6 +345,57 @@ dashboard.import|Import Your History|导入历史记录
 dashboard.importHelp|Already have a spreadsheet? Bring your flights into Flight Desk in a few clicks.|已有航班表格？未来可通过导入功能，轻松整理到 Flight Desk。
 dashboard.importSoon|Excel Import Coming Soon|Excel 导入即将上线
 dashboard.importFormats|.xlsx or .csv · Preview before saving|.xlsx 或 .csv · 保存前可预览
+excel.backToAdd|Back to Add a Flight|返回添加航班
+excel.kicker|IMPORT HISTORY|导入历史记录
+excel.title|Import from Excel|从 Excel 导入
+excel.description|Upload, match your columns, and preview your flights. Nothing is saved in this phase.|上传文件、匹配字段并预览航班。本阶段不会保存任何数据。
+excel.uploadTitle|Upload your spreadsheet|上传你的表格
+excel.uploadHelp|Drag and drop a file here, or choose one from your device.|将文件拖放到此处，或从设备中选择文件。
+excel.chooseFile|Choose File|选择文件
+excel.replaceFile|Replace File|更换文件
+excel.parsing|Parsing…|正在解析…
+excel.fileLimit|XLSX, XLS or CSV · Maximum 10 MB|支持 XLSX、XLS 或 CSV · 最大 10 MB
+excel.sheets|sheets|个工作表
+excel.rows|rows|行
+excel.sheet|Sheet|工作表
+excel.headerMode|Header mode|表头模式
+excel.headerRow|Header row|表头行
+excel.matchTitle|Match Your Columns|匹配你的列
+excel.matchHelp|Review the suggestions and adjust any field before continuing.|检查自动建议，并在继续前调整字段。
+excel.autoMatch|Auto Match|自动匹配
+excel.resetMapping|Reset Mapping|重置映射
+excel.ignoreUnmatched|Ignore Unmatched|忽略未匹配项
+excel.yourColumn|Your Column|你的列
+excel.sampleData|Sample Data|示例数据
+excel.flightDeskField|Flight Desk Field|Flight Desk 字段
+excel.status|Status|状态
+excel.ignore|Ignore|忽略
+excel.previewTitle|Data Preview|数据预览
+excel.fieldsMapped|fields mapped|个字段已映射
+excel.previewRows|preview rows|条预览数据
+Import from Excel|Import from Excel|从 Excel 导入
+Bulk import flight history|Bulk import flight history|批量导入航班历史
+Departure Airport|Departure Airport|出发机场
+Arrival Airport|Arrival Airport|到达机场
+Departure Date|Departure Date|出发日期
+Flight Number|Flight Number|航班号
+Airline|Airline|航空公司
+Aircraft Type|Aircraft Type|机型
+Departure Time|Departure Time|出发时间
+Arrival Time|Arrival Time|到达时间
+Flight Duration|Flight Duration|飞行时长
+Flight Status|Flight Status|航班状态
+Aircraft Registration|Aircraft Registration|飞机注册号
+Notes|Notes|备注
+Only .xlsx, .xls, and .csv files are supported.|Only .xlsx, .xls, and .csv files are supported.|仅支持 .xlsx、.xls 和 .csv 文件。
+The file must be 10 MB or smaller.|The file must be 10 MB or smaller.|文件大小不能超过 10 MB。
+This file could not be parsed. Please check the file and try again.|This file could not be parsed. Please check the file and try again.|无法解析此文件，请检查文件后重试。
+Auto-detect header|Auto-detect header|自动识别表头
+Choose header row|Choose header row|选择表头行
+No header row|No header row|无表头
+Header row detected|Header row detected|已识别表头行
+No clear header row found; please choose one or use no-header mode.|No clear header row found; please choose one or use no-header mode.|未找到明确表头，请手动选择或使用无表头模式。
+Ignored|Ignored|已忽略
 dashboard.map|Flight Map|飞行地图
 dashboard.allFlights|All Flights|全部航班
 dashboard.allFlightsHelp|Manage Your Complete Flight History|管理完整航班记录

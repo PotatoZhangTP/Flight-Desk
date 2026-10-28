@@ -13,7 +13,6 @@ function MenuIcon({ children }: { children: ReactNode }) {
     </span>
   );
 }
-
 export function AddFlightDropdown() {
   const [open, setOpen] = useState(false);
   const root = useRef<HTMLDivElement>(null);
@@ -48,7 +47,11 @@ export function AddFlightDropdown() {
             <span aria-hidden="true" className="text-lg text-brand">→</span>
           </Link>
           <div className="my-1 border-t border-line" />
-          <MenuItem icon={<path d="M4 5h16v14H4zM8 9h8M8 13h5" />} title="Import from Excel" description="Bulk import flight history" />
+          <Link href="/flights/import/excel" onClick={() => setOpen(false)} className="flex items-center gap-3 rounded-xl px-3 py-3 transition hover:bg-brand-soft focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand">
+            <MenuIcon><path d="M4 5h16v14H4zM8 9h8M8 13h5" /></MenuIcon>
+            <span className="min-w-0 flex-1"><strong className="block text-sm font-bold text-ink"><T source="Import from Excel" /></strong><span className="block text-xs text-muted"><T source="Bulk import flight history" /></span></span>
+            <span aria-hidden="true" className="text-lg text-brand">→</span>
+          </Link>
           <div className="my-1 border-t border-line" />
           <Link href="/flights/import/simbrief" onClick={() => setOpen(false)} className="flex items-center gap-3 rounded-xl px-3 py-3 transition hover:bg-brand-soft focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand">
             <MenuIcon><path d="M4 17h16M6 17l2-7h8l2 7M10 10V6h4v4M12 3v3" /></MenuIcon>
@@ -57,16 +60,6 @@ export function AddFlightDropdown() {
           </Link>
         </div>
       )}
-    </div>
-  );
-}
-
-function MenuItem({ icon, title, description }: { icon: ReactNode; title: string; description: string }) {
-  return (
-    <div className="flex items-center gap-3 rounded-xl px-3 py-3 opacity-75">
-      <MenuIcon>{icon}</MenuIcon>
-      <span className="min-w-0 flex-1"><strong className="block text-sm font-bold text-ink">{title}</strong><span className="block text-xs text-muted">{description}</span></span>
-      <span className="rounded-full bg-page px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-subtle"><T id="common.soon" /></span>
     </div>
   );
 }
