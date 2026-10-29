@@ -137,6 +137,7 @@ export function ExcelImporter() {
       aircraft_type: aircraftResult(row), departure_date: normalizeDateValue(value("departure_date"), dateFormat), arrival_date: normalizeDateValue(value("arrival_date"), dateFormat),
       departure_time: normalizeTimeValue(value("departure_time")), arrival_time: normalizeTimeValue(value("arrival_time")), flight_duration: normalizeDurationValue(value("flight_duration")),
       status: value("status") ? { original: value("status"), normalized: value("status").toLowerCase(), status: "Resolved" } : { original: "", normalized: "", status: "Unresolved" },
+      row_number: { original: String(row.sourceRow), normalized: String(row.sourceRow), status: "Resolved" },
     };
     return { sourceRow: row.sourceRow, fields };
   }), [aircraftResult, airportResult, dataRows, dateFormat, fieldColumn, rowOverrides]);

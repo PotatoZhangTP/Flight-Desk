@@ -376,6 +376,7 @@ excel.previewRows|preview rows|条预览数据
 Import from Excel|Import from Excel|从 Excel 导入
 Bulk import flight history|Bulk import flight history|批量导入航班历史
 Departure Airport|Departure Airport|出发机场
+Row Number|Row Number|行号
 Arrival Airport|Arrival Airport|到达机场
 Departure Date|Departure Date|出发日期
 Flight Number|Flight Number|航班号

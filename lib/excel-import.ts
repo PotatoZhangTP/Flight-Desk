@@ -12,6 +12,7 @@ export const excelFields = [
   ["status", "Flight Status"],
   ["registration", "Aircraft Registration"],
   ["notes", "Notes"],
+  ["row_number", "Row Number"],
 ] as const;
 export type ExcelField = typeof excelFields[number][0];
 export type Confidence = "High" | "Medium" | "Low";
@@ -92,6 +93,7 @@ const aliases: Record<ExcelField, string[]> = {
   status: ["flight status", "status", "state", "状态", "航班状态"],
   registration: ["registration", "aircraft registration", "tail number", "tail", "机号", "注册号"],
   notes: ["notes", "note", "remarks", "comments", "备注", "说明"],
+  row_number: ["row number", "source row", "row", "序号", "编号"],
 };
 
 export function normalizeHeader(value: string) { return value.trim().toLowerCase().replace(/[\u3000\s_./#-]+/g, " ").replace(/[^a-z0-9\u4e00-\u9fff ]/g, "").trim(); }
@@ -115,6 +117,7 @@ function contentScore(field: ExcelField, values: string[]) {
 
 export function matchColumn(header: string, values: string[]): { field: ExcelField | null; confidence: Confidence; score: number } {
   const normalized = normalizeHeader(header);
+  if (header.trim() === "#") return { field: "row_number", confidence: "High", score: 1 };
   if (normalized) {
     for (const [field, names] of Object.entries(aliases) as [ExcelField, string[]][]) {
       const normalizedNames = names.map(normalizeHeader);
