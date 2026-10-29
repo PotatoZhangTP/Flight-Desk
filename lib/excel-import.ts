@@ -42,6 +42,15 @@ export function validateImportFields(fields: Record<string, NormalizedValue & { 
   }
   const duration = fields.flight_duration;
   if (duration?.original && (duration.status === "Unresolved" || !/^\d+$/.test(duration.normalized))) reasons.push("Flight duration must be a non-negative number of minutes.");
+  const labels: Record<string, string> = {
+    departure_airport: "Departure airport", arrival_airport: "Arrival airport", departure_date: "Departure date", arrival_date: "Arrival date",
+    departure_time: "Departure time", arrival_time: "Arrival time", flight_number: "Flight number", airline: "Airline", aircraft_type: "Aircraft type", flight_duration: "Flight duration",
+  };
+  for (const [field, label] of Object.entries(labels)) {
+    const value = fields[field];
+    if (value?.status === "Needs Confirmation" && !reasons.some(reason => reason.startsWith(`${label} requires`))) reasons.push(`${label} requires confirmation.`);
+    if (value?.status === "Unresolved" && value.original && !reasons.some(reason => reason.startsWith(`${label} is invalid`)) && field !== "flight_duration") reasons.push(`${label} could not be resolved.`);
+  }
   const departureTime = fields.departure_time?.normalized?.match(/^(\d{2}):(\d{2})/);
   const arrivalTime = fields.arrival_time?.normalized?.match(/^(\d{2}):(\d{2})/);
   if (departureTime && arrivalTime && !fields.arrival_time.normalized.includes("+1")) {
@@ -223,8 +232,8 @@ export function normalizeTimeValue(value: string): NormalizedValue {
 export function normalizeDurationValue(value: string): NormalizedValue {
   const original = value.trim();
   if (!original) return { original, normalized: "", status: "Unresolved" };
-  const hm = original.match(/^(\d+(?:\.\d+)?)\s*(?:h|hr|hours?)\s*(?:(\d+)\s*(?:m|min|minutes?))?$/i);
+  const hm = original.match(/^(\d+(?:\.\d+)?)\s*(?:h|hr|hours?|小时)\s*(?:(\d+)\s*(?:m|min|minutes?|分钟))?$/i);
   const clock = original.match(/^(\d{1,3}):(\d{2})$/);
-  const minutes = hm ? Math.round(Number(hm[1]) * 60 + Number(hm[2] || 0)) : clock ? Number(clock[1]) * 60 + Number(clock[2]) : /^\d+(?:\.\d+)?\s*(?:m|min|minutes?)$/i.test(original) ? Math.round(Number.parseFloat(original)) : NaN;
+  const minutes = hm ? Math.round(Number(hm[1]) * 60 + Number(hm[2] || 0)) : clock ? Number(clock[1]) * 60 + Number(clock[2]) : /^\d+(?:\.\d+)?\s*(?:m|min|minutes?|分钟)$/i.test(original) ? Math.round(Number.parseFloat(original)) : NaN;
   return Number.isFinite(minutes) && minutes >= 0 ? { original, normalized: String(minutes), status: "Resolved" } : { original, normalized: original, status: "Unresolved" };
 }

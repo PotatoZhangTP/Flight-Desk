@@ -373,6 +373,7 @@ excel.ignore|Ignore|忽略
 excel.previewTitle|Data Preview|数据预览
 excel.fieldsMapped|fields mapped|个字段已映射
 excel.previewRows|preview rows|条预览数据
+Edit the highlighted fields or select an airport to resolve this row.|编辑高亮字段或选择机场以解决此行问题。
 Import from Excel|Import from Excel|从 Excel 导入
 Bulk import flight history|Bulk import flight history|批量导入航班历史
 Departure Airport|Departure Airport|出发机场
