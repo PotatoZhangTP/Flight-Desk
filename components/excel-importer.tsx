@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { T, useText } from "@/components/i18n";
 import { airportCodeFromColumns, autoMatch, detectHeaderRow, detectImportDuplicate, excelFields, normalizeAircraftValue, normalizeDateValue, normalizeDurationValue, normalizeFlightPair, normalizeHeader, normalizeTimeValue, validateImportFields, type Confidence, type ExcelField, type NormalizedValue, type ReviewStatus } from "@/lib/excel-import";
 import { airportCodes, type Airport } from "@/lib/airports";
-import { airportAliasCode } from "@/lib/airport-aliases";
+import { airportSearchQueries, searchAirportCatalog } from "@/lib/airport-search";
 import { getScheduledFlightTime } from "@/lib/flight-time";
 
 type RawSheet = { name: string; rawRows: string[][] };
@@ -73,13 +73,12 @@ export function ExcelImporter() {
     if (!values.length) { setAirportCandidates({}); return; }
     setAirportLoading(true);
     Promise.all(values.map(async value => {
-      const queries = [...new Set([value, airportAliasCode(value)].filter(Boolean) as string[])];
+      const queries = airportSearchQueries(value);
       for (const query of queries) {
         try {
-          const response = await fetch(`/api/airports?q=${encodeURIComponent(query)}`, { cache: "no-store" });
-          const body = await response.json();
-          if (response.ok && Array.isArray(body.airports) && body.airports.length) return [value.toLowerCase(), body.airports as Airport[]] as const;
-        } catch { /* Try the canonical code fallback below. */ }
+          const airports = await searchAirportCatalog(query);
+          if (airports.length) return [value.toLowerCase(), airports] as const;
+        } catch { /* Keep this value unresolved and allow manual confirmation. */ }
       }
       return [value.toLowerCase(), []] as const;
     })).then(entries => { if (live) setAirportCandidates(Object.fromEntries(entries)); }).finally(() => { if (live) setAirportLoading(false); });

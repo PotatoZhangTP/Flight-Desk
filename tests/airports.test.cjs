@@ -14,7 +14,6 @@ function load(file, dependencies = {}, env = {}) {
   return module.exports;
 }
 const model = load('lib/airports.ts');
-const aliases = load('lib/airport-aliases.ts');
 const excel = load('lib/excel-import.ts');
 const time = load('lib/flight-time.ts', { luxon: require('luxon') });
 const normalizer = load('lib/flight-input.ts', { '@/lib/flight-time': time });
@@ -29,13 +28,6 @@ test('airport row mapping does not synthesize ICAO from GPS or ident; missing co
   const a = model.airportFromRow({id:1,name:'Small airfield',ident:'00A',gps_code:'K00A',timezone:null});
   assert.equal(a.icao,null); assert.equal(a.iata,null); assert.equal(a.ident,'00A'); assert.equal(a.timezone,null);
   assert.equal(model.airportCodes(a),'Ident: 00A'); assert.equal(model.airportLegacyKey(a),'00A');
-});
-test('airport aliases resolve Chinese, English, IATA and ICAO inputs to one canonical airport code', () => {
-  assert.equal(aliases.airportAliasCode('天津滨海'), 'TSN');
-  assert.equal(aliases.airportAliasCode('天津滨海国际机场'), 'TSN');
-  assert.equal(aliases.airportAliasCode('Tianjin Binhai'), 'TSN');
-  assert.equal(aliases.airportAliasCode('TSN'), null);
-  assert.equal(aliases.airportAliasCode('ZBTJ'), null);
 });
 test('row-number-like numeric values are not converted into dates', () => {
   assert.equal(excel.normalizeDateValue('1').normalized, '1');
@@ -129,18 +121,17 @@ function endpoint(result={data:[{id:1,name:'Sample Airport',ident:'TEST',icao_co
   let searchIndex = 0;
   const route=load('app/api/airports/route.ts',{
     '@/lib/airports':model,'@/lib/airport-config':{AirportConfigError:config.AirportConfigError,resolveAirportConfig:()=>({url:'https://catalog.example.test',key:'sb_publishable_fixture'})},
-    '@/lib/airport-aliases':aliases,
     '@/lib/country-region':{loadCountryMappings:async()=>[],displayCountryCode:(code)=>code,displayAirportCountryName:(name)=>name},
     '@supabase/supabase-js':{createClient:(url,key,options)=>{calls.push({url,key,options});return{rpc:(name,args)=>{calls.push({name,args});const response=name==='search_airports'&&searchResults ? searchResults[searchIndex++] || result : result;return{abortSignal:async signal=>{assert(signal instanceof AbortSignal);return response;}};}}; }},
   });
   return{route,calls};
 }
-test('airport endpoint retries a maintained Chinese alias with its canonical IATA code', async()=>{
+test('airport endpoint returns the canonical airport row for a database alias match', async()=>{
   const airport={id:1,name:'Tianjin Binhai International Airport',ident:'ZBTJ',icao_code:'ZBTJ',iata_code:'TSN',country_code:'CN',timezone:'Asia/Shanghai'};
-  const f=endpoint({data:[airport],error:null,status:200},[{data:[],error:null,status:200},{data:[airport],error:null,status:200}]);
+  const f=endpoint({data:[airport],error:null,status:200});
   const response=await f.route.GET(new Request('https://site.example.test/api/airports?q='+encodeURIComponent('天津滨海')));
   assert.equal(response.status,200);const body=await response.json();assert.equal(body.airports[0].iata,'TSN');assert.equal(body.airports[0].icao,'ZBTJ');
-  assert.deepEqual(f.calls.filter(call=>call.name==='search_airports').map(call=>call.args.search_query),['天津滨海','TSN']);
+  assert.deepEqual(f.calls.filter(call=>call.name==='search_airports').map(call=>call.args.search_query),['天津滨海']);
 });
 test('airport endpoint is public, bounded and stateless, never forwards user auth cookies',async()=>{
   const f=endpoint();const response=await f.route.GET(new Request('https://site.example.test/api/airports?q=PEK',{headers:{cookie:'private-session'}}));

@@ -4,6 +4,7 @@ import { T, useText } from "@/components/i18n";
 
 import { useEffect, useId, useRef, useState, type KeyboardEvent } from "react";
 import { airportCodes, type Airport } from "@/lib/airports";
+import { searchAirportCatalog } from "@/lib/airport-search";
 import { Spinner } from "./async-button";
 import { CountryFlag } from "@/components/country-flag";
 
@@ -35,10 +36,8 @@ export function AirportPicker({ label, selected, onChange, onSelect }: {
     setOptions([]); setActive(-1); setStatus("loading");
     const timer = setTimeout(async () => {
       try {
-        const response = await fetch(`/api/airports?q=${encodeURIComponent(query.trim())}`, { signal: controller.signal });
-        const body = await response.json();
-        if (!response.ok || !Array.isArray(body.airports)) throw new Error("Lookup failed");
-        if (live) { setOptions(body.airports); setStatus("ready"); }
+        const airports = await searchAirportCatalog(query, controller.signal);
+        if (live) { setOptions(airports); setStatus("ready"); }
       } catch {
         if (live) { setOptions([]); setStatus("error"); }
       }
