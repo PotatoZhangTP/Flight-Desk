@@ -24,5 +24,7 @@ function normalize(value: string) {
 }
 
 export function airportAliasCode(value: string) {
-  return aliases[normalize(value)] || null;
+  const key = normalize(value);
+  const match = Object.entries(aliases).find(([alias]) => normalize(alias) === key);
+  return match?.[1] || null;
 }

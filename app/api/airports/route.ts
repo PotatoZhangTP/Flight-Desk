@@ -47,7 +47,7 @@ export async function GET(request: Request) {
     // Older previews may not have the airport_aliases migration yet. Resolve
     // the built-in reference aliases through their canonical IATA code so a
     // value such as 天津滨海 still reaches the same catalog row automatically.
-    if (Array.isArray(data) && data.length === 0) {
+    if (!Array.isArray(data) || data.length === 0) {
       const fallbackCode = airportAliasCode(query);
       if (fallbackCode) {
         const fallback = await client.rpc("search_airports", { search_query: fallbackCode, result_limit: 12 })

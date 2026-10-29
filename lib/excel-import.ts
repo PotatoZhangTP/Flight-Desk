@@ -208,6 +208,16 @@ export function normalizeAircraftValue(value: string): NormalizedValue {
 export function normalizeDateValue(value: string, format: "MM/DD/YYYY" | "DD/MM/YYYY" | "YYYY-MM-DD" = "MM/DD/YYYY"): NormalizedValue {
   const original = value.trim();
   if (!original) return { original, normalized: "", status: "Unresolved" };
+  // A row number such as "1" or "2" must never be interpreted by the
+  // JavaScript Date parser as a real date. Keep plausible Excel serial dates
+  // supported, but reject small bare numbers that are almost always row IDs.
+  if (/^\d+(?:\.\d+)?$/.test(original)) {
+    const serial = Number(original);
+    if (!Number.isFinite(serial) || serial < 10000 || serial > 100000) return { original, normalized: original, status: "Unresolved" };
+    const date = new Date(Date.UTC(1899, 11, 30) + Math.floor(serial) * 86400000);
+    const year = date.getUTCFullYear(); const month = date.getUTCMonth() + 1; const day = date.getUTCDate();
+    return { original, normalized: `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`, status: "Resolved" };
+  }
   const iso = original.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})$/);
   const slash = original.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{2,4})$/);
   let year = "", month = "", day = "", status: NormalizationStatus = "Resolved";

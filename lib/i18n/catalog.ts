@@ -405,6 +405,7 @@ excel.resolvingAirports|Resolving airports…|正在识别机场…
 excel.resolved|Resolved|已识别
 excel.needsConfirmation|Needs Confirmation|需要确认
 excel.unresolved|Unresolved|无法识别
+Not Provided|Not Provided|未提供
 excel.confirmationTitle|Airport Confirmation Required|需要确认机场
 excel.originalValue|Original Value|原始值
 excel.select|Select|选择
