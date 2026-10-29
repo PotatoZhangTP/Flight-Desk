@@ -427,6 +427,8 @@ Reasons|Reasons|原因
 Flight details|Flight details|航班详情
 Keep this row|Keep this row|保留此记录
 No issues found.|No issues found.|未发现问题。
+Review fields|Review fields|审核字段
+One or more fields require confirmation.|One or more fields require confirmation.|一个或多个字段需要确认。
 Airports|Airports|机场
 Departure|Departure|出发
 Arrival|Arrival|到达

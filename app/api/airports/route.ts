@@ -2,6 +2,7 @@ import { createClient } from "@supabase/supabase-js";
 import { airportFromRow } from "@/lib/airports";
 import { AirportConfigError, resolveAirportConfig } from "@/lib/airport-config";
 import { displayAirportCountryName, displayCountryCode, loadCountryMappings } from "@/lib/country-region";
+import { airportAliasCode } from "@/lib/airport-aliases";
 
 export const dynamic = "force-dynamic";
 
@@ -31,7 +32,7 @@ export async function GET(request: Request) {
       auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
     });
     stage = "rpc";
-    const { data, error, status } = await client.rpc("search_airports", { search_query: query, result_limit: 12 })
+    let { data, error, status } = await client.rpc("search_airports", { search_query: query, result_limit: 12 })
       .abortSignal(AbortSignal.any([request.signal, AbortSignal.timeout(5000)]));
     if (error) {
       const failure = (code: string) => unavailable(code, { status, code: error.code });
@@ -42,6 +43,20 @@ export async function GET(request: Request) {
       if (error.code === "57014") return failure("AIRPORT_QUERY_TIMEOUT");
       if (!status || status === 0) return failure("AIRPORT_CONNECTION_FAILED");
       return failure("AIRPORT_UPSTREAM_REQUEST_FAILED");
+    }
+    // Older previews may not have the airport_aliases migration yet. Resolve
+    // the built-in reference aliases through their canonical IATA code so a
+    // value such as 天津滨海 still reaches the same catalog row automatically.
+    if (Array.isArray(data) && data.length === 0) {
+      const fallbackCode = airportAliasCode(query);
+      if (fallbackCode) {
+        const fallback = await client.rpc("search_airports", { search_query: fallbackCode, result_limit: 12 })
+          .abortSignal(AbortSignal.any([request.signal, AbortSignal.timeout(5000)]));
+        if (!fallback.error && Array.isArray(fallback.data)) {
+          data = fallback.data;
+          status = fallback.status;
+        }
+      }
     }
     stage = "response";
     if (!Array.isArray(data)) return unavailable("AIRPORT_RESPONSE_INVALID");
