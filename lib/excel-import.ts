@@ -218,7 +218,9 @@ export function normalizeFlightPair(airline: string, flightNumber: string) {
   const flightValue = numeric && airlineValue.normalized && airlineValue.status === "Resolved"
     ? { original: rawNumber, normalized: `${airlineValue.normalized}${rawNumber.padStart(3, "0")}`, status: "Resolved" as NormalizationStatus }
     : normalizeFlightNumber(rawNumber, airlineValue.normalized);
-  return { airline: airlineValue, flightNumber: flightValue };
+  // Flight numbers are kept as editable source data, but a syntactically
+  // usable value should not block an import with a second confirmation step.
+  return { airline: airlineValue, flightNumber: flightValue.status === "Needs Confirmation" ? { ...flightValue, status: "Resolved" as NormalizationStatus } : flightValue };
 }
 
 export function normalizeAircraftValue(value: string): NormalizedValue {
