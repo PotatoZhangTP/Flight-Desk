@@ -41,6 +41,12 @@ test('row-number-like numeric values are not converted into dates', () => {
   assert.equal(excel.normalizeDateValue('1').normalized, '1');
   assert.equal(excel.normalizeDateValue('1').status, 'Unresolved');
 });
+test('unlabeled duplicate ICAO columns map in spreadsheet order to departure and arrival', () => {
+  const headers = ['Departure Airport', 'ICAO', 'Arrival Airport', 'ICAO'];
+  const values = ['天津滨海', 'ZBTJ', '昆明长水', 'ZPPP'];
+  assert.equal(excel.airportCodeFromColumns('departure_airport', headers, values), 'ZBTJ');
+  assert.equal(excel.airportCodeFromColumns('arrival_airport', headers, values), 'ZPPP');
+});
 test('historical airport snapshots survive without a catalog lookup or fabricated IATA', () => {
   const a = model.airportFromSnapshot({departure_airport:'old-local-code',departure_airport_name:'Historical field',departure_timezone:'Asia/Kathmandu'},'departure');
   assert.equal(a.name,'Historical field'); assert.equal(a.ident,'old-local-code'); assert.equal(a.iata,null); assert.equal(a.origin,'snapshot');

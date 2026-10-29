@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { T, useText } from "@/components/i18n";
-import { autoMatch, detectHeaderRow, detectImportDuplicate, excelFields, normalizeAircraftValue, normalizeDateValue, normalizeDurationValue, normalizeFlightPair, normalizeHeader, normalizeTimeValue, validateImportFields, type Confidence, type ExcelField, type NormalizedValue, type ReviewStatus } from "@/lib/excel-import";
+import { airportCodeFromColumns, autoMatch, detectHeaderRow, detectImportDuplicate, excelFields, normalizeAircraftValue, normalizeDateValue, normalizeDurationValue, normalizeFlightPair, normalizeHeader, normalizeTimeValue, validateImportFields, type Confidence, type ExcelField, type NormalizedValue, type ReviewStatus } from "@/lib/excel-import";
 import { airportCodes, type Airport } from "@/lib/airports";
 import { airportAliasCode } from "@/lib/airport-aliases";
 import { getScheduledFlightTime } from "@/lib/flight-time";
@@ -67,7 +67,8 @@ export function ExcelImporter() {
       const raw = (row.values[Number(column)] || "").trim();
       if (!raw) return [];
       const isIcaoColumn = normalizeHeader(headers[Number(column)] || "").includes("icao");
-      return isIcaoColumn ? (raw.toUpperCase().match(/[A-Z]{4}/g) || []) : [raw];
+      const embeddedCodes = raw.toUpperCase().match(/\b[A-Z]{4}\b/g) || [];
+      return isIcaoColumn ? embeddedCodes : [raw, ...embeddedCodes];
     })))];
     if (!values.length) { setAirportCandidates({}); return; }
     setAirportLoading(true);
@@ -114,23 +115,14 @@ export function ExcelImporter() {
     return normalizeAircraftValue(original);
   }, [aircraftCandidates, aircraftColumn]);
 
-  const airportCodeFallback = useCallback((field: "departure_airport" | "arrival_airport", row: { values: string[] }) => {
-    const columns = headers.map((header, index) => ({ header: normalizeHeader(header), index })).filter(item => item.header.includes("icao"));
-    for (const column of columns) {
-      const codes = (row.values[column.index] || "").toUpperCase().match(/[A-Z]{4}/g) || [];
-      if (codes.length === 1 && (column.header.includes("departure") || column.header.includes("出发") || column.header.includes("起飞")) && field === "departure_airport") return codes[0];
-      if (codes.length === 1 && (column.header.includes("arrival") || column.header.includes("到达") || column.header.includes("降落")) && field === "arrival_airport") return codes[0];
-      if (codes.length >= 2) return field === "departure_airport" ? codes[0] || "" : codes[codes.length - 1] || "";
-    }
-    return "";
-  }, [headers]);
+  const airportCodeFallback = useCallback((field: "departure_airport" | "arrival_airport", row: { values: string[] }) => airportCodeFromColumns(field, headers, row.values), [headers]);
   const airportResult = useCallback((field: "departure_airport" | "arrival_airport", row: { sourceRow: number; values: string[] }): NormalizedValue & { candidates: Airport[] } => {
-    const column = fieldColumn(field); const original = column ? (row.values[Number(column)] || "").trim() : ""; const fallbackCode = airportCodeFallback(field, row); const key = original.toLowerCase();
-    const displayOriginal = original || fallbackCode;
-    const candidates = airportCandidates[key] || airportCandidates[fallbackCode.toLowerCase()] || []; const selected = rowAirportSelections[`${field}:${row.sourceRow}`] || airportSelections[key] || airportSelections[fallbackCode.toLowerCase()];
+    const column = fieldColumn(field); const original = column ? (row.values[Number(column)] || "").trim() : ""; const fallbackCode = airportCodeFallback(field, row); const embeddedCode = original.toUpperCase().match(/\b[A-Z]{4}\b/)?.[0] || ""; const queryCode = fallbackCode || embeddedCode; const key = original.toLowerCase();
+    const displayOriginal = original || queryCode;
+    const candidates = airportCandidates[key] || airportCandidates[queryCode.toLowerCase()] || []; const selected = rowAirportSelections[`${field}:${row.sourceRow}`] || airportSelections[key] || airportSelections[queryCode.toLowerCase()];
     if (!displayOriginal) return { original: "", normalized: "", status: "Unresolved", candidates };
     if (selected) return { original: displayOriginal, normalized: airportCodes(selected), status: "Resolved", candidates };
-    const code = /^[A-Z]{3,4}$/i.test(displayOriginal);
+    const code = /^[A-Z]{3,4}$/i.test(displayOriginal) || Boolean(queryCode);
     const exact = candidates.filter(item => [item.name, item.iata, item.icao, item.ident, item.municipality].filter(Boolean).some(value => String(value).trim().toLowerCase() === key));
     if ((code || fallbackCode) && candidates.length === 1) return { original: displayOriginal, normalized: airportCodes(candidates[0]), status: "Resolved", candidates };
     if (!code && exact.length === 1) return { original: displayOriginal, normalized: airportCodes(exact[0]), status: "Resolved", candidates };

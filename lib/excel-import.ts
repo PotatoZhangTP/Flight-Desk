@@ -106,6 +106,35 @@ const aliases: Record<ExcelField, string[]> = {
 };
 
 export function normalizeHeader(value: string) { return value.trim().toLowerCase().replace(/[\u3000\s_./#-]+/g, " ").replace(/[^a-z0-9\u4e00-\u9fff ]/g, "").trim(); }
+
+/**
+ * Finds the airport code that belongs to one side of a row. Some exports use
+ * `Departure ICAO` / `Arrival ICAO`, while others contain two identically
+ * named `ICAO` columns next to the two airport columns. In the latter case the
+ * spreadsheet order is the only reliable relationship: first ICAO column is
+ * departure, second is arrival. Never guess when only one unlabeled column is
+ * present.
+ */
+export function airportCodeFromColumns(field: "departure_airport" | "arrival_airport", headers: string[], values: string[]) {
+  const columns = headers.map((header, index) => ({ header: normalizeHeader(header), index }))
+    .filter(item => item.header.includes("icao"));
+  const codeAt = (index: number) => (values[index] || "").toUpperCase().match(/[A-Z]{4}/g) || [];
+  const explicit = columns.find(item => {
+    const departure = item.header.includes("departure") || item.header.includes("dep") || item.header.includes("出发") || item.header.includes("起飞");
+    const arrival = item.header.includes("arrival") || item.header.includes("arr") || item.header.includes("到达") || item.header.includes("降落");
+    return field === "departure_airport" ? departure : arrival;
+  });
+  if (explicit) {
+    const codes = codeAt(explicit.index);
+    return codes.length === 1 ? codes[0] : field === "departure_airport" ? codes[0] || "" : codes[codes.length - 1] || "";
+  }
+  const unlabeled = columns.filter(item => !/(?:departure|dep|arrival|arr|出发|起飞|到达|降落)/.test(item.header));
+  if (unlabeled.length >= 2) {
+    const codes = codeAt(unlabeled[field === "departure_airport" ? 0 : unlabeled.length - 1].index);
+    return codes.length === 1 ? codes[0] : field === "departure_airport" ? codes[0] || "" : codes[codes.length - 1] || "";
+  }
+  return "";
+}
 function samples(values: string[]) { return values.map(value => value.trim()).filter(Boolean).slice(0, 12); }
 function contentScore(field: ExcelField, values: string[]) {
   const sample = samples(values);
