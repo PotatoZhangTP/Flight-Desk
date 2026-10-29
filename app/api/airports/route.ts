@@ -45,6 +45,25 @@ export async function GET(request: Request) {
       }
       if (rows.size >= 20) break;
     }
+    // Keep exact IATA/ICAO lookup reliable even if a deployed search RPC is
+    // older or its text index has not caught up with the reference catalog.
+    // This is a generic code lookup, not an airport-specific exception.
+    const exactCode = query.toUpperCase();
+    const hasExactCode = [...rows.values()].some(row => [row.iata_code, row.icao_code, row.ident]
+      .some(value => String(value || "").trim().toUpperCase() === exactCode));
+    if (!hasExactCode && /^[A-Z0-9]{3,4}$/.test(exactCode) && typeof (client as unknown as { from?: unknown }).from === "function") {
+      const directResults = await Promise.all([
+        client.from("airports").select("id,name,ident,icao_code,iata_code,gps_code,local_code,municipality,country_code,country_name,timezone,latitude,longitude,airport_type,scheduled_service").eq("status", "listed").eq("iata_code", exactCode).limit(20),
+        client.from("airports").select("id,name,ident,icao_code,iata_code,gps_code,local_code,municipality,country_code,country_name,timezone,latitude,longitude,airport_type,scheduled_service").eq("status", "listed").eq("icao_code", exactCode).limit(20),
+        client.from("airports").select("id,name,ident,icao_code,iata_code,gps_code,local_code,municipality,country_code,country_name,timezone,latitude,longitude,airport_type,scheduled_service").eq("status", "listed").eq("ident", exactCode).limit(20),
+      ]);
+      for (const result of directResults) {
+        if (Array.isArray(result.data)) for (const row of result.data as Record<string, unknown>[]) {
+          const key = String(row.id || `${row.icao_code || ""}:${row.iata_code || ""}:${row.name || ""}`);
+          rows.set(key, row);
+        }
+      }
+    }
     if (firstError && !rows.size) {
       const { error, status } = firstError;
       const failure = (code: string) => unavailable(code, { status, code: error.code });

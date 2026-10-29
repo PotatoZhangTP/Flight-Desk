@@ -83,13 +83,16 @@ export function ExcelImporter() {
 
   useEffect(() => {
     let live = true;
-    const values = [...new Set(dataRows.flatMap(row => airportColumns.flatMap(column => {
-      const raw = (row.values[Number(column)] || "").trim();
-      if (!raw) return [];
-      const isIcaoColumn = normalizeHeader(headers[Number(column)] || "").includes("icao");
-      const embeddedCodes = raw.toUpperCase().match(/\b[A-Z]{4}\b/g) || [];
-      return isIcaoColumn ? embeddedCodes : [raw, ...embeddedCodes];
-    })))];
+    const values = [...new Set(dataRows.flatMap(row => [
+      ...airportColumns.flatMap(column => {
+        const raw = (row.values[Number(column)] || "").trim();
+        if (!raw) return [];
+        const isIcaoColumn = normalizeHeader(headers[Number(column)] || "").includes("icao");
+        const embeddedCodes = raw.toUpperCase().match(/\b[A-Z]{4}\b/g) || [];
+        return isIcaoColumn ? embeddedCodes : [raw, ...embeddedCodes];
+      }),
+      ...row.values.flatMap(value => value.toUpperCase().match(/\b[A-Z]{4}\b/g) || []),
+    ]))];
     if (!values.length) { setAirportCandidates({}); setAirportLoading(false); return; }
     setAirportLoading(true);
     setAirportCandidates({});
@@ -154,7 +157,8 @@ export function ExcelImporter() {
     if (!displayOriginal) return { original: "", normalized: "", status: "Unresolved", candidates };
     if (selected) return { original: displayOriginal, normalized: airportCodes(selected), status: "Resolved", candidates };
     const code = /^[A-Z]{3,4}$/i.test(displayOriginal) || Boolean(queryCode);
-    const exact = candidates.filter(item => [item.name, item.iata, item.icao, item.ident, item.municipality].filter(Boolean).some(value => String(value).trim().toLowerCase() === key));
+    const exactKeys = new Set([key, queryCode.toLowerCase()].filter(Boolean));
+    const exact = candidates.filter(item => [item.name, item.iata, item.icao, item.ident, item.municipality].filter(Boolean).some(value => exactKeys.has(String(value).trim().toLowerCase())));
     if ((code || fallbackCode) && exact.length === 1) return { original: displayOriginal, normalized: airportCodes(exact[0]), status: "Resolved", candidates };
     if ((code || fallbackCode) && candidates.length === 1) return { original: displayOriginal, normalized: airportCodes(candidates[0]), status: "Resolved", candidates };
     if (!code && exact.length === 1) return { original: displayOriginal, normalized: airportCodes(exact[0]), status: "Needs Confirmation", candidates };

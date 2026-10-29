@@ -36,8 +36,26 @@ export async function resolveCanonicalAirport(
       search_query: probe,
       result_limit: 20,
     });
-    if (error || !Array.isArray(data)) continue;
-    const exact = (data as AirportRow[]).filter(row =>
+    let rows = Array.isArray(data) ? data as AirportRow[] : [];
+    // Keep the server-side import aligned with the public airport search even
+    // when a deployed search RPC is stale or its text index misses a code.
+    // This is a generic exact-code fallback, never an airport-specific map.
+    if (/^[A-Z0-9]{3,4}$/i.test(probe) && typeof (supabase as unknown as { from?: unknown }).from === "function") {
+      const code = upper(probe);
+      const directRows: AirportRow[] = [];
+      for (const column of ["iata_code", "icao_code", "ident"] as const) {
+        const result = await supabase.from("airports")
+          .select("id,ident,name,icao_code,iata_code,country_code,timezone,municipality")
+          .eq("status", "listed")
+          .eq(column, code)
+          .limit(2);
+        if (Array.isArray(result.data)) directRows.push(...result.data as AirportRow[]);
+      }
+      rows = [...rows, ...directRows];
+    }
+    if (error && !rows.length) continue;
+    if (!rows.length) continue;
+    const exact = rows.filter(row =>
       isSame(row.iata_code, probe) ||
       isSame(row.icao_code, probe) ||
       isSame(row.ident, probe) ||
@@ -53,7 +71,7 @@ export async function resolveCanonicalAirport(
     // Alias matches are returned by the shared search RPC but are not part of
     // the airport row itself. A single result is safe to accept; a city query
     // returning several airports remains unresolved and must be confirmed.
-    const matches = codeExact.length ? codeExact : exact.length ? exact : data.length === 1 && isSame(input.name, probe) ? data as AirportRow[] : [];
+    const matches = codeExact.length ? codeExact : exact.length ? exact : rows.length === 1 && isSame(input.name, probe) ? rows : [];
     if (matches.length !== 1) continue;
     const row = matches[0];
     if (!row.id || !clean(row.name)) continue;

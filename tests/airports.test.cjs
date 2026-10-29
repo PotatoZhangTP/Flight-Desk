@@ -123,17 +123,24 @@ test('anonymous, invalid, missing/other-owner and DB failures cannot produce sav
   const missing=actionsFixture({found:false});assert((await missing.actions.updateFlight('44444444-4444-4444-8444-444444444444',input())).error);assert.equal(missing.invalidated.length,0);
   const failure=actionsFixture({error:{message:'private upstream diagnostic'}});const result=await failure.actions.createFlight(input());assert(result.error);assert(!result.error.includes('private upstream'));assert.equal(failure.invalidated.length,0);
 });
-function endpoint(result={data:[{id:1,name:'Sample Airport',ident:'TEST',icao_code:null,iata_code:null}],error:null}, searchResults=null) {
+function endpoint(result={data:[{id:1,name:'Sample Airport',ident:'TEST',icao_code:null,iata_code:null}],error:null}, searchResults=null, directRows=[]) {
   const calls=[];
   let searchIndex = 0;
   const route=load('app/api/airports/route.ts',{
     '@/lib/airports':model,'@/lib/airport-config':{AirportConfigError:config.AirportConfigError,resolveAirportConfig:()=>({url:'https://catalog.example.test',key:'sb_publishable_fixture'})},
     '@/lib/country-region':{loadCountryMappings:async()=>[],displayCountryCode:(code)=>code,displayAirportCountryName:(name)=>name},
     '@/lib/airport-query':airportQuery,
-    '@supabase/supabase-js':{createClient:(url,key,options)=>{calls.push({url,key,options});return{rpc:(name,args)=>{calls.push({name,args});const response=name==='search_airports'&&searchResults ? searchResults[searchIndex++] || result : result;return{abortSignal:async signal=>{assert(signal instanceof AbortSignal);return response;}};}}; }},
+    '@supabase/supabase-js':{createClient:(url,key,options)=>{calls.push({url,key,options});return{rpc:(name,args)=>{calls.push({name,args});const response=name==='search_airports'&&searchResults ? searchResults[searchIndex++] || result : result;return{abortSignal:async signal=>{assert(signal instanceof AbortSignal);return response;}};},from:()=>({select:()=>{const query={eq:()=>query,limit:async()=>({data:directRows,error:null})};return query;}})}; }},
   });
   return{route,calls};
 }
+test('airport endpoint falls back to exact IATA/ICAO/ident lookup when the RPC has no rows', async()=>{
+  const airport={id:99,name:'Tianjin Binhai International Airport',ident:'ZBTJ',icao_code:'ZBTJ',iata_code:'TSN',country_code:'CN',timezone:'Asia/Shanghai'};
+  const f=endpoint({data:[],error:null,status:200},null,[airport]);
+  const response=await f.route.GET(new Request('https://site.example.test/api/airports?q=ZBTJ'));
+  assert.equal(response.status,200); const body=await response.json();
+  assert.equal(body.airports[0].iata,'TSN'); assert.equal(body.airports[0].icao,'ZBTJ');
+});
 test('airport endpoint returns the canonical airport row for a database alias match', async()=>{
   const airport={id:1,name:'Tianjin Binhai International Airport',ident:'ZBTJ',icao_code:'ZBTJ',iata_code:'TSN',country_code:'CN',timezone:'Asia/Shanghai'};
   const f=endpoint({data:[airport],error:null,status:200});
