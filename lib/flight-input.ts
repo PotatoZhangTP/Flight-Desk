@@ -1,8 +1,9 @@
 import { getScheduledFlightTime, getScheduledDuration, type ClockChoice, type PlannedTime } from "@/lib/flight-time";
 
 /** Shared by manual entry, server mutations and future import normalization. */
-export function normalizeFlightInput(input: Record<string, unknown>): { data: Record<string, unknown>; error: null } | { data: null; error: string } {
+export function normalizeFlightInput(input: Record<string, unknown>, options: { allowIncompletePlanned?: boolean } = {}): { data: Record<string, unknown>; error: null } | { data: null; error: string } {
   try {
+    const allowIncompletePlanned = options.allowIncompletePlanned === true;
     const text = (key: string, max = 200, required = false) => {
       const raw = input[key];
       if (raw != null && typeof raw !== "string") throw new Error(`Invalid ${key}.`);
@@ -26,12 +27,12 @@ export function normalizeFlightInput(input: Record<string, unknown>): { data: Re
       const choice = input[`${side}Disambiguation`];
       if (choice != null && choice !== "" && choice !== "earlier" && choice !== "later") throw new Error("Invalid clock-change choice.");
       const planned = {
-        date: text(`${side}Date`, 10, true)!, time: text(`${side}Time`, 5, true)!,
+        date: text(`${side}Date`, 10, !allowIncompletePlanned) || "", time: text(`${side}Time`, 5, !allowIncompletePlanned) || "",
         timezone: text(`${side}Timezone`, 100, true)!,
         disambiguation: (choice || undefined) as ClockChoice | undefined,
       };
-      const utc = getScheduledFlightTime(planned.date, planned.time, planned.timezone, planned.disambiguation);
-      if (utc.error || !utc.iso) throw new Error(`${side}: ${utc.error}`);
+      const utc = planned.date && planned.time ? getScheduledFlightTime(planned.date, planned.time, planned.timezone, planned.disambiguation) : { iso: null, error: null };
+      if (utc.error || (!allowIncompletePlanned && !utc.iso)) throw new Error(`${side}: ${utc.error || "Enter a valid date and time."}`);
       times.push(planned);
       Object.assign(data, {
         [`${side}_airport`]: iata || icao || ident || name,
@@ -42,15 +43,19 @@ export function normalizeFlightInput(input: Record<string, unknown>): { data: Re
         [`${side}_terminal`]: text(`${side}Terminal`, 80), [`${side}_gate`]: text(`${side}Gate`, 80),
       });
     }
-    const duration = getScheduledDuration(times[0], times[1]);
-    if (duration.error || duration.minutes == null) throw new Error(duration.error || "Check planned times.");
+    const scheduleComplete = times.every(time => Boolean(time.date && time.time));
+    const duration = scheduleComplete ? getScheduledDuration(times[0], times[1]) : { minutes: null, error: null };
+    if (duration.error || (duration.minutes == null && !allowIncompletePlanned)) throw new Error(duration.error || "Check planned times.");
+    const suppliedDuration = input.scheduledDurationMinutes;
+    const importedDuration = suppliedDuration == null || suppliedDuration === "" ? null : Number(suppliedDuration);
+    if (importedDuration != null && (!Number.isSafeInteger(importedDuration) || importedDuration < 0)) throw new Error("Scheduled duration must be a non-negative whole number of minutes.");
     const actual = input.actualDurationMinutes;
     if (actual != null && (typeof actual !== "number" || !Number.isSafeInteger(actual) || actual < 0 || actual > 2147483647)) throw new Error("Actual duration must be a non-negative whole number of minutes.");
-    const status = input.status === "planned" ? "planned" : input.status === "completed" || input.status == null || input.status === "" ? "completed" : null;
+    const status = !scheduleComplete ? "planned" : input.status === "planned" ? "planned" : input.status === "completed" || input.status == null || input.status === "" ? "completed" : null;
     if (!status) throw new Error("Choose a valid flight status.");
     const source = input.source === "simbrief" ? "simbrief" : "manual";
     Object.assign(data, {
-      flight_date: times[0].date, scheduled_duration_minutes: duration.minutes,
+      flight_date: times[0].date || times[1].date || null, scheduled_duration_minutes: duration.minutes ?? importedDuration,
       actual_duration_minutes: actual ?? null,
       airline: text("airline"), flight_number: text("flightNumber", 40),
       aircraft_type: text("aircraftType"), registration: text("registration", 80), notes: text("notes", 10000), status, source,

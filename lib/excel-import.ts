@@ -27,10 +27,6 @@ export function validateImportFields(fields: Record<string, NormalizedValue & { 
   const required: [string, string][] = [
     ["departure_airport", "Departure airport is missing."],
     ["arrival_airport", "Arrival airport is missing."],
-    ["departure_date", "Departure date is missing."],
-    ["arrival_date", "Arrival date is missing."],
-    ["departure_time", "Departure time is missing."],
-    ["arrival_time", "Arrival time is missing."],
   ];
   for (const [field, message] of required) {
     const value = fields[field];
@@ -53,7 +49,7 @@ export function validateImportFields(fields: Record<string, NormalizedValue & { 
     if (arrivalMinutes < departureMinutes) reasons.push("Arrival time is earlier than departure time; confirm the date or overnight marker.");
   }
   const needsReview = Object.values(fields).some(value => value?.status === "Needs Confirmation");
-  if (reasons.some(reason => /missing|invalid|cannot be the same|must be/.test(reason))) return { status: "Incomplete", reasons };
+  if (reasons.some(reason => /invalid|cannot be the same|must be/.test(reason))) return { status: "Incomplete", reasons };
   if (needsReview || reasons.length) return { status: "Needs Review", reasons };
   return { status: "Ready", reasons: [] };
 }
@@ -83,8 +79,8 @@ export function detectImportDuplicate(fields: Record<string, NormalizedValue>, e
 }
 
 const aliases: Record<ExcelField, string[]> = {
-  departure_airport: ["departure airport", "departure airport code", "from", "origin", "origin airport", "dep airport", "dep", "departure", "出发机场", "出发地", "起飞机场"],
-  arrival_airport: ["arrival airport", "arrival airport code", "to", "destination", "destination airport", "arr airport", "arr", "arrival", "到达机场", "目的地", "降落机场"],
+  departure_airport: ["departure airport", "departure airport code", "departure icao", "dep icao", "from", "origin", "origin airport", "dep airport", "dep", "departure", "出发机场", "出发机场icao", "出发icao", "起飞机场", "出发地"],
+  arrival_airport: ["arrival airport", "arrival airport code", "arrival icao", "arr icao", "to", "destination", "destination airport", "arr airport", "arr", "arrival", "到达机场", "到达机场icao", "到达icao", "降落机场", "目的地"],
   departure_date: ["departure date", "flight date", "date", "dep date", "outbound date", "出发日期", "飞行日期"],
   arrival_date: ["arrival date", "arr date", "inbound date", "到达日期", "降落日期"],
   flight_number: ["flight number", "flight no", "flight #", "flight", "flt no", "航班号", "航班编号"],

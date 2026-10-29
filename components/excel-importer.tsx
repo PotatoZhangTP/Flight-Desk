@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { T, useText } from "@/components/i18n";
-import { autoMatch, detectHeaderRow, detectImportDuplicate, excelFields, normalizeAircraftValue, normalizeDateValue, normalizeDurationValue, normalizeFlightPair, normalizeTimeValue, validateImportFields, type Confidence, type ExcelField, type NormalizedValue, type ReviewStatus } from "@/lib/excel-import";
+import { autoMatch, detectHeaderRow, detectImportDuplicate, excelFields, normalizeAircraftValue, normalizeDateValue, normalizeDurationValue, normalizeFlightPair, normalizeHeader, normalizeTimeValue, validateImportFields, type Confidence, type ExcelField, type NormalizedValue, type ReviewStatus } from "@/lib/excel-import";
 import { airportCodes, type Airport } from "@/lib/airports";
 import { getScheduledFlightTime } from "@/lib/flight-time";
 
@@ -50,10 +50,15 @@ export function ExcelImporter() {
   const headers = useMemo(() => headerIndex >= 0 ? (current?.rawRows[headerIndex] || []).map((value, index) => String(value || `Column ${index + 1}`)) : (current?.rawRows[0] || []).map((_, index) => `Column ${index + 1}`), [current, headerIndex]);
   const dataRows = useMemo(() => {
     const rows = current?.rawRows || [];
-    return rows.slice(headerIndex >= 0 ? headerIndex + 1 : 0).map((values, index) => ({ sourceRow: headerIndex >= 0 ? headerIndex + index + 2 : index + 1, values }));
+    return rows.slice(headerIndex >= 0 ? headerIndex + 1 : 0)
+      .map((values, index) => ({ sourceRow: headerIndex >= 0 ? headerIndex + index + 2 : index + 1, values }))
+      .filter(row => row.values.some(value => value.trim() !== ""));
   }, [current, headerIndex]);
   const fieldColumn = useCallback((field: ExcelField) => Object.keys(mapping).find(index => mapping[Number(index)] === field), [mapping]);
-  const airportColumns = useMemo(() => [fieldColumn("departure_airport"), fieldColumn("arrival_airport")].filter((value): value is string => Boolean(value)), [fieldColumn]);
+  const airportColumns = useMemo(() => [...new Set([
+    fieldColumn("departure_airport"), fieldColumn("arrival_airport"),
+    ...headers.map((header, index) => normalizeHeader(header).includes("icao") ? String(index) : ""),
+  ].filter(Boolean))], [fieldColumn, headers]);
 
   useEffect(() => {
     let live = true;
@@ -95,17 +100,28 @@ export function ExcelImporter() {
     return normalizeAircraftValue(original);
   }, [aircraftCandidates, aircraftColumn]);
 
+  const airportCodeFallback = useCallback((field: "departure_airport" | "arrival_airport", row: { values: string[] }) => {
+    const columns = headers.map((header, index) => ({ header: normalizeHeader(header), index })).filter(item => item.header.includes("icao"));
+    for (const column of columns) {
+      const codes = (row.values[column.index] || "").toUpperCase().match(/[A-Z]{4}/g) || [];
+      if (codes.length === 1 && (column.header.includes("departure") || column.header.includes("出发") || column.header.includes("起飞")) && field === "departure_airport") return codes[0];
+      if (codes.length === 1 && (column.header.includes("arrival") || column.header.includes("到达") || column.header.includes("降落")) && field === "arrival_airport") return codes[0];
+      if (codes.length >= 2) return field === "departure_airport" ? codes[0] || "" : codes[codes.length - 1] || "";
+    }
+    return "";
+  }, [headers]);
   const airportResult = useCallback((field: "departure_airport" | "arrival_airport", row: { sourceRow: number; values: string[] }): NormalizedValue & { candidates: Airport[] } => {
-    const column = fieldColumn(field); const original = column ? (row.values[Number(column)] || "").trim() : ""; const key = original.toLowerCase();
-    const candidates = airportCandidates[key] || []; const selected = rowAirportSelections[`${field}:${row.sourceRow}`] || airportSelections[key];
-    if (!original) return { original, normalized: "", status: "Unresolved", candidates };
-    if (selected) return { original, normalized: airportCodes(selected), status: "Resolved", candidates };
-    const code = /^[A-Z]{3,4}$/i.test(original);
+    const column = fieldColumn(field); const original = column ? (row.values[Number(column)] || "").trim() : ""; const fallbackCode = airportCodeFallback(field, row); const key = original.toLowerCase();
+    const displayOriginal = original || fallbackCode;
+    const candidates = airportCandidates[key] || airportCandidates[fallbackCode.toLowerCase()] || []; const selected = rowAirportSelections[`${field}:${row.sourceRow}`] || airportSelections[key] || airportSelections[fallbackCode.toLowerCase()];
+    if (!displayOriginal) return { original: "", normalized: "", status: "Unresolved", candidates };
+    if (selected) return { original: displayOriginal, normalized: airportCodes(selected), status: "Resolved", candidates };
+    const code = /^[A-Z]{3,4}$/i.test(displayOriginal);
     const exact = candidates.filter(item => [item.name, item.iata, item.icao, item.ident, item.municipality].filter(Boolean).some(value => String(value).trim().toLowerCase() === key));
-    if (code && candidates.length === 1) return { original, normalized: airportCodes(candidates[0]), status: "Resolved", candidates };
-    if (!code && exact.length === 1) return { original, normalized: airportCodes(exact[0]), status: "Resolved", candidates };
-    return { original, normalized: original, status: candidates.length > 1 ? "Needs Confirmation" : "Unresolved", candidates };
-  }, [airportCandidates, airportSelections, fieldColumn, rowAirportSelections]);
+    if ((code || fallbackCode) && candidates.length === 1) return { original: displayOriginal, normalized: airportCodes(candidates[0]), status: "Resolved", candidates };
+    if (!code && exact.length === 1) return { original: displayOriginal, normalized: airportCodes(exact[0]), status: "Resolved", candidates };
+    return { original: displayOriginal, normalized: displayOriginal, status: candidates.length > 1 ? "Needs Confirmation" : "Unresolved", candidates };
+  }, [airportCandidates, airportCodeFallback, airportSelections, fieldColumn, rowAirportSelections]);
 
   const normalizedRows = useMemo(() => dataRows.map(row => {
     const value = (field: ExcelField) => { const override = rowOverrides[`${row.sourceRow}:${field}`]; if (override !== undefined) return override; const column = fieldColumn(field); return column ? row.values[Number(column)] || "" : ""; };
@@ -155,17 +171,20 @@ export function ExcelImporter() {
     if (!departure || !arrival || !departure.timezone || !arrival.timezone) throw new Error("Airport details or timezone are missing.");
     const departureDate = row.fields.departure_date.normalized; const arrivalDate = row.fields.arrival_date.normalized;
     const departureTime = row.fields.departure_time.normalized.slice(0, 5); const arrivalTime = row.fields.arrival_time.normalized.slice(0, 5);
-    const departureUtc = getScheduledFlightTime(departureDate, departureTime, departure.timezone); const arrivalUtc = getScheduledFlightTime(arrivalDate, arrivalTime, arrival.timezone);
-    if (departureUtc.error || arrivalUtc.error || !departureUtc.iso || !arrivalUtc.iso) throw new Error(departureUtc.error || arrivalUtc.error || "Unable to resolve flight times.");
-    const scheduledDuration = Math.round((new Date(arrivalUtc.iso).getTime() - new Date(departureUtc.iso).getTime()) / 60000);
-    if (scheduledDuration < 0) throw new Error("Arrival must not precede departure.");
+    const completeSchedule = Boolean(departureDate && arrivalDate && departureTime && arrivalTime);
+    const departureUtc = completeSchedule ? getScheduledFlightTime(departureDate, departureTime, departure.timezone) : { iso: null, error: null };
+    const arrivalUtc = completeSchedule ? getScheduledFlightTime(arrivalDate, arrivalTime, arrival.timezone) : { iso: null, error: null };
+    if (departureUtc.error || arrivalUtc.error || (completeSchedule && (!departureUtc.iso || !arrivalUtc.iso))) throw new Error(departureUtc.error || arrivalUtc.error || "Unable to resolve flight times.");
+    const importedDuration = row.fields.flight_duration.normalized ? Number(row.fields.flight_duration.normalized) : null;
+    const scheduledDuration = completeSchedule ? Math.round((new Date(arrivalUtc.iso!).getTime() - new Date(departureUtc.iso!).getTime()) / 60000) : importedDuration != null && Number.isSafeInteger(importedDuration) && importedDuration >= 0 ? importedDuration : null;
+    if (scheduledDuration != null && scheduledDuration < 0) throw new Error("Arrival must not precede departure.");
     const code = (airport: Airport) => airport.iata || airport.icao || airport.ident || airport.name;
     return { row_number: row.sourceRow, data: {
-      flight_date: departureDate, flight_number: row.fields.flight_number.normalized, airline: row.fields.airline.normalized,
+      flight_date: departureDate || arrivalDate || null, flight_number: row.fields.flight_number.normalized, airline: row.fields.airline.normalized,
       departure_airport: code(departure), arrival_airport: code(arrival),
       departure_airport_iata: departure.iata || "", departure_airport_icao: departure.icao || "", departure_airport_name: departure.name, departure_country_code: departure.countryCode || "", departure_timezone: departure.timezone, departure_local_date: departureDate, departure_local_time: departureTime, departure_scheduled_at_utc: departureUtc.iso,
       arrival_airport_iata: arrival.iata || "", arrival_airport_icao: arrival.icao || "", arrival_airport_name: arrival.name, arrival_country_code: arrival.countryCode || "", arrival_timezone: arrival.timezone, arrival_local_date: arrivalDate, arrival_local_time: arrivalTime, arrival_scheduled_at_utc: arrivalUtc.iso,
-      aircraft_type: row.fields.aircraft_type.normalized, registration: "", notes: "", scheduled_duration_minutes: scheduledDuration, actual_duration_minutes: null, status: row.fields.status.normalized === "planned" ? "planned" : "completed", source: "manual", is_user_modified: false,
+      scheduledDurationMinutes: scheduledDuration, aircraft_type: row.fields.aircraft_type.normalized, registration: "", notes: "", status: completeSchedule && row.fields.status.normalized !== "planned" ? "completed" : "planned", source: "manual", is_user_modified: false,
     }};
   }, [airportForRow]);
   async function importSelectedRows(rows = reviews) {

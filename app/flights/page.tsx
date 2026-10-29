@@ -59,7 +59,7 @@ const pageItems = (page: number, pages: number): (number | "ellipsis")[] => {
 };
 type FlightRow = {
   id: string;
-  flight_date: string;
+  flight_date: string | null;
   flight_number: string | null;
   departure_airport: string | null;
   arrival_airport: string | null;
@@ -606,7 +606,7 @@ export default async function AllFlightsPage({
                     {(currentPage - 1) * size + index + 1}
                   </td>
                   <td>
-                    <LocalizedDate value={flight.flight_date} />
+                    {flight.flight_date ? <LocalizedDate value={flight.flight_date} /> : "—"}
                   </td>
                   <td>{flight.flight_number || "—"}</td>
                   <td>

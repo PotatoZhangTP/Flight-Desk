@@ -57,8 +57,8 @@ export async function POST(request: Request) {
     const normalized = normalizeFlightInput({
       departureAirportName: input.departure_airport_name, departureAirportIata: input.departure_airport_iata, departureAirportIcao: input.departure_airport_icao, departureAirportIdent: input.departure_airport, departureCountryCode: input.departure_country_code, departureDate: input.departure_local_date, departureTime: input.departure_local_time, departureTimezone: input.departure_timezone,
       arrivalAirportName: input.arrival_airport_name, arrivalAirportIata: input.arrival_airport_iata, arrivalAirportIcao: input.arrival_airport_icao, arrivalAirportIdent: input.arrival_airport, arrivalCountryCode: input.arrival_country_code, arrivalDate: input.arrival_local_date, arrivalTime: input.arrival_local_time, arrivalTimezone: input.arrival_timezone,
-      flightNumber: input.flight_number, airline: input.airline, aircraftType: input.aircraft_type, registration: input.registration, notes: input.notes, status: input.status, source: "manual", isUserModified: false,
-    });
+      flightNumber: input.flight_number, airline: input.airline, aircraftType: input.aircraft_type, registration: input.registration, notes: input.notes, status: input.status, scheduledDurationMinutes: input.scheduledDurationMinutes, source: "manual", isUserModified: false,
+    }, { allowIncompletePlanned: true });
     if (normalized.error || !normalized.data) {
       const error = normalized.error || "Flight validation failed.";
       results.push({ rowNumber: record.row_number, result: "failed", error });
