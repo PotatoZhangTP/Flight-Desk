@@ -62,14 +62,19 @@ export function ExcelImporter() {
 
   useEffect(() => {
     let live = true;
-    const values = [...new Set(dataRows.flatMap(row => airportColumns.map(column => (row.values[Number(column)] || "").trim()).filter(Boolean)))];
+    const values = [...new Set(dataRows.flatMap(row => airportColumns.flatMap(column => {
+      const raw = (row.values[Number(column)] || "").trim();
+      if (!raw) return [];
+      const isIcaoColumn = normalizeHeader(headers[Number(column)] || "").includes("icao");
+      return isIcaoColumn ? (raw.toUpperCase().match(/[A-Z]{4}/g) || []) : [raw];
+    })))];
     if (!values.length) { setAirportCandidates({}); return; }
     setAirportLoading(true);
     Promise.all(values.map(async value => {
       try { const response = await fetch(`/api/airports?q=${encodeURIComponent(value)}`, { cache: "no-store" }); const body = await response.json(); return [value.toLowerCase(), response.ok && Array.isArray(body.airports) ? body.airports as Airport[] : []] as const; } catch { return [value.toLowerCase(), []] as const; }
     })).then(entries => { if (live) setAirportCandidates(Object.fromEntries(entries)); }).finally(() => { if (live) setAirportLoading(false); });
     return () => { live = false; };
-  }, [airportColumns, dataRows]);
+  }, [airportColumns, dataRows, headers]);
 
   const aircraftColumn = fieldColumn("aircraft_type");
   useEffect(() => {
