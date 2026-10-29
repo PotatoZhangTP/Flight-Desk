@@ -12,6 +12,9 @@ export type Airport = {
   timezone: string | null;
   latitude: number | null;
   longitude: number | null;
+  /** Reference metadata used to rank ambiguous airport suggestions. */
+  airportType?: string | null;
+  scheduledService?: boolean;
 };
 
 export function airportCodes(airport: Airport) {
@@ -47,5 +50,7 @@ export function airportFromRow(row: Record<string, unknown>): Airport {
     municipality: text("municipality"), timezone: text("timezone"),
     latitude: typeof row.latitude === "number" ? row.latitude : null,
     longitude: typeof row.longitude === "number" ? row.longitude : null,
+    airportType: text("airport_type"),
+    scheduledService: typeof row.scheduled_service === "boolean" ? row.scheduled_service : undefined,
   };
 }
