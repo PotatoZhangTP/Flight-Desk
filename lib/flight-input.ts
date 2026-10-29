@@ -38,8 +38,8 @@ export function normalizeFlightInput(input: Record<string, unknown>, options: { 
         [`${side}_airport`]: iata || icao || ident || name,
         [`${side}_airport_iata`]: iata, [`${side}_airport_icao`]: icao,
         [`${side}_airport_name`]: name, [`${side}_country_code`]: country,
-        [`${side}_timezone`]: planned.timezone, [`${side}_local_date`]: planned.date,
-        [`${side}_local_time`]: planned.time, [`${side}_scheduled_at_utc`]: utc.iso,
+        [`${side}_timezone`]: planned.timezone, [`${side}_local_date`]: planned.date || null,
+        [`${side}_local_time`]: planned.time || null, [`${side}_scheduled_at_utc`]: utc.iso,
         [`${side}_terminal`]: text(`${side}Terminal`, 80), [`${side}_gate`]: text(`${side}Gate`, 80),
       });
     }

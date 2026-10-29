@@ -461,6 +461,8 @@ records ready|records ready|条记录准备导入
 Import Ready Records|Import Ready Records|导入准备好的记录
 Importing…|Importing…|正在导入…
 Import Complete|Import Complete|导入完成
+Import Complete with Errors|Import Complete with Errors|导入完成，但有失败记录
+Status|Status|状态
 Total Records|Total Records|记录总数
 Successfully Imported|Successfully Imported|成功导入
 Already Imported|Already Imported|已导入
