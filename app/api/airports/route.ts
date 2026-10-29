@@ -2,6 +2,7 @@ import { createClient } from "@supabase/supabase-js";
 import { airportFromRow } from "@/lib/airports";
 import { AirportConfigError, resolveAirportConfig } from "@/lib/airport-config";
 import { displayAirportCountryName, displayCountryCode, loadCountryMappings } from "@/lib/country-region";
+import { airportSearchQueries } from "@/lib/airport-query";
 
 export const dynamic = "force-dynamic";
 
@@ -31,9 +32,21 @@ export async function GET(request: Request) {
       auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
     });
     stage = "rpc";
-    let { data, error, status } = await client.rpc("search_airports", { search_query: query, result_limit: 12 })
-      .abortSignal(AbortSignal.any([request.signal, AbortSignal.timeout(5000)]));
-    if (error) {
+    const queries = airportSearchQueries(query);
+    const rows = new Map<string, Record<string, unknown>>();
+    let firstError: { error: { code?: string }; status: number } | null = null;
+    for (const searchQuery of queries) {
+      const result = await client.rpc("search_airports", { search_query: searchQuery, result_limit: 20 })
+        .abortSignal(AbortSignal.any([request.signal, AbortSignal.timeout(5000)]));
+      if (result.error) { firstError ||= { error: result.error, status: result.status }; continue; }
+      if (Array.isArray(result.data)) for (const row of result.data as Record<string, unknown>[]) {
+        const key = String(row.id || `${row.icao_code || ""}:${row.iata_code || ""}:${row.name || ""}`);
+        rows.set(key, row);
+      }
+      if (rows.size >= 20) break;
+    }
+    if (firstError && !rows.size) {
+      const { error, status } = firstError;
       const failure = (code: string) => unavailable(code, { status, code: error.code });
       if (status === 401 || error.code === "PGRST301" || error.code === "PGRST303") return failure("AIRPORT_KEY_REJECTED");
       if (error.code === "PGRST202") return failure("AIRPORT_RPC_NOT_FOUND");
@@ -44,7 +57,7 @@ export async function GET(request: Request) {
       return failure("AIRPORT_UPSTREAM_REQUEST_FAILED");
     }
     stage = "response";
-    if (!Array.isArray(data)) return unavailable("AIRPORT_RESPONSE_INVALID");
+    const data = [...rows.values()];
     const mappings = await loadCountryMappings(client);
     const rawCodes = [...new Set(data.slice(0, 12).map(row => String(row.country_code || "").trim().toUpperCase()).filter(Boolean))];
     const resolvedCodes = new Map<string, string>();
@@ -55,7 +68,8 @@ export async function GET(request: Request) {
     return Response.json({ airports: data.slice(0, 12).map(row => {
       const rawCode = String(row.country_code || "").trim().toUpperCase();
       const displayCode = resolvedCodes.get(rawCode) || displayCountryCode(rawCode, mappings);
-      return airportFromRow({ ...row, country_code: displayCode, country_name: displayAirportCountryName(row.country_name, rawCode, mappings) });
+      const originalCountryName = typeof row.country_name === "string" ? row.country_name : null;
+      return airportFromRow({ ...row, country_code: displayCode, country_name: displayAirportCountryName(originalCountryName, rawCode, mappings) });
     }) }, { headers: successHeaders });
   } catch (error) {
     if (error instanceof AirportConfigError) return unavailable(error.diagnosticCode);

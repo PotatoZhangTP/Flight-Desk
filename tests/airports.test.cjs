@@ -15,6 +15,7 @@ function load(file, dependencies = {}, env = {}) {
 }
 const model = load('lib/airports.ts');
 const excel = load('lib/excel-import.ts');
+const airportQuery = load('lib/airport-query.ts', {'pinyin-pro':require('pinyin-pro')});
 const time = load('lib/flight-time.ts', { luxon: require('luxon') });
 const normalizer = load('lib/flight-input.ts', { '@/lib/flight-time': time });
 const config = load('lib/airport-config.ts');
@@ -38,6 +39,12 @@ test('unlabeled duplicate ICAO columns map in spreadsheet order to departure and
   const values = ['天津滨海', 'ZBTJ', '昆明长水', 'ZPPP'];
   assert.equal(excel.airportCodeFromColumns('departure_airport', headers, values), 'ZBTJ');
   assert.equal(excel.airportCodeFromColumns('arrival_airport', headers, values), 'ZPPP');
+});
+test('Chinese airport queries produce pinyin candidates without changing the original query', () => {
+  const queries = airportQuery.airportSearchQueries('昆明长水');
+  assert.equal(queries[0], '昆明长水');
+  assert(queries.includes('kunming changshui'));
+  assert(airportQuery.airportSearchQueries('KMG').length === 1);
 });
 test('historical airport snapshots survive without a catalog lookup or fabricated IATA', () => {
   const a = model.airportFromSnapshot({departure_airport:'old-local-code',departure_airport_name:'Historical field',departure_timezone:'Asia/Kathmandu'},'departure');
@@ -122,6 +129,7 @@ function endpoint(result={data:[{id:1,name:'Sample Airport',ident:'TEST',icao_co
   const route=load('app/api/airports/route.ts',{
     '@/lib/airports':model,'@/lib/airport-config':{AirportConfigError:config.AirportConfigError,resolveAirportConfig:()=>({url:'https://catalog.example.test',key:'sb_publishable_fixture'})},
     '@/lib/country-region':{loadCountryMappings:async()=>[],displayCountryCode:(code)=>code,displayAirportCountryName:(name)=>name},
+    '@/lib/airport-query':airportQuery,
     '@supabase/supabase-js':{createClient:(url,key,options)=>{calls.push({url,key,options});return{rpc:(name,args)=>{calls.push({name,args});const response=name==='search_airports'&&searchResults ? searchResults[searchIndex++] || result : result;return{abortSignal:async signal=>{assert(signal instanceof AbortSignal);return response;}};}}; }},
   });
   return{route,calls};
@@ -131,12 +139,12 @@ test('airport endpoint returns the canonical airport row for a database alias ma
   const f=endpoint({data:[airport],error:null,status:200});
   const response=await f.route.GET(new Request('https://site.example.test/api/airports?q='+encodeURIComponent('天津滨海')));
   assert.equal(response.status,200);const body=await response.json();assert.equal(body.airports[0].iata,'TSN');assert.equal(body.airports[0].icao,'ZBTJ');
-  assert.deepEqual(f.calls.filter(call=>call.name==='search_airports').map(call=>call.args.search_query),['天津滨海']);
+  assert.deepEqual(f.calls.filter(call=>call.name==='search_airports').map(call=>call.args.search_query),['天津滨海', 'tian jin', 'tianjin', 'tian jin bin', 'tianjin bin', 'tian jin bin hai', 'tianjin binhai']);
 });
 test('airport endpoint is public, bounded and stateless, never forwards user auth cookies',async()=>{
   const f=endpoint();const response=await f.route.GET(new Request('https://site.example.test/api/airports?q=PEK',{headers:{cookie:'private-session'}}));
   assert.equal(response.status,200);assert.equal((await response.json()).airports[0].icao,null);
-  assert.deepEqual(f.calls[1],{name:'search_airports',args:{search_query:'PEK',result_limit:12}});
+  assert.deepEqual(f.calls[1],{name:'search_airports',args:{search_query:'PEK',result_limit:20}});
   assert.equal(f.calls[0].options.auth.persistSession,false);assert.equal(f.calls[0].options.global,undefined);
 });
 test('short, punctuation-only and oversized queries never hit Supabase; upstream errors are not fake empty results',async()=>{
