@@ -400,34 +400,43 @@ export default async function AllFlightsPage({
     return aircraftSearch.some(term => candidates.some(candidate => candidate.includes(term)));
   };
   const categoryFiltered = categoryError ? [] : filterFlightCategory(result.data, category, memorialFlightIds);
-  const toAirportMatches = (rows: Airport[]) =>
+  const toAirportMatches = (rows: Array<Airport | { icao_code?: string | null; iata_code?: string | null }>) =>
     rows.map((row) => ({
-      icao: normal(row.icao) || null,
-      iata: normal(row.iata) || null,
+      icao: normal("icao" in row ? row.icao : row.icao_code) || null,
+      iata: normal("iata" in row ? row.iata : row.iata_code) || null,
     }));
+  // Use the same reference search as Add Flight for filter terms. This keeps
+  // aliases and catalog-only names connected to the canonical IATA/ICAO codes
+  // stored on imported and manually added flights.
+  const airportSearchTerms = [...new Set([departureText, arrivalText, airportFilterText].map(value => value.trim()).filter(value => value.length >= 2))];
+  const remoteAirportMatches = new Map<string, AirportMatch[]>();
+  await Promise.all(airportSearchTerms.map(async term => {
+    const { data } = await supabase.rpc("search_airports", { search_query: term, result_limit: 20 });
+    if (Array.isArray(data)) remoteAirportMatches.set(term.toLocaleLowerCase(), toAirportMatches(data));
+  }));
   const departures =
     departureText && !p.departureExact
-      ? toAirportMatches(
+      ? [...toAirportMatches(
           departureAirports.filter((item) =>
             airportMatchesText(item, departureText),
           ),
-        )
+        ), ...(remoteAirportMatches.get(departureText.toLocaleLowerCase()) || [])]
       : [];
   const arrivals =
     arrivalText && !p.arrivalExact
-      ? toAirportMatches(
+      ? [...toAirportMatches(
           arrivalAirports.filter((item) =>
             airportMatchesText(item, arrivalText),
           ),
-        )
+        ), ...(remoteAirportMatches.get(arrivalText.toLocaleLowerCase()) || [])]
       : [];
   const airportMatchesAny =
     airportFilterText && !p.airportFilterExact
-      ? toAirportMatches(
+      ? [...toAirportMatches(
           airports.filter((item) =>
             airportMatchesText(item, airportFilterText),
           ),
-        )
+        ), ...(remoteAirportMatches.get(airportFilterText.toLocaleLowerCase()) || [])]
       : [];
   const departureExact = parseExact(p.departureExact);
   const arrivalExact = parseExact(p.arrivalExact);
