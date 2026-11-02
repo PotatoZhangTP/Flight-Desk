@@ -572,6 +572,7 @@ achievements.filter.progressive|Progressive|成长型
 achievements.filter.standalone|Standalone|独立徽章
 achievements.unlockedState|Unlocked|已解锁
 achievements.lockedState|Locked|未解锁
+achievements.awaitingUnlock|Awaiting Unlock|待解锁
 achievements.notStarted|Not Started|尚未开始
 achievements.maxTier|Highest Tier|最高等级
 achievements.condition|Unlock Condition|解锁条件
