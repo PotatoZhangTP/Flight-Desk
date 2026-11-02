@@ -45,6 +45,14 @@ test('ICAO columns receive explicit mappings instead of being treated as ignored
   assert.equal(excel.matchColumn('Arrival ICAO', ['ZPPP']).field, 'arrival_airport_icao');
   assert.equal(excel.matchColumn('ICAO', ['ZBTJ / ZPPP']).field, 'airport_icao');
 });
+test('duplicate unlabeled ICAO columns map by row position to departure and arrival', () => {
+  const result = excel.autoMatch(
+    ['Departure Airport', 'ICAO', 'Arrival Airport', 'ICAO'],
+    [['天津滨海', 'ZBTJ', '昆明长水', 'ZPPP']],
+  ).result;
+  assert.equal(result[1], 'departure_airport_icao');
+  assert.equal(result[3], 'arrival_airport_icao');
+});
 test('airport conflicts require confirmation while a valid ICAO remains the suggested entity', () => {
   const result = excel.validateImportFields({
     departure_airport: { original: 'Tianjin', normalized: 'TSN · ZBTJ', status: 'Needs Confirmation', reason: 'Airport name and ICAO identify different airports.' },

@@ -184,7 +184,24 @@ export function autoMatch(headers: string[], rows: string[][], locked: Set<numbe
   const result: Record<number, ExcelField | "ignore"> = {};
   const confidence: Record<number, Confidence> = {};
   const used = new Set<ExcelField>();
-  headers.forEach((header, index) => { if (locked.has(index)) return; const match = matchColumn(header, rows.map(row => row[index] || "")); if (match.field && !used.has(match.field)) { result[index] = match.field; used.add(match.field); } else result[index] = "ignore"; confidence[index] = match.confidence; });
+  // Some spreadsheets export two identically named ICAO columns beside the
+  // departure and arrival airport columns. Treat the pair as positional
+  // departure/arrival fields before the normal one-field-per-column matcher;
+  // otherwise the second column is discarded as a duplicate and one code is
+  // incorrectly reused for both ends of the route.
+  const unlabeledIcao = headers.map((header, index) => ({ header: normalizeHeader(header), index }))
+    .filter(item => item.header.includes("icao") && !/(?:departure|dep|arrival|arr|出发|起飞|到达|降落)/.test(item.header));
+  if (unlabeledIcao.length >= 2) {
+    const departure = unlabeledIcao[0].index;
+    const arrival = unlabeledIcao[unlabeledIcao.length - 1].index;
+    if (departure !== arrival) {
+      if (locked.has(departure)) used.add("departure_airport_icao");
+      else { result[departure] = "departure_airport_icao"; confidence[departure] = "High"; used.add("departure_airport_icao"); }
+      if (locked.has(arrival)) used.add("arrival_airport_icao");
+      else { result[arrival] = "arrival_airport_icao"; confidence[arrival] = "High"; used.add("arrival_airport_icao"); }
+    }
+  }
+  headers.forEach((header, index) => { if (locked.has(index) || result[index]) return; const match = matchColumn(header, rows.map(row => row[index] || "")); if (match.field && !used.has(match.field)) { result[index] = match.field; used.add(match.field); } else result[index] = "ignore"; confidence[index] = match.confidence; });
   return { result, confidence };
 }
 
