@@ -166,7 +166,7 @@ export function ExcelImporter() {
     const column = fieldColumn(field); const original = column ? (row.values[Number(column)] || "").trim() : ""; const fallbackCode = airportCodeFallback(field, row); const embeddedCode = airportCodeValues(original)[0] || ""; const queryCode = fallbackCode || embeddedCode; const key = original.toLowerCase();
     const nameCandidates = rankAirportSuggestions(airportCandidates[key] || []);
     const codeCandidates = rankAirportSuggestions((queryCode && airportCandidates[queryCode.toLowerCase()]) || []);
-    const candidates = codeCandidates.length ? codeCandidates : nameCandidates; const selected = rowAirportSelections[`${field}:${row.sourceRow}`] || airportSelections[key] || airportSelections[queryCode.toLowerCase()];
+    const candidates = codeCandidates.length ? codeCandidates : nameCandidates; const selected = rowAirportSelections[`${field}:${row.sourceRow}`] || airportSelections[key];
     const displayOriginal = original || queryCode;
     if (!displayOriginal) return { original: "", normalized: "", status: "Unresolved", candidates };
     if (selected) return { original: displayOriginal, normalized: airportCodes(selected), status: "Resolved", candidates };
@@ -352,8 +352,9 @@ export function ExcelImporter() {
   function chooseAirport(airport: Airport, applyAll: boolean) {
     if (!confirmation) return;
     const key = confirmation.original.toLowerCase();
+    const rowKey = `${confirmation.field}:${confirmation.sourceRow}`;
+    setRowAirportSelections(previous => ({ ...previous, [rowKey]: airport }));
     if (applyAll) setAirportSelections(previous => ({ ...previous, [key]: airport }));
-    else setRowAirportSelections(previous => ({ ...previous, [`${confirmation.field}:${confirmation.sourceRow}`]: airport }));
     setConfirmation(null); setConfirmationQuery("");
   }
   const autoMatched = Object.values(mapping).filter(value => value !== "ignore").length;
