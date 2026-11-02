@@ -60,6 +60,7 @@ const pageItems = (page: number, pages: number): (number | "ellipsis")[] => {
 type FlightRow = {
   id: string;
   flight_date: string | null;
+  departure_local_date: string | null;
   flight_number: string | null;
   departure_airport: string | null;
   arrival_airport: string | null;
@@ -336,7 +337,7 @@ export default async function AllFlightsPage({
   let query = supabase
     .from("flights")
     .select(
-      "id,flight_date,flight_number,departure_airport,arrival_airport,departure_airport_icao,arrival_airport_icao,departure_airport_iata,arrival_airport_iata,departure_country_code,arrival_country_code,aircraft_type,status,actual_duration_minutes,scheduled_duration_minutes,duration_minutes",
+      "id,flight_date,departure_local_date,flight_number,departure_airport,arrival_airport,departure_airport_icao,arrival_airport_icao,departure_airport_iata,arrival_airport_iata,departure_country_code,arrival_country_code,aircraft_type,status,actual_duration_minutes,scheduled_duration_minutes,duration_minutes",
       { count: "exact" },
     )
     .eq("user_id", user.id);
@@ -606,7 +607,7 @@ export default async function AllFlightsPage({
                     {(currentPage - 1) * size + index + 1}
                   </td>
                   <td>
-                    {flight.flight_date ? <LocalizedDate value={flight.flight_date} /> : "—"}
+                    {flight.departure_local_date || flight.flight_date ? <LocalizedDate value={flight.departure_local_date || flight.flight_date!} /> : "—"}
                   </td>
                   <td>{flight.flight_number || "—"}</td>
                   <td>
@@ -632,7 +633,7 @@ export default async function AllFlightsPage({
                     />
                   </td>
                   <td>
-                    <FlightStatusToggle id={flight.id} status={flight.status} />
+                    <FlightStatusToggle id={flight.id} status={flight.status} departureDate={flight.departure_local_date || flight.flight_date} />
                   </td>
                   <td>
                     <div className="flex justify-center gap-2">

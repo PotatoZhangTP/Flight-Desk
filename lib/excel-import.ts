@@ -1,6 +1,9 @@
 export const excelFields = [
   ["departure_airport", "Departure Airport"],
   ["arrival_airport", "Arrival Airport"],
+  ["departure_airport_icao", "Departure ICAO"],
+  ["arrival_airport_icao", "Arrival ICAO"],
+  ["airport_icao", "Airport ICAO"],
   ["departure_date", "Departure Date"],
   ["arrival_date", "Arrival Date"],
   ["flight_number", "Flight Number"],
@@ -19,7 +22,7 @@ export type Confidence = "High" | "Medium" | "Low";
 export type ExcelRow = { sourceRow: number; values: string[] };
 export type SheetData = { name: string; rows: ExcelRow[]; rawRows: string[][]; headerRow: number | null; hasHeader: boolean };
 export type NormalizationStatus = "Resolved" | "Needs Confirmation" | "Unresolved";
-export type NormalizedValue = { original: string; normalized: string; status: NormalizationStatus };
+export type NormalizedValue = { original: string; normalized: string; status: NormalizationStatus; reason?: string };
 export type ReviewStatus = "Ready" | "Needs Review" | "Incomplete" | "Duplicate" | "Skipped";
 export type ImportReview = { status: ReviewStatus; reasons: string[] };
 
@@ -51,6 +54,7 @@ export function validateImportFields(fields: Record<string, NormalizedValue & { 
     if (value?.status === "Needs Confirmation" && !reasons.some(reason => reason.startsWith(`${label} requires`))) reasons.push(`${label} requires confirmation.`);
     if (value?.status === "Unresolved" && value.original && !reasons.some(reason => reason.startsWith(`${label} is invalid`)) && field !== "flight_duration") reasons.push(`${label} could not be resolved.`);
   }
+  for (const value of Object.values(fields)) if (value?.reason) reasons.push(value.reason);
   const departureTime = fields.departure_time?.normalized?.match(/^(\d{2}):(\d{2})/);
   const arrivalTime = fields.arrival_time?.normalized?.match(/^(\d{2}):(\d{2})/);
   if (departureTime && arrivalTime && !fields.arrival_time.normalized.includes("+1")) {
@@ -89,8 +93,11 @@ export function detectImportDuplicate(fields: Record<string, NormalizedValue>, e
 }
 
 const aliases: Record<ExcelField, string[]> = {
-  departure_airport: ["departure airport", "departure airport code", "departure icao", "dep icao", "from", "origin", "origin airport", "dep airport", "dep", "departure", "出发机场", "出发机场icao", "出发icao", "起飞机场", "出发地"],
-  arrival_airport: ["arrival airport", "arrival airport code", "arrival icao", "arr icao", "to", "destination", "destination airport", "arr airport", "arr", "arrival", "到达机场", "到达机场icao", "到达icao", "降落机场", "目的地"],
+  departure_airport: ["departure airport", "departure airport code", "from", "origin", "origin airport", "dep airport", "dep", "departure", "出发机场", "起飞机场", "出发地"],
+  arrival_airport: ["arrival airport", "arrival airport code", "to", "destination", "destination airport", "arr airport", "arr", "arrival", "到达机场", "降落机场", "目的地"],
+  departure_airport_icao: ["departure icao", "dep icao", "departure airport icao", "出发机场icao", "出发icao", "起飞icao"],
+  arrival_airport_icao: ["arrival icao", "arr icao", "arrival airport icao", "到达机场icao", "到达icao", "降落icao"],
+  airport_icao: ["icao", "airport icao", "icao code", "机场icao"],
   departure_date: ["departure date", "flight date", "date", "dep date", "outbound date", "出发日期", "飞行日期"],
   arrival_date: ["arrival date", "arr date", "inbound date", "到达日期", "降落日期"],
   flight_number: ["flight number", "flight no", "flight #", "flight", "flt no", "航班号", "航班编号"],

@@ -42,12 +42,21 @@ export async function updateFlightStatus(id: string, status: "planned" | "comple
   if (!user) return { error: "common.loginRequired" };
   if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) return { error: "flight.invalidRecord" };
 
-  const { data, error } = await supabase.from("flights")
-    .update({ status })
+  const existing = await supabase.from("flights")
+    .select("id,flight_date,departure_local_date,status")
     .eq("id", id)
     .eq("user_id", user.id)
-    .select("id,status")
     .maybeSingle();
+  if (existing.error) return { error: "flight.statusUpdateError" };
+  if (!existing.data) return { error: "flight.unavailable" };
+  if (status === "completed" && !(existing.data.departure_local_date || existing.data.flight_date)) return { error: "flight.departureDateRequired" };
+
+  let update = supabase.from("flights")
+    .update({ status })
+    .eq("id", id)
+    .eq("user_id", user.id);
+  if (status === "completed") update = update.not("flight_date", "is", null);
+  const { data, error } = await update.select("id,status").maybeSingle();
   if (error) {
     console.error("[flights] status update failed", { code: error.code, message: error.message, details: error.details, hint: error.hint });
     return { error: "flight.statusUpdateError" };

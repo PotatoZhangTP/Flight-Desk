@@ -40,6 +40,19 @@ test('unlabeled duplicate ICAO columns map in spreadsheet order to departure and
   assert.equal(excel.airportCodeFromColumns('departure_airport', headers, values), 'ZBTJ');
   assert.equal(excel.airportCodeFromColumns('arrival_airport', headers, values), 'ZPPP');
 });
+test('ICAO columns receive explicit mappings instead of being treated as ignored data', () => {
+  assert.equal(excel.matchColumn('Departure ICAO', ['ZBTJ']).field, 'departure_airport_icao');
+  assert.equal(excel.matchColumn('Arrival ICAO', ['ZPPP']).field, 'arrival_airport_icao');
+  assert.equal(excel.matchColumn('ICAO', ['ZBTJ / ZPPP']).field, 'airport_icao');
+});
+test('airport conflicts require confirmation while a valid ICAO remains the suggested entity', () => {
+  const result = excel.validateImportFields({
+    departure_airport: { original: 'Tianjin', normalized: 'TSN · ZBTJ', status: 'Needs Confirmation', reason: 'Airport name and ICAO identify different airports.' },
+    arrival_airport: { original: 'Kunming', normalized: 'KMG · ZPPP', status: 'Resolved' },
+  });
+  assert.equal(result.status, 'Needs Review');
+  assert(result.reasons.includes('Airport name and ICAO identify different airports.'));
+});
 test('Chinese airport queries produce pinyin candidates without changing the original query', () => {
   const queries = airportQuery.airportSearchQueries('昆明长水');
   assert.equal(queries[0], '昆明长水');
@@ -99,11 +112,12 @@ test('Actual duration is independent, nullable and preserves zero; malformed inp
     const result = normalizer.normalizeFlightInput({...input(),...patch}); assert(result.error); assert.equal(result.data,null);
   }
 });
-function actionsFixture({user={id:'owner'},error=null,found=true}={}) {
+function actionsFixture({user={id:'owner'},error=null,found=true,flightDate='2026-10-20'}={}) {
   const writes=[],filters=[],invalidated=[];
   const db={auth:{getUser:async()=>({data:{user}})},rpc:async()=>({data:null,error:null}),from:table=>({
     insert:async data=>{writes.push({table,data});return{error};},
-    update:data=>{writes.push({table,data}); const q={eq:(key,value)=>{filters.push([key,value]);return q;},select:()=>q,maybeSingle:async()=>({data:found?{id:'flight'}:null,error})};return q;},
+    select:()=>{const q={eq:(key,value)=>{filters.push([key,value]);return q;},maybeSingle:async()=>({data:found?{id:'flight',flight_date:flightDate,departure_local_date:flightDate,status:'planned'}:null,error})};return q;},
+    update:data=>{writes.push({table,data}); const q={eq:(key,value)=>{filters.push([key,value]);return q;},not:(key,operator,value)=>{filters.push([key,operator,value]);return q;},select:()=>q,maybeSingle:async()=>({data:found?{id:'flight',status:data.status}:null,error})};return q;},
   })};
   const actions=load('app/flights/actions.ts',{
     '@/lib/supabase/server':{createClient:async()=>db},'@/lib/flight-input':normalizer,
@@ -116,6 +130,12 @@ test('flight mutations use authenticated ownership and whitelist data, never cli
   assert.equal(f.writes[0].data.user_id,'owner');assert.equal(f.writes[0].data.id,undefined);assert.equal(f.writes[0].table,'flights');
   const id='44444444-4444-4444-8444-444444444444';await f.actions.updateFlight(id,input());
   assert.deepEqual(f.filters,[['id',id],['user_id','owner']]);
+});
+test('planned flights without a departure date cannot be marked completed', async()=>{
+  const f=actionsFixture({flightDate:null});
+  const result=await f.actions.updateFlightStatus('44444444-4444-4444-8444-444444444444','completed');
+  assert.equal(result.error,'flight.departureDateRequired');
+  assert.equal(f.writes.length,0);
 });
 test('anonymous, invalid, missing/other-owner and DB failures cannot produce save success',async()=>{
   const anon=actionsFixture({user:null});assert((await anon.actions.createFlight(input())).error);assert.equal(anon.writes.length,0);

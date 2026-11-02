@@ -308,6 +308,8 @@ flight.markCompleted|Mark as Completed|标记为已完成
 flight.markPlanned|Mark as Planned|标记为计划中
 flight.updatingStatus|Updating flight status…|正在更新航班状态…
 flight.statusUpdateError|Unable to update flight status.|无法更新航班状态。
+flight.departureDateRequiredTitle|Departure Date Required|需要出发日期
+flight.departureDateRequired|This flight cannot be marked as completed because its departure date is missing. Please add a departure date before completing this flight.|该航班缺少出发日期，无法标记为已完成。请先添加出发日期后再完成此航班。
 dashboard.glance|Here’s your flying at a glance.|你的飞行经历，一目了然。
 dashboard.total|Total Flights|航班总数
 dashboard.recorded|Your Recorded Flights|已记录的航班
