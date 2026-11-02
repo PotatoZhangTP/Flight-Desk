@@ -110,6 +110,9 @@ function FeaturedAchievementWindow({ index, label: windowLabel, item, selected, 
 }
 
 function AchievementCard({ item, zh, flipped, featured, featuredFull, onFlip, onAddToFeatured, onRemoveFromFeatured, onChooseDisplayLevel, onPreview, onShowGuidance }: { item: AchievementItem; zh: boolean; flipped: boolean; featured: boolean; featuredFull: boolean; onFlip: () => void; onAddToFeatured: () => void; onRemoveFromFeatured: () => void; onChooseDisplayLevel: (levelKey: AchievementLevel["level_key"]) => void; onPreview: (item: AchievementItem, trigger: HTMLButtonElement) => void; onShowGuidance: (level: AchievementLevel) => void }) {
+  if (!item.unlocked) {
+    return <article className="achievement-card spotlight-card is-locked" aria-hidden="true"><div className="achievement-card-face achievement-card-blank" /></article>;
+  }
   const copy = label(item, zh);
   const level = item.unlocked?.achievement_level_id ? item.levels.find(entry => entry.id === item.unlocked?.achievement_level_id) : item.progress.level;
   const displayLevel = item.displayLevelKey ? item.levels.find(entry => entry.level_key === item.displayLevelKey) ?? level : level;
