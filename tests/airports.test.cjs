@@ -49,9 +49,21 @@ test('airport conflicts require confirmation while a valid ICAO remains the sugg
   const result = excel.validateImportFields({
     departure_airport: { original: 'Tianjin', normalized: 'TSN · ZBTJ', status: 'Needs Confirmation', reason: 'Airport name and ICAO identify different airports.' },
     arrival_airport: { original: 'Kunming', normalized: 'KMG · ZPPP', status: 'Resolved' },
+    departure_date: { original: '2026-10-20', normalized: '2026-10-20', status: 'Resolved' },
   });
   assert.equal(result.status, 'Needs Review');
   assert(result.reasons.includes('Airport name and ICAO identify different airports.'));
+});
+test('missing departure date remains incomplete with a concrete reason', () => {
+  const result = excel.validateImportFields({
+    departure_airport: { original: 'TSN', normalized: 'TSN · ZBTJ', status: 'Resolved' },
+    arrival_airport: { original: 'KMG', normalized: 'KMG · ZPPP', status: 'Resolved' },
+    departure_date: { original: '', normalized: '', status: 'Unresolved' },
+    departure_time: { original: '', normalized: '', status: 'Unresolved' },
+    arrival_time: { original: '', normalized: '', status: 'Unresolved' },
+  });
+  assert.equal(result.status, 'Incomplete');
+  assert(result.reasons.includes('Departure date is missing.'));
 });
 test('Chinese airport queries produce pinyin candidates without changing the original query', () => {
   const queries = airportQuery.airportSearchQueries('昆明长水');

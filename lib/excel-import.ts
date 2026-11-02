@@ -31,6 +31,7 @@ export function validateImportFields(fields: Record<string, NormalizedValue & { 
   const required: [string, string][] = [
     ["departure_airport", "Departure airport is missing."],
     ["arrival_airport", "Arrival airport is missing."],
+    ["departure_date", "Departure date is missing."],
   ];
   for (const [field, message] of required) {
     const value = fields[field];
@@ -63,7 +64,8 @@ export function validateImportFields(fields: Record<string, NormalizedValue & { 
     if (arrivalMinutes < departureMinutes) reasons.push("Arrival time is earlier than departure time; confirm the date or overnight marker.");
   }
   const needsReview = Object.values(fields).some(value => value?.status === "Needs Confirmation");
-  if (reasons.some(reason => /invalid|cannot be the same|must be/.test(reason))) return { status: "Incomplete", reasons };
+  const missingRequired = required.some(([field]) => !fields[field]?.normalized);
+  if (missingRequired || reasons.some(reason => /invalid|cannot be the same|must be/.test(reason))) return { status: "Incomplete", reasons };
   if (needsReview || reasons.length) return { status: "Needs Review", reasons };
   return { status: "Ready", reasons: [] };
 }
