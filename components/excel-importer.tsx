@@ -159,7 +159,7 @@ export function ExcelImporter() {
     const exact = options.filter(option => [option.code, option.name, ...(option.aliases || [])]
       .some(value => value.toLowerCase().replace(/[\s-]+/g, "") === key));
     if (exact.length === 1) return { original, normalized: exact[0].code, status: "Resolved" };
-    if (options.length === 1 && /^[AB]\d{3}$/i.test(options[0].code)) return { original, normalized: options[0].code, status: "Resolved" };
+    if (options.length === 1 && /^[A-Z0-9]{3,4}$/i.test(options[0].code)) return { original, normalized: options[0].code, status: "Resolved" };
     return normalizeAircraftValue(original);
   }, [aircraftCandidates, aircraftColumn]);
 

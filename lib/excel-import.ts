@@ -150,7 +150,7 @@ function contentScore(field: ExcelField, values: string[]) {
   const matches = sample.filter(value => {
     const upper = value.toUpperCase();
     if (field === "departure_airport" || field === "arrival_airport") return /^[A-Z]{3,4}$/.test(upper);
-    if (field === "flight_number") return /^[A-Z0-9]{2,4}\s?\d{1,5}$/.test(upper);
+    if (field === "flight_number") return /^[A-Z0-9]{2,4}\s?\d{1,5}$/.test(upper) && !/^(A|B|E|CRJ|ERJ|AT|DH|MD|F)[A-Z0-9-]{2,8}$/i.test(value);
     if (field === "aircraft_type") return /^(A|B|E|CRJ|ERJ|AT|DH|MD|F)[A-Z0-9-]{2,8}$/i.test(value);
     if (field === "departure_date") return /^\d{4}[-/]\d{1,2}[-/]\d{1,2}$/.test(value) || /^\d{1,2}[-/]\d{1,2}[-/]\d{2,4}$/.test(value) || !Number.isNaN(Date.parse(value));
     if (field === "departure_time" || field === "arrival_time") return /^\d{1,2}:\d{2}(?::\d{2})?\s*(AM|PM)?$/i.test(value);
@@ -199,6 +199,17 @@ export function autoMatch(headers: string[], rows: string[][], locked: Set<numbe
       if (locked.has(arrival)) used.add("arrival_airport_icao");
       else { result[arrival] = "arrival_airport_icao"; confidence[arrival] = "High"; used.add("arrival_airport_icao"); }
     }
+  }
+  // Headerless exports use generated names such as "Column 4". When two
+  // columns consistently contain four-letter codes, use their spreadsheet
+  // order as the least-surprising departure/arrival ICAO pairing.
+  const positionalIcao = headers.map((header, index) => ({ header: normalizeHeader(header), index }))
+    .filter(item => /^column \d+$/.test(item.header) && rows.length > 0 && rows.every(row => !String(row[item.index] || "").trim() || /^[A-Z]{4}$/i.test(String(row[item.index]).trim())) && rows.some(row => /^[A-Z]{4}$/i.test(String(row[item.index] || "").trim())));
+  if (positionalIcao.length >= 2 && !result[positionalIcao[0].index] && !result[positionalIcao[positionalIcao.length - 1].index]) {
+    const departure = positionalIcao[0].index;
+    const arrival = positionalIcao[positionalIcao.length - 1].index;
+    if (!locked.has(departure) && !used.has("departure_airport_icao")) { result[departure] = "departure_airport_icao"; confidence[departure] = "Medium"; used.add("departure_airport_icao"); }
+    if (!locked.has(arrival) && !used.has("arrival_airport_icao")) { result[arrival] = "arrival_airport_icao"; confidence[arrival] = "Medium"; used.add("arrival_airport_icao"); }
   }
   headers.forEach((header, index) => { if (locked.has(index) || result[index]) return; const match = matchColumn(header, rows.map(row => row[index] || "")); if (match.field && !used.has(match.field)) { result[index] = match.field; used.add(match.field); } else result[index] = "ignore"; confidence[index] = match.confidence; });
   return { result, confidence };

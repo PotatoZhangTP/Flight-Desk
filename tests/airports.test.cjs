@@ -59,6 +59,17 @@ test('header detection does not treat a headerless data row containing an airlin
     ['2', '美国', '旧金山', 'KSFO', '', '', 'Tianjin Airline', 'ERJ150', 'GS3333', '', '2小时', '美国', '洛杉矶', 'KLAX'],
   ]), -1);
 });
+test('aircraft-like prefixes are not misclassified as flight numbers', () => {
+  assert.equal(excel.matchColumn('Column 8', ['ERJ150']).field, 'aircraft_type');
+});
+test('headerless four-letter airport columns are paired as departure and arrival ICAO', () => {
+  const result = excel.autoMatch(
+    ['Column 1', 'Column 2', 'Column 3', 'Column 4'],
+    [['1', '美国', 'KPSP', 'KSFO']],
+  ).result;
+  assert.equal(result[2], 'departure_airport_icao');
+  assert.equal(result[3], 'arrival_airport_icao');
+});
 test('airport conflicts require confirmation while a valid ICAO remains the suggested entity', () => {
   const result = excel.validateImportFields({
     departure_airport: { original: 'Tianjin', normalized: 'TSN · ZBTJ', status: 'Needs Confirmation', reason: 'Airport name and ICAO identify different airports.' },
