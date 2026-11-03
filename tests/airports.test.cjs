@@ -19,6 +19,7 @@ const airportQuery = load('lib/airport-query.ts', {'pinyin-pro':require('pinyin-
 const time = load('lib/flight-time.ts', { luxon: require('luxon') });
 const normalizer = load('lib/flight-input.ts', { '@/lib/flight-time': time });
 const config = load('lib/airport-config.ts');
+const aircraftCatalog = load('lib/aircraft-catalog.ts');
 const input = () => ({
   departureAirportName: 'Beijing Capital', departureAirportIata: 'PEK', departureAirportIcao: 'ZBAA', departureCountryCode: 'CN',
   departureDate: '2026-10-20', departureTime: '10:00', departureTimezone: 'Asia/Shanghai',
@@ -66,6 +67,15 @@ test('uncommon three-to-four-character aircraft codes remain usable without a ca
   assert.deepEqual(excel.normalizeAircraftValue('E150'), { original: 'E150', normalized: 'E150', status: 'Resolved' });
   assert.deepEqual(excel.normalizeAircraftValue('CRJ9'), { original: 'CRJ9', normalized: 'CRJ9', status: 'Resolved' });
   assert.equal(excel.normalizeAircraftValue('ERJ150').status, 'Needs Confirmation');
+});
+test('aircraft aliases resolve to the shared canonical catalog key', async () => {
+  const calls = [];
+  const supabase = { from: () => {
+    const query = { select: () => query, eq: () => query, or: value => { calls.push(value); return query; }, limit: async () => ({ data: [{ canonical_type_key: 'A321', alias_key: 'AIRBUSA321' }] }) };
+    return query;
+  } };
+  assert.equal(await aircraftCatalog.resolveAircraftCanonical(supabase, 'Airbus A321'), 'A321');
+  assert.deepEqual(calls, ['alias_key.eq.A321,canonical_type_key.eq.A321']);
 });
 test('headerless four-letter airport columns are paired as departure and arrival ICAO', () => {
   const result = excel.autoMatch(

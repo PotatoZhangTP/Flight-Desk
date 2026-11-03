@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { normalizeFlightInput } from "@/lib/flight-input";
 import { resolveCanonicalAirport } from "@/lib/airport-resolution";
+import { resolveAircraftCanonical } from "@/lib/aircraft-catalog";
 
 export const dynamic = "force-dynamic";
 
@@ -20,11 +21,19 @@ export async function POST(request: Request) {
   const rpcRows: ImportRecord[] = [];
   const results: { rowNumber: number; result: string; error?: string }[] = [];
   const airportCache = new Map<string, Awaited<ReturnType<typeof resolveCanonicalAirport>>>();
+  const aircraftCache = new Map<string, string | null>();
   const resolve = async (value: { iata?: unknown; icao?: unknown; ident?: unknown; name?: unknown }) => {
     const key = [value.iata, value.icao, value.ident, value.name].map(item => typeof item === "string" ? item.trim().toUpperCase() : "").join("|");
     if (!key.replace(/\|/g, "")) return null;
     if (!airportCache.has(key)) airportCache.set(key, await resolveCanonicalAirport(supabase, value));
     return airportCache.get(key) || null;
+  };
+  const resolveAircraft = async (value: unknown) => {
+    const raw = typeof value === "string" ? value.trim() : "";
+    if (!raw) return null;
+    const key = raw.toUpperCase();
+    if (!aircraftCache.has(key)) aircraftCache.set(key, await resolveAircraftCanonical(supabase, raw));
+    return aircraftCache.get(key) || null;
   };
   for (const record of records) {
     if (!Number.isInteger(record?.row_number) || rowNumbers.has(record.row_number)) {
@@ -54,10 +63,11 @@ export async function POST(request: Request) {
       [`${side}_timezone`]: airport.timezone || rawInput[`${side}_timezone`] || "",
     });
     const input = { ...rawInput, ...canonical("departure", departure), ...canonical("arrival", arrival) };
+    const canonicalAircraft = await resolveAircraft(input.aircraft_type);
     const normalized = normalizeFlightInput({
       departureAirportName: input.departure_airport_name, departureAirportIata: input.departure_airport_iata, departureAirportIcao: input.departure_airport_icao, departureAirportIdent: input.departure_airport, departureCountryCode: input.departure_country_code, departureDate: input.departure_local_date, departureTime: input.departure_local_time, departureTimezone: input.departure_timezone,
       arrivalAirportName: input.arrival_airport_name, arrivalAirportIata: input.arrival_airport_iata, arrivalAirportIcao: input.arrival_airport_icao, arrivalAirportIdent: input.arrival_airport, arrivalCountryCode: input.arrival_country_code, arrivalDate: input.arrival_local_date, arrivalTime: input.arrival_local_time, arrivalTimezone: input.arrival_timezone,
-      flightNumber: input.flight_number, airline: input.airline, aircraftType: input.aircraft_type, registration: input.registration, notes: input.notes, status: input.status, scheduledDurationMinutes: input.scheduledDurationMinutes, source: "manual", isUserModified: false,
+      flightNumber: input.flight_number, airline: input.airline, aircraftType: canonicalAircraft || input.aircraft_type, registration: input.registration, notes: input.notes, status: input.status, scheduledDurationMinutes: input.scheduledDurationMinutes, source: "manual", isUserModified: false,
     }, { allowIncompletePlanned: true });
     if (normalized.error || !normalized.data) {
       const error = normalized.error || "Flight validation failed.";
