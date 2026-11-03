@@ -272,6 +272,11 @@ export function normalizeAircraftValue(value: string): NormalizedValue {
   if (/AIRBUS\s*A320|空客\s*A320/i.test(original)) return { original, normalized: "A320", status: "Resolved" };
   if (/^(737|738|739)$/.test(compact)) return { original, normalized: `B${compact}`, status: "Needs Confirmation" };
   if (/^359$/.test(compact)) return { original, normalized: "A359", status: "Needs Confirmation" };
+  // Keep a syntactically valid ICAO-style designator even when the shared
+  // catalog has no display alias for it. This supports less common types
+  // without guessing a different aircraft; longer/non-standard names remain
+  // Needs Confirmation.
+  if (/^[A-Z][A-Z0-9]{2,3}$/.test(compact)) return { original, normalized: compact, status: "Resolved" };
   return { original, normalized: original, status: "Needs Confirmation" };
 }
 

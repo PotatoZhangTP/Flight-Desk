@@ -62,6 +62,11 @@ test('header detection does not treat a headerless data row containing an airlin
 test('aircraft-like prefixes are not misclassified as flight numbers', () => {
   assert.equal(excel.matchColumn('Column 8', ['ERJ150']).field, 'aircraft_type');
 });
+test('uncommon three-to-four-character aircraft codes remain usable without a catalog alias', () => {
+  assert.deepEqual(excel.normalizeAircraftValue('E150'), { original: 'E150', normalized: 'E150', status: 'Resolved' });
+  assert.deepEqual(excel.normalizeAircraftValue('CRJ9'), { original: 'CRJ9', normalized: 'CRJ9', status: 'Resolved' });
+  assert.equal(excel.normalizeAircraftValue('ERJ150').status, 'Needs Confirmation');
+});
 test('headerless four-letter airport columns are paired as departure and arrival ICAO', () => {
   const result = excel.autoMatch(
     ['Column 1', 'Column 2', 'Column 3', 'Column 4'],
