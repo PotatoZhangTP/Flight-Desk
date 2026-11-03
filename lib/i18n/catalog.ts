@@ -375,6 +375,7 @@ excel.ignore|Ignore|忽略
 excel.previewTitle|Data Preview|数据预览
 excel.fieldsMapped|fields mapped|个字段已映射
 excel.previewRows|preview rows|条预览数据
+excel.backToColumnMatching|Back to Column Matching|返回字段匹配
 excel.verifyHint.airline|Enter an airline IATA code, usually 2 letters, for example CA.|请输入航空公司 IATA 代码，通常为 2 个字母，例如 CA。
 excel.verifyHint.flightNumber|Use the airline code followed by 1–5 digits, for example CA2869.|请输入航司代码加 1–5 位数字，例如 CA2869。
 excel.verifyHint.aircraftType|Use an ICAO aircraft type code, for example B738 or A320.|请输入 ICAO 机型代码，例如 B738 或 A320。
