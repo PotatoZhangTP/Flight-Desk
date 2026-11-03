@@ -330,7 +330,7 @@ export function ExcelImporter() {
     setMapping(previous => preserve ? { ...result.result, ...Object.fromEntries([...locked].map(index => [index, previous[index]])) } : result.result);
     setConfidence(result.confidence);
   }, [dataRows, headers, locked]);
-  useEffect(() => { if (headers.length) { setLocked(new Set()); const result = autoMatch(headers, dataRows.map(row => row.values)); setMapping(result.result); setConfidence(result.confidence); } }, [selectedSheet, headerIndex, headers.length]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { if (headers.length) { setLocked(new Set()); const result = autoMatch(headers, dataRows.map(row => row.values)); setMapping(result.result); setConfidence(result.confidence); } }, [selectedSheet, headerIndex, headerMode, manualHeader, headers, dataRows]);
 
   async function parse(file: File) {
     setError("");

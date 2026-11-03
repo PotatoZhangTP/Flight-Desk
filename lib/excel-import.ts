@@ -206,7 +206,10 @@ export function autoMatch(headers: string[], rows: string[][], locked: Set<numbe
 
 export function detectHeaderRow(rows: string[][]) {
   let best = { index: -1, score: 0 };
-  rows.slice(0, 30).forEach((row, index) => { const score = row.reduce((total, cell) => total + (matchColumn(String(cell || ""), []).score >= .8 ? 1 : 0), 0); if (score > best.score) best = { index, score }; });
+  // Only exact field labels count as an automatic header signal. Fuzzy
+  // matches such as a data value "Tianjin Airline" containing "Airline"
+  // must not turn a headerless data row into the header row.
+  rows.slice(0, 30).forEach((row, index) => { const score = row.reduce((total, cell) => total + (matchColumn(String(cell || ""), []).score === 1 ? 1 : 0), 0); if (score > best.score) best = { index, score }; });
   return best.score ? best.index : -1;
 }
 

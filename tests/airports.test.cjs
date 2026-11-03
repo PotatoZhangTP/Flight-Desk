@@ -53,6 +53,12 @@ test('duplicate unlabeled ICAO columns map by row position to departure and arri
   assert.equal(result[1], 'departure_airport_icao');
   assert.equal(result[3], 'arrival_airport_icao');
 });
+test('header detection does not treat a headerless data row containing an airline name as headers', () => {
+  assert.equal(excel.detectHeaderRow([
+    ['1', '美国', '棕榈泉', 'KPSP', '', '', 'Tianjin Airline', 'ERJ150', 'GS2222', '', '2小时', '美国', '旧金山', 'KSFO'],
+    ['2', '美国', '旧金山', 'KSFO', '', '', 'Tianjin Airline', 'ERJ150', 'GS3333', '', '2小时', '美国', '洛杉矶', 'KLAX'],
+  ]), -1);
+});
 test('airport conflicts require confirmation while a valid ICAO remains the suggested entity', () => {
   const result = excel.validateImportFields({
     departure_airport: { original: 'Tianjin', normalized: 'TSN · ZBTJ', status: 'Needs Confirmation', reason: 'Airport name and ICAO identify different airports.' },
