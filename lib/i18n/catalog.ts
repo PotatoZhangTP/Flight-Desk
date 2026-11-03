@@ -375,6 +375,15 @@ excel.ignore|Ignore|忽略
 excel.previewTitle|Data Preview|数据预览
 excel.fieldsMapped|fields mapped|个字段已映射
 excel.previewRows|preview rows|条预览数据
+excel.verifyHint.airline|Enter an airline IATA code, usually 2 letters, for example CA.|请输入航空公司 IATA 代码，通常为 2 个字母，例如 CA。
+excel.verifyHint.flightNumber|Use the airline code followed by 1–5 digits, for example CA2869.|请输入航司代码加 1–5 位数字，例如 CA2869。
+excel.verifyHint.aircraftType|Use an ICAO aircraft type code, for example B738 or A320.|请输入 ICAO 机型代码，例如 B738 或 A320。
+excel.verifyHint.date|Use YYYY-MM-DD, for example 2026-11-03.|请输入 YYYY-MM-DD 格式，例如 2026-11-03。
+excel.verifyHint.time|Use HH:MM, for example 14:30. Add +1 when the arrival is on the next day.|请输入 HH:MM 格式，例如 14:30；跨日请加 +1。
+excel.verifyHint.duration|Use total minutes or hours and minutes, for example 150 or 2h 30m.|请输入总分钟数或小时和分钟，例如 150 或 2h 30m。
+excel.verifyHint.status|Use Planned or Completed.|请输入 Planned 或 Completed。
+excel.verifyHint.registration|Enter the aircraft registration, for example B-1234 or N12345.|请输入飞机注册号，例如 B-1234 或 N12345。
+excel.verifyHint.airport|Search using an IATA code, ICAO code, airport name, city, or a maintained airport alias.|可使用 IATA、ICAO、机场名称、城市或系统维护的机场别名搜索。
 Edit the highlighted fields or select an airport to resolve this row.|编辑高亮字段或选择机场以解决此行问题。
 Import from Excel|Import from Excel|从 Excel 导入
 Bulk import flight history|Bulk import flight history|批量导入航班历史
