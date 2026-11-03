@@ -31,7 +31,6 @@ export function validateImportFields(fields: Record<string, NormalizedValue & { 
   const required: [string, string][] = [
     ["departure_airport", "Departure airport is missing."],
     ["arrival_airport", "Arrival airport is missing."],
-    ["departure_date", "Departure date is missing."],
   ];
   for (const [field, message] of required) {
     const value = fields[field];
